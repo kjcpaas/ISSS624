@@ -33,5 +33,40 @@
     "title": "Hands-on Exercise 1",
     "section": "Getting Started",
     "text": "Getting Started\nThis is the getting started paragraph."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1.html",
+    "href": "Hands-on_Ex1/Hands-on_Ex1.html",
+    "title": "Hands-on Exercise 1: Geospatial Data Wrangling with R",
+    "section": "",
+    "text": "In this hands-on exercise, I learned about the following:\n\nPublic Data Sets like the ones on data.gov.sg, LTADataMall, and InsideAirbnb.\nHow to import data sets into RStudio\nWrangling geospatial data in using different R packages like sf, tidyverse, etc."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1.html#overview",
+    "href": "Hands-on_Ex1/Hands-on_Ex1.html#overview",
+    "title": "Hands-on Exercise 1: Geospatial Data Wrangling with R",
+    "section": "",
+    "text": "In this hands-on exercise, I learned about the following:\n\nPublic Data Sets like the ones on data.gov.sg, LTADataMall, and InsideAirbnb.\nHow to import data sets into RStudio\nWrangling geospatial data in using different R packages like sf, tidyverse, etc."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1.html#getting-started",
+    "href": "Hands-on_Ex1/Hands-on_Ex1.html#getting-started",
+    "title": "Hands-on Exercise 1: Geospatial Data Wrangling with R",
+    "section": "Getting Started",
+    "text": "Getting Started\n\nPreparing the data sets\nFirst, I downloaded the different data sets from data.gov.sg, LTADataMall, and InsideAirbnb.\nNext, I put them under the Hands-on_Ex1 directory, with the following file structure:\nHands-on_Ex1\n├── Hands-on_Ex1.qmd\n└── data\n    ├── aspatial\n    │   └── listings.csv\n    └── geospatial\n        ├── CyclingPathGazette.cpg\n        ├── CyclingPathGazette.dbf\n        ├── CyclingPathGazette.lyr\n        ├── CyclingPathGazette.prj\n        ├── CyclingPathGazette.sbn\n        ├── CyclingPathGazette.sbx\n        ├── CyclingPathGazette.shp\n        ├── CyclingPathGazette.shp.xml\n        ├── CyclingPathGazette.shx\n        ├── MP14_SUBZONE_WEB_PL.dbf\n        ├── MP14_SUBZONE_WEB_PL.prj\n        ├── MP14_SUBZONE_WEB_PL.sbn\n        ├── MP14_SUBZONE_WEB_PL.sbx\n        ├── MP14_SUBZONE_WEB_PL.shp\n        ├── MP14_SUBZONE_WEB_PL.shp.xml\n        ├── MP14_SUBZONE_WEB_PL.shx\n        └── PreSchoolsLocation.kml\n\n\nInstalling R packages\nI used the code below to install the R packages used in the exercise:\n\npacman::p_load(sf, tidyverse)"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1.html#importing-geospatial-data",
+    "href": "Hands-on_Ex1/Hands-on_Ex1.html#importing-geospatial-data",
+    "title": "Hands-on Exercise 1: Geospatial Data Wrangling with R",
+    "section": "Importing Geospatial Data",
+    "text": "Importing Geospatial Data\nAfter setting up the data sets and the R packages, I proceeded with importing the geospatial data.\n\nMaster Plan 2014 Subzone Boundary (Web)\nTo import the data set to RStudio, I used the following code chunk:\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\", layer = \"MP14_SUBZONE_WEB_PL\")\n\nReading layer `MP14_SUBZONE_WEB_PL' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Hands-on_Ex1/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 323 features and 15 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 2667.538 ymin: 15748.72 xmax: 56396.44 ymax: 50256.33\nProjected CRS: SVY21\n\n\nI encountered the error below along the way:\nCannot open layer MasterPlan2014SubzoneBoundaryWebKML\nThis is because I originally downloaded the kml file instead of the shp file. After using the shp file, the read worked.\n\nℹ️ My biggest take away for this is that st_read reads shp data set (by default).\n\nAfter running the code, I was able to see the mpsz data on my environment."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1.html#others",
+    "href": "Hands-on_Ex1/Hands-on_Ex1.html#others",
+    "title": "Hands-on Exercise 1: Geospatial Data Wrangling with R",
+    "section": "Others",
+    "text": "Others\n\nChanging the website theme\nAfter exploring Quarto docs, I found that we can change the theme. I decided on the zephyr theme as it looks most readable and aesthetic for me.\n\n\nIssues with using Github on Rstudio\nIt was recommended to name the project with the convention &lt;github_username&gt;/ISSS624. However, due to restrictions on my machine, I had to deviate from this and create my project elsewhere.\nHence, I couldn’t use usethis::use_github() to setup my Github repository. However, as I use Github intensively in my job, I did the setup manually myself to use the git functions on RStudio.\n\nCreate the repo manually on Github on https://github.com/kjcpaas/ISSS624\nAdd the Github remote on RStudio project\n&gt; git remote add origin git@github.com:kjcpaas/ISSS624.git\n&gt; git remote -v\norigin  git@github.com:kjcpaas/ISSS624.git (fetch)\norigin  git@github.com:kjcpaas/ISSS624.git (push)\nSet remote for head\n&gt; git remote set-head origin --auto\n&gt; git gc\n\nAfter all these, I was able to use the git functions on RStudio."
   }
 ]
