@@ -72,11 +72,299 @@ Cannot open layer MasterPlan2014SubzoneBoundaryWebKML
 
 This is because I originally downloaded the `kml` file instead of the `shp` file. After using the `shp` file, the read worked.
 
-> ℹ️ My biggest take away for this is that `st_read` reads `shp` data set (by default).
+> ℹ️ My biggest take-away for this is that `st_read` reads `shp` data set by default. (which was debunked later)
 
 After running the code, I was able to see the `mpsz` data on my environment.
 
 ![](images/mpsz_imported.png)
+
+### Cycling Path Data
+
+Equipped with my learning form the previous step, I was able to quickly figure out that importing this data set can be done by simply changing the `layer` parameter from the previous code:
+
+```{r}
+cyclingpath <- st_read(dsn = "data/geospatial", layer = "CyclingPathGazette")
+```
+
+However, the difference is that this geometry has polyline features, while the previous has polygon features.
+
+### Pre-Schools Location Data
+
+Unlike the others, this data set is in `kml` format instead of `shp` format. I used the following code to import:
+
+```{r}
+preschool <- st_read("data/geospatial/PreSchoolsLocation.kml")
+```
+
+> ℹ️ Contrary to my previous take-away, `st_read` can read `kml` files by default. In fact, reading `shp` files require more parameters like `dsn` and `layer`.
+
+## Checking Contents of Data Frames
+
+### Checking the geometry of data frames
+
+Using `st_geometry()` returns information about the geometry of the data frame.
+
+```{r}
+st_geometry(mpsz)
+```
+
+It gave the same geometric information as when importing the shape data but with additional details like the first 5 geometries.
+
+### Getting overview of geospatial data
+
+Using `glimpse()` gives useful information about the columns, data types, values. For example:
+
+```{r}
+glimpse(mpsz)
+```
+
+This will be very useful to scan for the available data and which columns are useful for analysis.
+
+### Revealing complete information of feature objects
+
+Using `head()` can give full information about objects in the data set. For example:
+
+```{r}
+head(mpsz, n=5)
+```
+
+This will return the first 5 objects, and the number of objects can be set by specifying a value for `n`.
+
+Another function that is useful for this purpose is `tail()`, which returns items from the end of the data set. For example:
+
+```{r}
+tail(mpsz, n=2)
+```
+
+This returned the items on rows 322 and 323 instead of 1 and 2 if we were to use `head()`.
+
+However, I wonder which use cases these functions would be useful as we can easily inspect the full data when looking at all the Environment Data in RStudio. 🤔
+
+## Plotting Geospatial Data
+
+```{r}
+plot(mpsz, max.plot = 15)
+```
+
+I was pleasantly surprised to find that the rendering of the plots was **so fast**! It only took 1 second or so on my machine for 300+ features and 15 fields. This is really useful for quick look of the data.
+
+Trying it on the cycling path data was also very fast though the result was not so useful for me as it needs to be overlayed with a map like above.
+
+```{r}
+plot(cyclingpath)
+```
+
+I wonder how long it would take once we have larger data sets. 🤔
+
+As someone not originally from Singapore, I am still familiarizing myself with the countries geography so I'll plot the regions first.
+
+```{r}
+plot(mpsz['REGION_N'])
+```
+
+This can still be visualized better, especially the names in the legend got cut off. From the **Help** pages on RStudio, this function has a lot more parameters and I'll explore it once I have more time.
+
+## Projections
+
+### Correcting the EPSG code
+
+```{r}
+st_crs(mpsz)
+```
+
+```{r}
+mpsz3414 <- st_set_crs(mpsz, 3414)
+```
+
+```{r}
+st_crs(mpsz3414)
+```
+
+I am not familiar with what the `st_crs()` returns and I wouldn't have thought that EPSG needs correcting since I don't have the domain knowledge. This is one of my biggest take away for this exercise.
+
+### Projection Transformation
+
+When using `st_set_crs()`, I got the warning below:
+
+``` bash
+Warning: st_crs<- : replacing crs does not reproject data; use st_transform for that
+```
+
+As such, the `mpsz3414` data before may not be projected properly despite having the correct EPSG value.
+
+Next, I will transform the pre-school data:
+
+```{r}
+preschool3414 <- st_transform(preschool, crs=3414)
+st_geometry(preschool3414)
+```
+
+## Importing and Converting Aspatial Data
+
+For aspatial data, I used `read_csv()` to import the data.
+
+```{r}
+listings <- read_csv("data/aspatial/listings.csv")
+```
+
+From this, we have candidate geospatial fields that we can use, longitude and latitude.
+
+Checking the data contents of these field can confirm if we can really use the data.
+
+```{r}
+list(listings)
+```
+
+After confirming that longitude and latitude can be used as geospatial data, I transformed this data to geospatial data.
+
+```{r}
+listings_sf <- st_as_sf(listings, 
+                       coords = c("longitude", "latitude"),
+                       crs=4326) %>%
+  st_transform(crs = 3414)
+```
+
+Checking the new data frame, it was confirmed that it was transformed to a geospatial data.
+
+```{r}
+glimpse(listings_sf)
+```
+
+## Geoprocessing
+
+### Buffering
+
+```{r}
+buffer_cycling <- st_buffer(cyclingpath, 
+                               dist=5, nQuadSegs = 30)
+buffer_cycling$AREA <- st_area(buffer_cycling)
+sum(buffer_cycling$AREA)
+```
+
+After seeing my classmate's question on Piazza, I was also curious about the effect of `nQuadSegs` to the area. From the documentation, this is the number of segments created per quadrant.
+
+My understanding of this is since each quadrant has 90 degrees, having `nQuadSegs = 30` means 1 segment per 3 degrees. If this correct, my hypothesis is that the higher `nQuadSegs` is, the more accurate it is. This is because `nQuadSegs=1` would be a square, and it becomes a polygon with more sides the higher `nQuadSegs` is.
+
+I'm testing the theory below and if my hypothesis is correct, the area should not differ much past `nQuadSegs=180`
+
+```{r}
+buffer_cycling0 <- st_buffer(cyclingpath, 
+                               dist=5, nQuadSegs = 0)
+buffer_cycling0$AREA <- st_area(buffer_cycling0)
+sum(buffer_cycling0$AREA)
+```
+
+```{r}
+buffer_cycling10 <- st_buffer(cyclingpath, 
+                               dist=5, nQuadSegs = 10)
+buffer_cycling10$AREA <- st_area(buffer_cycling10)
+sum(buffer_cycling10$AREA)
+```
+
+```{r}
+buffer_cycling45 <- st_buffer(cyclingpath, 
+                               dist=5, nQuadSegs = 45)
+buffer_cycling45$AREA <- st_area(buffer_cycling45)
+sum(buffer_cycling45$AREA)
+```
+
+```{r}
+buffer_cycling90 <- st_buffer(cyclingpath, 
+                               dist=5, nQuadSegs = 90)
+buffer_cycling90$AREA <- st_area(buffer_cycling90)
+sum(buffer_cycling90$AREA)
+```
+
+```{r}
+buffer_cycling180 <- st_buffer(cyclingpath, 
+                               dist=5, nQuadSegs = 180)
+buffer_cycling180$AREA <- st_area(buffer_cycling180)
+sum(buffer_cycling180$AREA)
+```
+
+```{r}
+buffer_cycling1800 <- st_buffer(cyclingpath, 
+                               dist=5, nQuadSegs = 1800)
+buffer_cycling1800$AREA <- st_area(buffer_cycling1800)
+sum(buffer_cycling1800$AREA)
+```
+
+As we can see, from 180 to 1800 the area only changed by 3m^2^ but the differences are larger in lower values. My conclusion is that the higher `nQuadSegs`, the more accurate the value we will get. However, the calculation took much longer. The extremely small accuracy benefit may not be worth the trade-off in most cases.
+
+The result when using `nQuadSegs` of 30 is already very close to the result when it is 1800.
+
+$$
+1774367/1774465 = 99.99\%
+$$
+
+### Point-in-polygon count
+
+```{r}
+mpsz3414$`PreSch Count`<- lengths(st_intersects(mpsz3414, preschool3414))
+summary(mpsz3414$`PreSch Count`)
+```
+
+This means that there are subzones without pre-school while some have as many as 72.
+
+```{r}
+top_n(mpsz3414, 1, `PreSch Count`)
+```
+
+The subzone with the most pre-schools is **Tampines East**.
+
+To calculate the density of pre-schools:
+
+```{r}
+mpsz3414$Area <- mpsz3414 %>%
+  st_area()
+mpsz3414 <- mpsz3414 %>%
+  mutate(`PreSch Density` = `PreSch Count`/Area * 1000000)
+```
+
+Let's see the top 3 subzones with the highest pre-school density.
+
+```{r}
+top_n(mpsz3414, 3, `PreSch Density`)
+```
+
+Despite Tampines East having the most pre-schools, **Cecil** has the highest pre-school density. Tampines East might be much bigger than Cecil so its Pre-school Density is lower.
+
+## Exploratory Data Analysis (EDA)
+
+Below is the histogram for Pre-school Density:
+
+```{r}
+hist(mpsz3414$`PreSch Density`)
+```
+
+We improvef this graph by using `ggplot`.
+
+```{r}
+ggplot(data=mpsz3414, 
+       aes(x= as.numeric(`PreSch Density`)))+
+  geom_histogram(bins=20, 
+                 color="black", 
+                 fill="light blue") +
+  labs(title = "Are pre-school even distributed in Singapore?",
+       subtitle= "There are many planning sub-zones with a single pre-school, on the other hand, \nthere are a few sub-zones with at least 20 pre-schools",
+      x = "Pre-school density (per km sq)",
+      y = "Frequency")
+```
+
+We can also create a scatter plot.
+
+```{r}
+ggplot(data=mpsz3414, 
+       aes(y = `PreSch Count`, 
+           x= as.numeric(`PreSch Density`)))+
+  geom_point(color="black", 
+             fill="light blue") +
+  xlim(0, 40) +
+  ylim(0, 40) +
+  labs(title = "",
+      x = "Pre-school density (per km sq)",
+      y = "Pre-school count")
+```
 
 ## Others
 
@@ -109,3 +397,9 @@ Hence, I couldn't use `usethis::use_github()` to setup my Github repository. How
     ```
 
 After all these, I was able to use the `git` functions on RStudio.
+
+## Reflections
+
+-   I thought it would be difficult to setup R and RStudio especially as the Cran Project site was down when I first attempted to set up. Good thing it was up the next day.
+
+-   This course is looking to be very demanding indeed with a lot of time spent on pre-class assignments. However, I have enjoyed the hands-on exercise so far and I am eager to learn more!
