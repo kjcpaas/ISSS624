@@ -16,4 +16,60 @@ Overview goes here
 
 ## Getting Started
 
-Getting started goes here
+The code chunk below loads the following packages:
+
+-   tmap: for thematic mapping
+
+-   sf: for geospatial data handling
+
+-   tidyverse: for non-spatial data handling
+
+```{r}
+pacman::p_load(tmap, sf, tidyverse)
+```
+
+## Preparing the Flow Data
+
+### Importing the origin and destination data
+
+Firstly, we will import the *Passenger Volume By Origin Destination Bust Stops* data set from LTA Data Mall by using `read_csv` .
+
+```{r}
+odbus <- read_csv("data/aspatial/origin_destination_bus_202308.csv")
+```
+
+To make it easier to process the PT codes, we will convert the origin and destination PT codes to factor data type.
+
+```{r}
+odbus$ORIGIN_PT_CODE <- as.factor(odbus$ORIGIN_PT_CODE)
+odbus$DESTINATION_PT_CODE <- as.factor(odbus$DESTINATION_PT_CODE)
+```
+
+Next, I want to investigate the commuter flows between 7-10am on weekdays. We need to use the interval `7 <= time <= 9` as the data with `time = 9` contains data from 9am to just before 10am.
+
+```{r}
+origtrip_7_9 <- odbus %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(TIME_PER_HOUR >= 7 &
+           TIME_PER_HOUR <= 9) %>%
+  group_by(ORIGIN_PT_CODE) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS))
+```
+
+### Importing geospatial data
+
+Next we need to import the bus stop locations so that we can correlate them from the PT codes from the origin and destination data from before.
+
+```{r}
+bustop <- st_read(dsn = "data/geospatial",
+                  layer = "BusStop") %>%
+  st_transform(crs=3414)
+```
+
+Since these are just points, we also need some polygon data to figure out where in the Singapore map the bus locations correspond to:
+
+```{r}
+mpsz <- st_read(dsn = "data/geospatial",
+                layer = "MPSZ-2019") %>%
+  st_transform(crs = 3414)
+```
