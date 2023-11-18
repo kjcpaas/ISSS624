@@ -159,5 +159,33 @@
     "title": "Hands-on Exercise 2: Choropleth Mapping with R",
     "section": "Reflections",
     "text": "Reflections\n\nI was exhausted after doing the 2 chapters, and I must change how I do things next week. What I have been doing is understanding each part deeply first before moving on to the next. I think I should do chunks of work first before going back for deep understanding so I have more holistic view of the content and more sustainable for the duration of this course.\nI find tmap very useful and I am looking forward to using it more as it has so many functions to visualize data. Only one’s creativity limits the possibilities of using it."
+  },
+  {
+    "objectID": "In-class_Ex1/data/geospatial/MPSZ-2019.html",
+    "href": "In-class_Ex1/data/geospatial/MPSZ-2019.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
+  },
+  {
+    "objectID": "In-class_Ex1/In-class_Ex1.html",
+    "href": "In-class_Ex1/In-class_Ex1.html",
+    "title": "In-class Exercise 1",
+    "section": "",
+    "text": "Overview goes here"
+  },
+  {
+    "objectID": "In-class_Ex1/In-class_Ex1.html#overview",
+    "href": "In-class_Ex1/In-class_Ex1.html#overview",
+    "title": "In-class Exercise 1",
+    "section": "",
+    "text": "Overview goes here"
+  },
+  {
+    "objectID": "In-class_Ex1/In-class_Ex1.html#getting-started",
+    "href": "In-class_Ex1/In-class_Ex1.html#getting-started",
+    "title": "In-class Exercise 1",
+    "section": "Getting Started",
+    "text": "Getting Started\nGetting started goes here"
   }
 ]
