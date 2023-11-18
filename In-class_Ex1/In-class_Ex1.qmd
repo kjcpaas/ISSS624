@@ -10,11 +10,11 @@ execute:
   warning: false
 ---
 
-## Overview
+# Overview
 
 Overview goes here
 
-## Getting Started
+# Getting Started
 
 The code chunk below loads the following packages:
 
@@ -28,9 +28,9 @@ The code chunk below loads the following packages:
 pacman::p_load(tmap, sf, tidyverse)
 ```
 
-## Preparing the Flow Data
+# Preparing the Flow Data
 
-### Importing the origin and destination data
+## Importing the origin and destination data
 
 Firstly, we will import the *Passenger Volume By Origin Destination Bust Stops* data set from LTA Data Mall by using `read_csv` .
 
@@ -56,7 +56,7 @@ origtrip_7_9 <- odbus %>%
   summarise(TRIPS = sum(TOTAL_TRIPS))
 ```
 
-### Importing geospatial data
+## Importing geospatial data
 
 Next we need to import the bus stop locations so that we can correlate them from the PT codes from the origin and destination data from before.
 
@@ -73,3 +73,7 @@ mpsz <- st_read(dsn = "data/geospatial",
                 layer = "MPSZ-2019") %>%
   st_transform(crs = 3414)
 ```
+
+# Reflections
+
+*My reflections will go here as they are very important for my learning*
