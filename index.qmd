@@ -4,4 +4,10 @@ title: "ISSS624"
 
 Welcome to ISSS624 Geospatial Analytics Applications!
 
+I am Kristine Joy Paas, or **Joy** for short.
+
 In this webpage, I am going to share with you my learning journey of geospatial analytics.
+
+Netlify link: <https://isss624-kjcpaas.netlify.app/>
+
+Github repo: <https://github.com/kjcpaas/ISSS624>
