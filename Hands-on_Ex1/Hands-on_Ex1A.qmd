@@ -1,5 +1,5 @@
 ---
-title: "Hands-on Exercise 1: Geospatial Data Wrangling and Choropleth Mapping with R"
+title: "Hands-on Exercise 1A: Geospatial Data Wrangling with R"
 author: "Kristine Joy Paas"
 date: "16 November 2023"
 date-modified: "last-modified"
@@ -12,13 +12,9 @@ execute:
 
 # Overview
 
-This hands-on exercise covers these chapters:
+This hands-on exercise covers [Chapter 1: Data Wrangling with R](https://r4gdsa.netlify.app/chap01).
 
--   [Chapter 1: Data Wrangling with R](https://r4gdsa.netlify.app/chap01)
-
--   [Chapter 2: Choropleth Mapping with R](https://r4gdsa.netlify.app/chap02)
-
-In this hands-on exercise, I learned about the following:
+I learned about the following:
 
 -   Public Data Sets like the ones on [data.gov.sg](https://data.gov.sg/), [LTADataMall](https://www.mytransport.sg/content/mytransport/home/dataMall.html), and [InsideAirbnb](http://insideairbnb.com/get-the-data.html).
 -   How to import data sets into RStudio
@@ -43,17 +39,13 @@ First, I downloaded the different data sets needed in this exercise.
 
 -   Latest version of Singapore Airbnb listing data from [Inside Airbnb](http://insideairbnb.com/get-the-data.html)
 
--   Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling, June 2011-2020 from [Department of Statistics, Singapore](https://www.singstat.gov.sg/)
-
 Next, is putting them under the `Hands-on_Ex1` directory, with the following file structure:
 
 ``` bash
 Hands-on_Ex1
-├── Hands-on_Ex1.qmd
 └── data
     ├── aspatial
-    │   ├── listings.csv
-    │   └── respopagesextod2011to2020.csv
+    │   └── listings.csv
     └── geospatial
         ├── CyclingPathGazette.cpg
         ├── CyclingPathGazette.dbf
@@ -79,16 +71,14 @@ Hands-on_Ex1
 I used the code below to install the R packages used in the exercise:
 
 ```{r}
-pacman::p_load(sf, tidyverse, tmap)
+pacman::p_load(sf, tidyverse)
 ```
 
-# Chapter 1: Data Wrangling with R
-
-## Importing Geospatial Data
+# Importing Geospatial Data
 
 After setting up the data sets and the R packages, we can proceed with importing the geospatial data.
 
-### **Master Plan 2014 Subzone Boundary (Web)**
+## **Master Plan 2014 Subzone Boundary (Web)**
 
 To import the data set to RStudio, I used `st_read()` :
 
@@ -110,7 +100,7 @@ After running the code, we should see the `mpsz` data in the environment.
 
 ![](images/mpsz_imported.png)
 
-### Cycling Path Data
+## Cycling Path Data
 
 Equipped with my learning from the previous step, I was able to quickly figure out that importing this data set can be done by simply changing the `layer` parameter from the previous code:
 
@@ -120,7 +110,7 @@ cyclingpath <- st_read(dsn = "data/geospatial", layer = "CyclingPathGazette")
 
 However, the difference is that this geometry has polyline features, while the previous has polygon features.
 
-### Pre-Schools Location Data
+## Pre-Schools Location Data
 
 Unlike the others, this data set is in `kml` format instead of `shp` format. I used the following code to import:
 
@@ -130,9 +120,9 @@ preschool <- st_read("data/geospatial/PreSchoolsLocation.kml")
 
 > ℹ️ Contrary to my previous take-away, `st_read()` can read `kml` files by default. In fact, reading `shp` files require more parameters like `dsn` and `layer`.
 
-## Checking Contents of Data Frames
+# Checking Contents of Data Frames
 
-### Checking the geometry of data frames
+## Checking the geometry of data frames
 
 Using `st_geometry()` returns information about the geometry of the data frame.
 
@@ -142,7 +132,7 @@ st_geometry(mpsz)
 
 It gave the same geometric information as when importing the shape data but with additional details like the first 5 geometries.
 
-### Getting overview of geospatial data
+## Getting overview of geospatial data
 
 Using `glimpse()` gives useful information about the columns, data types, values. For example:
 
@@ -152,7 +142,7 @@ glimpse(mpsz)
 
 This will be very useful to scan for the available data and which columns are useful for analysis.
 
-### Revealing complete information of feature objects
+## Revealing complete information of feature objects
 
 Using `head()` can give full information about objects in the data set. For example:
 
@@ -196,9 +186,9 @@ plot(mpsz['REGION_N'])
 
 This can still be visualized better, especially the names in the legend got cut off. From the **Help** pages on RStudio, this function has a lot more parameters and I'll explore it once I have more time.
 
-## Projections
+# Projections
 
-### Correcting the EPSG code
+## Correcting the EPSG code
 
 ```{r}
 st_crs(mpsz)
@@ -214,7 +204,7 @@ st_crs(mpsz3414)
 
 I am not familiar with what the `st_crs()` returns and I wouldn't have thought that EPSG needs correcting since I don't have the domain knowledge. This is one of my biggest take away for this exercise.
 
-### Projection Transformation
+## Projection Transformation
 
 When using `st_set_crs()`, I got the warning below:
 
@@ -262,9 +252,9 @@ Checking the new data frame, it was confirmed that it was transformed to a geosp
 glimpse(listings_sf)
 ```
 
-## Geoprocessing
+# Geoprocessing
 
-### Buffering
+## Buffering
 
 ```{r}
 buffer_cycling <- st_buffer(cyclingpath, 
@@ -329,7 +319,7 @@ $$
 1774367/1774465 = 99.99\%
 $$
 
-### Point-in-polygon count
+## Point-in-polygon count
 
 ```{r}
 mpsz3414$`PreSch Count`<- lengths(st_intersects(mpsz3414, preschool3414))
@@ -361,7 +351,7 @@ top_n(mpsz3414, 3, `PreSch Density`)
 
 Despite Tampines East having the most pre-schools, **Cecil** has the highest pre-school density. Tampines East might be much bigger than Cecil so its Pre-school Density is lower.
 
-## Exploratory Data Analysis (EDA)
+# Exploratory Data Analysis (EDA)
 
 Below is the histogram for Pre-school Density:
 
@@ -397,238 +387,6 @@ ggplot(data=mpsz3414,
       x = "Pre-school density (per km sq)",
       y = "Pre-school count")
 ```
-
-# Chapter 2: Choropleth mapping with R
-
-## Data Wrangling
-
-### Importing geospatial data
-
-To import the MPSZ data set to RStudio, I used the same code chunk in the previous exercise.
-
-```{r}
-mpsz <- st_read(dsn = "data/geospatial", layer = "MP14_SUBZONE_WEB_PL")
-```
-
-### Importing aspatial data
-
-The csv data is an aspatial data so `read_csv()` must be used instead of `st_read()`:
-
-```{r}
-popdata <- read_csv("data/aspatial/respopagesextod2011to2020.csv")
-```
-
-### Data preparation
-
-```{r}
-popdata2020 <- popdata %>%
-  filter(Time == 2020) %>%
-  group_by(PA, SZ, AG) %>%
-  summarise(`POP` = sum(`Pop`)) %>%
-  ungroup()%>%
-  pivot_wider(names_from=AG, 
-              values_from=POP) %>%
-  mutate(YOUNG = rowSums(.[3:6])
-         +rowSums(.[12])) %>%
-mutate(`ECONOMY ACTIVE` = rowSums(.[7:11])+
-rowSums(.[13:15]))%>%
-mutate(`AGED`=rowSums(.[16:21])) %>%
-mutate(`TOTAL`=rowSums(.[3:21])) %>%  
-mutate(`DEPENDENCY` = (`YOUNG` + `AGED`)
-/`ECONOMY ACTIVE`) %>%
-  select(`PA`, `SZ`, `YOUNG`, 
-       `ECONOMY ACTIVE`, `AGED`, 
-       `TOTAL`, `DEPENDENCY`)
-```
-
-I don't fully understand this entire code chunk yet but I know it filtered for data from 2020 only and did some aggregations based on the age groups, PA, and AZ. New fields like `YOUNG` and `AGED` .
-
-Next, I joined this data with the mpsz data via `SZ`. However, we still need to make sure that the `SZ` values are uppercase to match mpsz's `SUBZONE_N.`
-
-```{r}
-popdata2020 <- popdata2020 %>%
-  mutate_at(.vars = vars(PA, SZ), 
-          .funs = list(toupper)) %>%
-  filter(`ECONOMY ACTIVE` > 0)
-```
-
-Then the 2 data sets can be joined.
-
-```{r}
-mpsz_pop2020 <- left_join(mpsz, popdata2020,
-                          by = c("SUBZONE_N" = "SZ"))
-```
-
-Lastly, write the rds of the combined data set.
-
-```{r}
-write_rds(mpsz_pop2020, "data/rds/mpszpop2020.rds")
-```
-
-> ⚠️ This failed on the first try so I had to create the `rds` directory under `data/` before trying again.
-
-## **Choropleth Mapping Geospatial Data Using *tmap***
-
-### Using *qtm()*
-
-```{r}
-tmap_mode("plot")
-qtm(mpsz_pop2020, 
-    fill = "DEPENDENCY")
-```
-
-I tried to create an interactive map by using `view` instead of `plot` but an error about invalid polygons was returned.
-
-### Using *tmap* elements
-
-```{r}
-tm_shape(mpsz_pop2020)+
-  tm_fill("DEPENDENCY", 
-          style = "quantile", 
-          palette = "Blues",
-          title = "Dependency ratio") +
-  tm_layout(main.title = "Distribution of Dependency Ratio by planning subzone",
-            main.title.position = "center",
-            main.title.size = 1.2,
-            legend.height = 0.45, 
-            legend.width = 0.35,
-            frame = TRUE) +
-  tm_borders(alpha = 0.5) +
-  tm_compass(type="8star", size = 2) +
-  tm_scale_bar() +
-  tm_grid(alpha =0.2) +
-  tm_credits("Source: Planning Sub-zone boundary from Urban Redevelopment Authorithy (URA)\n and Population data from Department of Statistics DOS", 
-             position = c("left", "bottom"))
-```
-
-From this part, I saw that with `tm_shape` as base, thematic maps can be created by doing `+` with the tmap actions. I will explore this later but I found a good reference on where to start: <https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html>.
-
-### Classification methods
-
-#### Quantile
-
-```{r}
-tm_shape(mpsz_pop2020)+
-  tm_fill("DEPENDENCY",
-          n = 5,
-          style = "jenks") +
-  tm_borders(alpha = 0.5)
-```
-
-#### Equal
-
-```{r}
-tm_shape(mpsz_pop2020)+
-  tm_fill("DEPENDENCY",
-          n = 5,
-          style = "equal") +
-  tm_borders(alpha = 0.5)
-```
-
-My main takeaway for this is that the quantile classification deals with outliers better. In this data set, there is an outlier subzone. If we use equal classification, the map looks homogeneous and does not provide much information as it cannot be seen how the values from one subzone to the other differ.
-
-With quantile classification, these differences can be seen more easily despite the outlier value.
-
-### Color Scheme
-
-The color scheme can be changed by specifying the palette in `tm_fill()` like below:
-
-```{r}
-tm_shape(mpsz_pop2020)+
-  tm_fill("DEPENDENCY",
-          n = 6,
-          style = "quantile",
-          palette = "Blues") +
-  tm_borders(alpha = 0.5)
-```
-
-More colors can be found when running `tmaptools::palette_explorer()` in the console. However, it requires `shiny` and `shinyjs` to work. This is a wonderful tool as it can also simulate how the color schemes look from the perspective of people with color blindness. As these maps aim to communicate, it is important for the color schemes chosen to not just be beautiful, but also inclusive.
-
-### Map Layouts
-
-```{r}
-tm_shape(mpsz_pop2020)+
-  tm_fill("DEPENDENCY", 
-          style = "jenks", 
-          palette = "Blues", 
-          legend.hist = TRUE, 
-          legend.is.portrait = TRUE,
-          legend.hist.z = 0.1) +
-  tm_layout(main.title = "Distribution of Dependency Ratio by planning subzone \n(Jenks classification)",
-            main.title.position = "center",
-            main.title.size = 1,
-            legend.height = 0.45, 
-            legend.width = 0.35,
-            legend.outside = FALSE,
-            legend.position = c("right", "bottom"),
-            frame = FALSE) +
-  tm_borders(alpha = 0.5)
-```
-
-Adding legends to maps is very useful as it provides additional information. However, this feature should not be abused to add multiple visualizations as legend as it can cause more confusion if there is too much information to present.
-
-Map style can also be changed and it is useful to enhance the visual presentation. After doing some research, I found the other available styles in <https://cran.r-project.org/web/packages/tmap/vignettes/tmap-changes.html>.
-
-```{r}
-tm_shape(mpsz_pop2020)+
-  tm_fill("DEPENDENCY", 
-          style = "quantile", 
-          palette = "-Greens") +
-  tm_borders(alpha = 0.5) +
-  tm_compass(type="8star", size = 2) +
-  tm_scale_bar(width = 0.15) +
-  tm_grid(lwd = 0.1, alpha = 0.2) +
-  tmap_style("natural")
-```
-
-In this example, I used the `natural` style to make it look like the map is surrounded by water (as it is naturally). Adding "furnitures" like compass and scale can also provide more perspective.
-
-### Smaller Maps
-
-```{r}
-tm_shape(mpsz_pop2020)+ 
-  tm_polygons(c("DEPENDENCY","AGED"),
-          style = c("equal", "quantile"), 
-          palette = list("Blues","Greens")) +
-  tm_layout(legend.position = c("right", "bottom"))
-```
-
-I don't find this very useful as the maps rendered might be too small to inspect. However, the facets with the region can be useful to see the data based on region.
-
-```{r}
-tm_shape(mpsz_pop2020) +
-  tm_fill("DEPENDENCY",
-          style = "quantile",
-          palette = "Greens",
-          thres.poly = 0) + 
-  tm_facets(by="REGION_N", 
-            free.coords=TRUE, 
-            drop.shapes=TRUE) +
-  tm_layout(legend.show = FALSE,
-            title.position = c("center", "center"), 
-            title.size = 20) +
-  tm_borders(alpha = 0.5)
-```
-
-### Mapping According to Criterion
-
-```{r}
-tm_shape(mpsz_pop2020[mpsz_pop2020$REGION_N=="CENTRAL REGION", ])+
-  tm_fill("DEPENDENCY", 
-          style = "quantile", 
-          palette = "Greens", 
-          legend.hist = TRUE, 
-          legend.is.portrait = TRUE,
-          legend.hist.z = 0.1) +
-  tm_layout(legend.outside = TRUE,
-            legend.height = 0.45, 
-            legend.width = 5.0,
-            legend.position = c("right", "bottom"),
-            frame = FALSE) +
-  tm_borders(alpha = 0.5)
-```
-
-I find this very useful especially if we just want to map a subset of the data. This can be used when we want to highlight information on certain regions.
 
 # Others
 
@@ -667,9 +425,5 @@ After all these, I was able to use the `git` functions on RStudio.
 # Reflections
 
 -   I thought it would be difficult to setup R and RStudio especially as the Cran Project site was down when I first attempted to set up. Good thing it was up the next day.
-
--   I was exhausted after doing the 2 chapters, and I must change how I do things next week. What I have been doing is understanding each part deeply first before moving on to the next. I think I should do chunks of work first before going back for deep understanding so I have more holistic view of the content and more sustainable for the duration of this course.
-
--   I find `tmap` very useful and I am looking forward to using it more as it has so many functions to visualize data. Only one's creativity limits the possibilities of using it.
 
 -   This course is looking to be very demanding indeed with a lot of time spent on pre-class assignments. However, I have enjoyed the hands-on exercise so far and I am eager to learn more!

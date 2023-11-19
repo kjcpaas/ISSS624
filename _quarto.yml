@@ -7,8 +7,10 @@ website:
     left:
       - text: Hands-on Exercises
         menu:
-          - text: Hands-on Exercise 1
-            href: Hands-on_Ex1/Hands-on_Ex1.qmd
+          - text: "1A: Data Wrangling with R"
+            href: Hands-on_Ex1/Hands-on_Ex1A.qmd
+          - text: "1B: Choropleth Mapping with R"
+            href: Hands-on_Ex1/Hands-on_Ex1B.qmd
           - text: Hands-on Exercise 2
             href: Hands-on_Ex2/Hands-on_Ex2.qmd
       - text: In-class Exercises
