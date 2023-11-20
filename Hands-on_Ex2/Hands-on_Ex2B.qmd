@@ -1,0 +1,99 @@
+---
+title: "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation"
+author: "Kristine Joy Paas"
+date: "20 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Overview
+
+This hands-on exercise covers [Chapter 9: Global Measures of Spatial Autocorrelation](https://r4gdsa.netlify.app/chap09)
+
+I learned about the following:
+
+-   Spatial correlation
+-   Global Spatial Autocorrelation (GSA) statistics
+-   Local Indicator of Spatial Association (LISA) statistics
+-   Getis-Ord\'s Gi-statistics
+
+# Getting Started
+
+## Preparing the data sets
+
+Data sets used on this exercise were downloaded from [E-learn](https://elearn.smu.edu.sg/d2l/home/357628).
+
+### Geospatial
+
+-   Hunan county boundary layer (`shp` format)
+
+### Aspatial
+
+-   Hunan's local development indicators in 2012 (`csv` format)
+
+Next, is putting them under the `Hands-on_Ex2` directory, with the following file structure:
+
+``` bash
+Hands-on_Ex2
+└── data
+    ├── aspatial
+    │   └── Hunan_2012.csv
+    └── geospatial
+        ├── Hunan.dbf
+        ├── Hunan.prj
+        ├── Hunan.qpj
+        ├── Hunan.shp
+        └── Hunan.shx
+```
+
+## Installing R packages
+
+I used the code below to install the R packages used in the exercise:
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse)
+```
+
+# Getting the Data Into R Environment\*\*
+
+## Importing data sets
+
+I used `st_read()` to import the geospatial `shp` data.
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial",
+                 layer = "Hunan")
+```
+
+::: callout-note
+In the previous exercises, we transformed the data with **EPSG:3414**. However, that is not applicable for this data set as we are not working with Singapore 🇸🇬 data set.
+:::
+
+As with the previous exercises, I used `read_csv()` to import aspatial `csv` data.
+
+```{r}
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+## Joining the data sets
+
+In the exercise, we have to join the 2 data sets using this code:
+
+```{r}
+hunan <- left_join(hunan, hunan2012)%>%
+  select(1:4, 7, 15)
+```
+
+::: callout-note
+We did not specify any columns to join by but `left_join` detected common column, `County`, so it joined the 2 data sets by this column.
+
+At the end of this, we are left with 7 columns, which includes **GDPPC** from the aspatial data, which contains data for **Gross Domestic Product per Capita**.
+:::
+
+# Reflections
+
+*Reflections go here*
