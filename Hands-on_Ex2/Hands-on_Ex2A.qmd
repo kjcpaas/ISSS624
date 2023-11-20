@@ -1,0 +1,540 @@
+---
+title: "Hands-on Exercisa 2A: Spatial Weights and Applications"
+author: "Kristine Joy Paas"
+date: "20 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Overview
+
+This hands-on exercise covers [Chapter 8: Spatial Weights and Applications](https://r4gdsa.netlify.app/chap08)
+
+I learned about the following:
+
+-   Calculating spatial weights
+-   Calculating spatially lagged variables
+
+# Getting Started
+
+## Preparing the data sets
+
+Data sets used on this exercise were downloaded from [E-learn](https://elearn.smu.edu.sg/d2l/home/357628).
+
+### Geospatial
+
+-   Hunan county boundary layer (`shp` format)
+
+### Aspatial
+
+-   Hunan's local development indicators in 2012 (`csv` format)
+
+Next, is putting them under the `Hands-on_Ex2` directory, with the following file structure:
+
+``` bash
+Hands-on_Ex2
+└── data
+    ├── aspatial
+    │   └── Hunan_2012.csv
+    └── geospatial
+        ├── Hunan.dbf
+        ├── Hunan.prj
+        ├── Hunan.qpj
+        ├── Hunan.shp
+        └── Hunan.shx
+```
+
+## Installing R packages
+
+I used the code below to install the R packages used in the exercise:
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse, knitr)
+```
+
+# Getting the Data Into R Environment\*\*
+
+## Importing data sets
+
+I used `st_read()` to import the geospatial `shp` data.
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial",
+                 layer = "Hunan")
+```
+
+::: callout-note
+In the previous exercises, we transformed the data with **EPSG:3414**. However, that is not applicable for this data set as we are not working with Singapore 🇸🇬 data set.
+:::
+
+As with the previous exercises, I used `read_csv()` to import aspatial `csv` data.
+
+```{r}
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+## Joining the data sets
+
+In the exercise, we have to join the 2 data sets using this code:
+
+```{r}
+hunan <- left_join(hunan, hunan2012)%>%
+  select(1:4, 7, 15)
+```
+
+::: callout-note
+We did not specify any columns to join by but `left_join` detected common column, `County`, so it joined the 2 data sets by this column.
+
+At the end of this, we are left with 7 columns, which includes **GDPPC** from the aspatial data, which contains data for **Gross Domestic Product per Capita**.
+:::
+
+# Generating a quick thematic map
+
+I used `qtm()` and other `tmap` functions to generate a map of the data.
+
+```{r}
+basemap <- tm_shape(hunan) +
+  tm_polygons() +
+  tm_text("NAME_3", size=0.5)
+
+gdppc <- qtm(hunan, "GDPPC")
+tmap_arrange(basemap, gdppc, asp=1, ncol=2)
+```
+
+::: callout-tip
+Maps do not need to be fancy at first. Using `qtm()` can already give us some useful insights and can guide us on how to proceed further with our analytics.
+
+For example, from this map, I already see that the counties with the highest GDP per capital in the Central Eastern part of China, aside from a few exceptions.
+:::
+
+# Computing Contiguity Spatial Weights
+
+This part makes use of `poly2nb()` to calculate the spatial weights.
+
+## Computing (QUEEN) contiguity based neighbors
+
+```{r}
+wm_q <- poly2nb(hunan, queen=TRUE)
+summary(wm_q)
+```
+
+This showed that there are 2 least connected regions, **30** and **65**. Furthermore, there is 1 county is most connected, **85**.
+
+Below I analyzed these counties of interest
+
+### Least connected counties
+
+First, I checked the names of the least connected counties.
+
+```{r}
+hunan$County[c(30, 65)]
+```
+
+The least connected counties are **Xinhuang** in the West and **Linxiang** in the Northeast.
+
+It makes sense for these counties to be least connected as they are counties that only have 1 neighbors each, according to the map.
+
+```{r}
+hunan$County[c(
+  wm_q[[30]],
+  wm_q[[65]]
+)]
+```
+
+Xinhuang borders **Zhijiang** to the East, while Linxiang borders **Yueyang** to the Southwest.
+
+### Most connected county
+
+```{r}
+hunan$County[85]
+```
+
+The most connected county is **Taoyuan** with 11 neighbors. It's neighbors are:
+
+```{r}
+hunan$County[wm_q[[85]]]
+```
+
+This makes perfect sense as Taoyuan is a relatively large, inner county.
+
+## Creating (ROOK) contiguity based neighbors
+
+```{r}
+wm_r <- poly2nb(hunan, queen=FALSE)
+summary(wm_r)
+```
+
+This operation resulted in **8 fewer** non-zero links. The most connected region, Taoyuan, has one less neighbor. However, the least connected regions stayed the same.
+
+```{r}
+setdiff(hunan$County[wm_q[[85]]], hunan$County[wm_r[[85]]])
+```
+
+**Nan** is not considered a neighbor of Taoyuan using the Rook method. I check the documentation of `poly2nb()` to understand why.
+
+::: callout-note
+When setting **queen=false**, it requires boundaries to be **more that just one point**. On the other hand, with **queen=true**, it requires the objects to shared **only a single point**.
+
+As such, having 8 less links means 8 pairs of counties only share a single point in their boundaries.
+:::
+
+Looking at the map, Nan indeed only touches Taoyuan at a single point:
+
+![](images/taoyuan_nan_boundary.png){fig-align="center"}
+
+## Visualising contiguity weights
+
+To plot the contiguity, we need to get the centroids of each county region. To get this for a single county, the following code can be used.
+
+```{r}
+hunan$geometry[1] %>% st_centroid(.x)
+```
+
+However, we needed to plot each longitude and latitude separately and create a new data frame for **centroid coordinates** from those. In order to do that, I copied the code chunks from the exercise.
+
+```{r}
+longitude <- map_dbl(hunan$geometry, ~st_centroid(.x)[[1]])
+latitude <- map_dbl(hunan$geometry, ~st_centroid(.x)[[2]])
+coords <- cbind(longitude, latitude)
+head(coords)
+```
+
+### Plotting contiguity based neighbors map
+
+I plotted the Queen and Rooks maps on the same plot instead of the recommended way in the exercise. This is so I could see which neighbors where present in the Queen method but were not present in the Rook method.
+
+They are the red lines in the map.
+
+```{r}
+plot(hunan$geometry, border="lightgrey")
+plot(wm_q, coords, pch = 19, cex = 0.6, add = TRUE, col= "red", main="Queen Contiguity")
+plot(wm_r, coords, pch = 19, cex = 0.6, add = TRUE, col = "blue", main="Rook Contiguity")
+```
+
+# Computing distance-based neighbors
+
+::: callout-tip
+The data set uses **WSG84** projection so distances are calculated according to this.
+:::
+
+This part makes use of `knearneigh()` to calculate the spatial weights.
+
+::: callout-note
+One observation is that a county's nearest neighbor does not necessarily mean that said country is also the nearest neighbor of the neighboring country.
+
+For example if B is the nearest neighbor of A, **A may not be the nearest neighbor of B**. B's nearest neighbor might be another county, e.g., C.
+
+See below for some examples.
+:::
+
+```{r}
+knearneigh(coords)$nn[c(1,3,30,33,28,49)]
+```
+
+In this example, 1 and 3 are nearest neighbors of each other. However, 30 is not 33's nearest neighbor even though 33 is 30's.
+
+## Determining cut-off distance
+
+```{r}
+k1 <- knn2nb(knearneigh(coords))
+k1dists <- unlist(nbdists(k1, coords, longlat = TRUE))
+summary(k1dists)
+```
+
+::: callout-note
+This means that the (centroids of) closest neighbors are **24.79 km** apart while the farthest neighbors are **61.79 km** apart.
+
+To ensure that all counties will have at least one neighbors, we set the cut-off distance to the maximum distance, or **61.79 km**.
+:::
+
+## Computing fixed distance weight matrix
+
+To figure out the neighbors within the **62km** distance (rounded out from the previous result), we use `dnearneigh()` .
+
+```{r}
+wm_d62 <- dnearneigh(coords, 0, 62, longlat = TRUE)
+wm_d62
+```
+
+::: callout-tip
+The **average number of links** here correspond to the average number of neighbors each county has.
+
+That means for every county in China, there are **3.681818** other counties within 62 km of them, on average.
+:::
+
+The example below gives a glimpse of neighbors each county has.
+
+```{r}
+str(wm_d62)
+```
+
+::: callout-note
+Another observation here is that **Taoyuan**, which had 11 contiguity-based neighbors, now only has 2 neighbors when using distance-based methods.
+
+```{r}
+wm_d62[88]
+```
+:::
+
+## Plotting distance-based matrix
+
+```{r}
+plot(hunan$geometry, border="lightgrey")
+plot(wm_d62, coords, add=TRUE)
+plot(k1, coords, add=TRUE, col="red", length=0.08)
+```
+
+::: callout-note
+💡 I found out that plotting the red lines first before the black lines would just display black lines.
+
+The technique of rendering the superset before the subset is a good technique to display the difference in the different plots.
+
+After realizing this, I applied the same technique in the Queen and Rook maps in \[##Visualising contiguity weights\].
+:::
+
+## Computing adaptive distance weight matrix
+
+There are cases in which knowing the k-nearest neighbors is useful. It can be done by passing `k` to `knearneigh`:
+
+```{r}
+knn6 <- knn2nb(knearneigh(coords, k=6))
+knn6
+```
+
+Plotting this in a map and overlapping with the `wm_d62` map, we can see that more neighbor links (in red) were added so that each county has 6 neighbors.
+
+```{r}
+plot(hunan$geometry, border="lightgrey")
+plot(knn6, coords, add=TRUE, col="red", length=0.08)
+plot(wm_d62, coords, add=TRUE)
+```
+
+# Weights based on IDW
+
+Next I calculated inversed distance values. This is calculated by:
+
+$$
+1/distance
+$$
+
+In R, it can be obtained by:
+
+```{r}
+dist <- nbdists(wm_q, coords, longlat = TRUE)
+ids <- lapply(dist, function(x) 1/(x))
+ids
+```
+
+## Row-standardized weights matrix
+
+Next we assign the weight of `1/(# of neighbors)` to each neighbor.
+
+```{r}
+rswm_q <- nb2listw(wm_q, style="W", zero.policy = TRUE)
+rswm_q
+```
+
+Next I inspected some weights values to check if the results are consistent with our expectations.
+
+```{r}
+rswm_q$weights[c(1, 10, 30, 85)]
+```
+
+As expected, their values are equal to `1/(# of neighbors)`.
+
+Next, the same was also done to derive a row standardised distance weight matrix.
+
+```{r}
+rswm_ids <- nb2listw(wm_q, glist=ids, style="B", zero.policy=TRUE)
+rswm_ids
+```
+
+Checking some of the matrix values:
+
+```{r}
+rswm_ids$weights[c(1, 10, 30, 85)]
+```
+
+::: callout-note
+Results seem to be the same as when using `nbdists()` and `lapply()` in [Weights based on IDW].
+:::
+
+Finally, we get some summary of the values.
+
+```{r}
+summary(unlist(rswm_ids$weights))
+```
+
+# Application of Spatial Weight Matrix
+
+## Spatial lag with row-standardized weights
+
+First, I computed the **spatially lagged values** for each polygon.
+
+```{r}
+GDPPC.lag <- lag.listw(rswm_q, hunan$GDPPC)
+GDPPC.lag
+```
+
+The spatially lagged GDPPC values were appended to the Hunan data using the code below:
+
+```{r}
+lag.list <- list(hunan$NAME_3, lag.listw(rswm_q, hunan$GDPPC))
+lag.res <- as.data.frame(lag.list)
+colnames(lag.res) <- c("NAME_3", "lag GDPPC")
+hunan <- left_join(hunan,lag.res)
+head(hunan)
+```
+
+Next, the GDPPC and spatial lag GDPPC were plotted for comparison
+
+```{r}
+gdppc <- qtm(hunan, "GDPPC")
+lag_gdppc <- qtm(hunan, "lag GDPPC")
+tmap_arrange(gdppc, lag_gdppc, asp=1, ncol=2)
+```
+
+::: callout-note
+The spatial correlation seems to appear more positive among counties in the East.
+:::
+
+## Spatial lag as a sum of neighboring values
+
+The spatial lag as a sum of neighboring values was calculated by assigning binary weights.
+
+```{r}
+b_weights <- lapply(wm_q, function(x) 0*x + 1)
+b_weights2 <- nb2listw(wm_q, 
+                       glist = b_weights, 
+                       style = "B")
+b_weights2
+```
+
+Then, these weights were applied to the GDPPC values, and appending the `lag_sum` data to the`hunan` data set.
+
+```{r}
+lag_sum <- list(hunan$NAME_3, lag.listw(b_weights2, hunan$GDPPC))
+lag.res <- as.data.frame(lag_sum)
+colnames(lag.res) <- c("NAME_3", "lag_sum GDPPC")
+hunan <- left_join(hunan, lag.res)
+```
+
+Lastly, I plotted the map.
+
+```{r}
+gdppc <- qtm(hunan, "GDPPC")
+lag_sum_gdppc <- qtm(hunan, "lag_sum GDPPC")
+tmap_arrange(gdppc, lag_sum_gdppc, asp=1, ncol=2)
+```
+
+::: callout-note
+The `lag_sum` plot looks more *scattered* compared to the `lag` plot.
+:::
+
+## Spatial window average
+
+First, I added the diagonal element to the neighbor list.
+
+```{r}
+wm_qs <- include.self(wm_q)
+```
+
+Next, I calculated the weights for the new list.
+
+```{r}
+wm_qs <- nb2listw(wm_qs)
+wm_qs
+```
+
+Then, I creates the lag variable from the weight structure and GDPPC variable.
+
+```{r}
+lag_w_avg_gpdpc <- lag.listw(wm_qs, hunan$GDPPC)
+lag_w_avg_gpdpc
+```
+
+Subsequently, I processed the data for further analysis.
+
+```{r}
+lag.list.wm_qs <- list(hunan$NAME_3, lag.listw(wm_qs, hunan$GDPPC))
+lag_wm_qs.res <- as.data.frame(lag.list.wm_qs)
+colnames(lag_wm_qs.res) <- c("NAME_3", "lag_window_avg GDPPC")
+hunan <- left_join(hunan, lag_wm_qs.res)
+```
+
+I inspected the different lag values to figure out if there was any pattern. *It was hard to do by eye on this table*.
+
+```{r}
+hunan %>%
+  select("County", "lag GDPPC", "lag_window_avg GDPPC") %>%
+  kable()
+```
+
+After all the data processing, I could finally plot the spatial window average.
+
+```{r}
+w_avg_gdppc <- qtm(hunan, "lag_window_avg GDPPC")
+tmap_arrange(lag_gdppc, w_avg_gdppc, asp=1, ncol=2)
+```
+
+::: callout-note
+The range of values became narrower, from **10,000 - 60,000** to **10,000 - 50,000**. Furthermore, the map looks "cleaner" for the `lag_window_average`.
+:::
+
+## Spatial window sum
+
+First, I added the diagonal element to the neighbor list.
+
+```{r}
+wm_qs <- include.self(wm_q)
+```
+
+Then, binary weights were calculated from this new list.
+
+```{r}
+b_weights <- lapply(wm_qs, function(x) 0*x + 1)
+b_weights2 <- nb2listw(wm_qs, 
+                       glist = b_weights, 
+                       style = "B")
+b_weights2
+```
+
+```{r}
+w_sum_gdppc <- list(hunan$NAME_3, lag.listw(b_weights2, hunan$GDPPC))
+w_sum_gdppc
+```
+
+Next, data was processed for further analysis.
+
+```{r}
+w_sum_gdppc.res <- as.data.frame(w_sum_gdppc)
+colnames(w_sum_gdppc.res) <- c("NAME_3", "w_sum GDPPC")
+hunan <- left_join(hunan, w_sum_gdppc.res)
+```
+
+Next, I compared the `lag_sum` and `w_sum` values to check for patterns. *Hard to see in this table format.*
+
+```{r}
+hunan %>%
+  select("County", "lag_sum GDPPC", "w_sum GDPPC") %>%
+  kable()
+```
+
+Finally, I plotted the maps.
+
+```{r}
+w_sum_gdppc <- qtm(hunan, "w_sum GDPPC")
+tmap_arrange(lag_sum_gdppc, w_sum_gdppc, asp=1, ncol=2)
+```
+
+# Reflections
+
+This exercise was interesting for me as I used to develop simple games when I was learning how to code. I implemented some collision detection algorithm to figure out if balls need to bounce, or if a killed character needs to disappear from screen.
+
+However, the logic I did before was very simple compared to what was done in this exercise as most elements in my games were simple geometric shapes like circle or rectangles.
+
+I am interested to know more how these "collisions" are detected in geospatial analysis.
