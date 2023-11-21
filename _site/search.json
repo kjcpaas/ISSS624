@@ -606,21 +606,21 @@
     "href": "Hands-on_Ex2/Hands-on_Ex2B.html",
     "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
     "section": "",
-    "text": "This hands-on exercise covers Chapter 9: Global Measures of Spatial Autocorrelation\nI learned about the following:\n\nSpatial correlation\nGlobal Spatial Autocorrelation (GSA) statistics\nLocal Indicator of Spatial Association (LISA) statistics\nGetis-Ord's Gi-statistics"
+    "text": "This hands-on exercise covers Chapter 9: Global Measures of Spatial Autocorrelation\nI learned about the following:\n\nSpatial correlation using Moran’s I and Geary’s C\nCorrelograms\n\n\n\nData sets used on this exercise were downloaded from E-learn.\n\n\n\nHunan county boundary layer (shp format)\n\n\n\n\n\nHunan’s local development indicators in 2012 (csv format)\n\nNext, is putting them under the Hands-on_Ex2 directory, with the following file structure:\nHands-on_Ex2\n└── data\n    ├── aspatial\n    │   └── Hunan_2012.csv\n    └── geospatial\n        ├── Hunan.dbf\n        ├── Hunan.prj\n        ├── Hunan.qpj\n        ├── Hunan.shp\n        └── Hunan.shx\n\n\n\n\nI used the code below to install the R packages used in the exercise:\n\npacman::p_load(sf, spdep, tmap, tidyverse)"
   },
   {
     "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#preparing-the-data-sets",
     "href": "Hands-on_Ex2/Hands-on_Ex2B.html#preparing-the-data-sets",
     "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
-    "section": "Preparing the data sets",
-    "text": "Preparing the data sets\nData sets used on this exercise were downloaded from E-learn.\n\nGeospatial\n\nHunan county boundary layer (shp format)\n\n\n\nAspatial\n\nHunan’s local development indicators in 2012 (csv format)\n\nNext, is putting them under the Hands-on_Ex2 directory, with the following file structure:\nHands-on_Ex2\n└── data\n    ├── aspatial\n    │   └── Hunan_2012.csv\n    └── geospatial\n        ├── Hunan.dbf\n        ├── Hunan.prj\n        ├── Hunan.qpj\n        ├── Hunan.shp\n        └── Hunan.shx"
+    "section": "",
+    "text": "Data sets used on this exercise were downloaded from E-learn.\n\n\n\nHunan county boundary layer (shp format)\n\n\n\n\n\nHunan’s local development indicators in 2012 (csv format)\n\nNext, is putting them under the Hands-on_Ex2 directory, with the following file structure:\nHands-on_Ex2\n└── data\n    ├── aspatial\n    │   └── Hunan_2012.csv\n    └── geospatial\n        ├── Hunan.dbf\n        ├── Hunan.prj\n        ├── Hunan.qpj\n        ├── Hunan.shp\n        └── Hunan.shx"
   },
   {
     "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#installing-r-packages",
     "href": "Hands-on_Ex2/Hands-on_Ex2B.html#installing-r-packages",
     "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
-    "section": "Installing R packages",
-    "text": "Installing R packages\nI used the code below to install the R packages used in the exercise:\n\npacman::p_load(sf, spdep, tmap, tidyverse)"
+    "section": "",
+    "text": "I used the code below to install the R packages used in the exercise:\n\npacman::p_load(sf, spdep, tmap, tidyverse)"
   },
   {
     "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#importing-data-sets",
@@ -635,5 +635,54 @@
     "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
     "section": "Joining the data sets",
     "text": "Joining the data sets\nIn the exercise, we have to join the 2 data sets using this code:\n\nhunan &lt;- left_join(hunan, hunan2012)%&gt;%\n  select(1:4, 7, 15)\n\n\n\n\n\n\n\nNote\n\n\n\nWe did not specify any columns to join by but left_join detected common column, County, so it joined the 2 data sets by this column.\nAt the end of this, we are left with 7 columns, which includes GDPPC from the aspatial data, which contains data for Gross Domestic Product per Capita."
+  },
+  {
+    "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#visualizing-regional-development-indicator",
+    "href": "Hands-on_Ex2/Hands-on_Ex2B.html#visualizing-regional-development-indicator",
+    "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
+    "section": "Visualizing Regional Development Indicator",
+    "text": "Visualizing Regional Development Indicator\nNext, I plotted the GDPPC maps using equal interval classification and equal quantile classification.\n\nequal &lt;- tm_shape(hunan) +\n  tm_fill(\"GDPPC\",\n          n = 5,\n          style = \"equal\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Equal interval classification\")\n\nquantile &lt;- tm_shape(hunan) +\n  tm_fill(\"GDPPC\",\n          n = 5,\n          style = \"quantile\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Equal quantile classification\")\n\ntmap_arrange(equal, \n             quantile, \n             asp=1, \n             ncol=2)"
+  },
+  {
+    "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#computing-contiguity-spatial-weights",
+    "href": "Hands-on_Ex2/Hands-on_Ex2B.html#computing-contiguity-spatial-weights",
+    "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
+    "section": "Computing Contiguity Spatial Weights",
+    "text": "Computing Contiguity Spatial Weights\nFirst, I built the neighbor list using Queen contiguity-based neighbors. This means the regions must share a border (minimum a point) to be considered neighbors.\n\nwm_q &lt;- poly2nb(hunan, \n                queen=TRUE)\nsummary(wm_q)\n\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 448 \nPercentage nonzero weights: 5.785124 \nAverage number of links: 5.090909 \nLink number distribution:\n\n 1  2  3  4  5  6  7  8  9 11 \n 2  2 12 16 24 14 11  4  2  1 \n2 least connected regions:\n30 65 with 1 link\n1 most connected region:\n85 with 11 links"
+  },
+  {
+    "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#row-standardized-weights-matrix",
+    "href": "Hands-on_Ex2/Hands-on_Ex2B.html#row-standardized-weights-matrix",
+    "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
+    "section": "Row-standardized weights matrix",
+    "text": "Row-standardized weights matrix\nNext, I assigned weights to each neighboring county with value 1/(# of neighbors). This could be done by using style=\"W\" to nb2listw().\n\nrswm_q &lt;- nb2listw(wm_q, \n                   style=\"W\", \n                   zero.policy = TRUE)\nrswm_q\n\nCharacteristics of weights list object:\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 448 \nPercentage nonzero weights: 5.785124 \nAverage number of links: 5.090909 \n\nWeights style: W \nWeights constants summary:\n   n   nn S0       S1       S2\nW 88 7744 88 37.86334 365.9147"
+  },
+  {
+    "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#global-spatial-autocorrelation-morans-i",
+    "href": "Hands-on_Ex2/Hands-on_Ex2B.html#global-spatial-autocorrelation-morans-i",
+    "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
+    "section": "Global Spatial Autocorrelation: Moran’s I",
+    "text": "Global Spatial Autocorrelation: Moran’s I\n\nMoran’s I test\nNext, I used Moran’s I statistical testing using moran.test().\n\nmoran.test(hunan$GDPPC, \n           listw=rswm_q, \n           zero.policy = TRUE, \n           na.action=na.omit)\n\n\n    Moran I test under randomisation\n\ndata:  hunan$GDPPC  \nweights: rswm_q    \n\nMoran I statistic standard deviate = 4.7351, p-value = 1.095e-06\nalternative hypothesis: greater\nsample estimates:\nMoran I statistic       Expectation          Variance \n      0.300749970      -0.011494253       0.004348351 \n\n\n\n\n\n\n\n\nTip\n\n\n\nThe Moran’s I value is 0.30075, which is greater than 0. This means that observations are clustered, and tend to be similar.\nThe p-value is also very close to 0, which indicates high confidence on the correlation.\n\n\n\n\nComputing Monte Carlo Moran’s I\nNext, a Monte Carlo simulation was performed for the Moran’s I statistic. 1000 simulations were performed by the code below:\n\nset.seed(1234)\nbperm = moran.mc(hunan$GDPPC, \n                listw=rswm_q, \n                nsim=999, \n                zero.policy = TRUE, \n                na.action=na.omit)\nbperm\n\n\n    Monte-Carlo simulation of Moran I\n\ndata:  hunan$GDPPC \nweights: rswm_q  \nnumber of simulations + 1: 1000 \n\nstatistic = 0.30075, observed rank = 1000, p-value = 0.001\nalternative hypothesis: greater\n\n\n\n\n\n\n\n\nTip\n\n\n\nThe Moran’s I value is 0.30075, same result as that of the Moran’s I test. Similarly, it means that observations are clustered, and tend to be similar.\nThe p-value is also very close to 0, which indicates high confidence on the correlation.\n\n\n\n\nVisualizing Monte Carlo Moran’s I\nFirst, I examined the statistics of the Monte Carlo Moran’s I. I checked the mean, variance, and the quantiles.\n\nmean(bperm$res[1:999])\n\n[1] -0.01504572\n\n\n\nvar(bperm$res[1:999])\n\n[1] 0.004371574\n\n\n\nsummary(bperm$res[1:999])\n\n    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. \n-0.18339 -0.06168 -0.02125 -0.01505  0.02611  0.27593 \n\n\nNext, I also plotted the histogram.\n\n\n\n\n\n\nImportant\n\n\n\nI plotted using ggplot2 as an additional challenge from the exercise.\n\n\n\nmc_results_df &lt;- data.frame(moran_i = bperm$res)\nggplot(mc_results_df, aes(x = moran_i)) +\n  geom_histogram(bins = 20, fill = \"grey\", color = \"black\") +\n  geom_vline(xintercept = 0, color = \"red\") +\n  labs(x = \"Sumilated Moran's I\",\n       y = \"Frequency\")\n\n\n\n\n\n\n\n\n\n\nNote\n\n\n\nFrom this Monte Carlo simulations, results are skewed to the left, meaning most of the Moran’s I simulations result in negative values. It means that in most simulation results, there is dispersion so there is no spatial correlation.\nThis is quite contradictory to the statistic from moran.test.\nHowever, as this is a simulation set using seed 1234, results could be different in other simulations because the sampling is different."
+  },
+  {
+    "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#global-spatial-autocorrelation-gearys",
+    "href": "Hands-on_Ex2/Hands-on_Ex2B.html#global-spatial-autocorrelation-gearys",
+    "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
+    "section": "Global Spatial Autocorrelation: Geary’s",
+    "text": "Global Spatial Autocorrelation: Geary’s\nNext I used Geary’s method for spatial correlation.\n\nGeary’s C test\n\ngeary.test(hunan$GDPPC, listw=rswm_q)\n\n\n    Geary C test under randomisation\n\ndata:  hunan$GDPPC \nweights: rswm_q \n\nGeary C statistic standard deviate = 3.6108, p-value = 0.0001526\nalternative hypothesis: Expectation greater than statistic\nsample estimates:\nGeary C statistic       Expectation          Variance \n        0.6907223         1.0000000         0.0073364 \n\n\n\n\n\n\n\n\nTip\n\n\n\nGeary’s C statistic is 0.6907, which is less than 1. This means that observations are clustered, and tend to be similar. P-value is also very close to 0, suggesting high-confidence.\n\nIt is consistent with the conclusions in Moran’s I test.\n\n\n\n\nComputing Monte Carlo Geary’s C\nSimilarly, I did permutation test via Monte Carlo simulations.\n\nset.seed(1234)\nbperm=geary.mc(hunan$GDPPC, \n               listw=rswm_q, \n               nsim=999)\nbperm\n\n\n    Monte-Carlo simulation of Geary C\n\ndata:  hunan$GDPPC \nweights: rswm_q \nnumber of simulations + 1: 1000 \n\nstatistic = 0.69072, observed rank = 1, p-value = 0.001\nalternative hypothesis: greater\n\n\n\n\n\n\n\n\nTip\n\n\n\nThe Moran’s I value is 0.6907, same result as that of the Geary’s C test. Similarly, it means that observations are clustered, and tend to be similar.\nThe p-value is also very close to 0, which indicates high confidence on the correlation.\n\n\n\n\nVisualizing Monte Carlo Geary’s C\nFirst, I examined the statistics of the Monte Carlo Geary’s C. I checked the mean, variance, and the quantiles.\n\nmean(bperm$res[1:999])\n\n[1] 1.004402\n\n\n\nvar(bperm$res[1:999])\n\n[1] 0.007436493\n\n\n\nsummary(bperm$res[1:999])\n\n   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. \n 0.7142  0.9502  1.0052  1.0044  1.0595  1.2722 \n\n\nFinally, visualizing it.\n\nhist(bperm$res, freq=TRUE, breaks=20, xlab=\"Simulated Geary c\")\nabline(v=1, col=\"red\")\n\n\n\n\n\n\n\n\n\n\nNote\n\n\n\nFrom this Monte Carlo simulations, results are quite balanced on 1, which makes it inconclusive as to the spatial clustering and dispersion.\nThis is quite contrary to the statistic resulting from geary.test(), which was more conclusive.\nHowever, as this is a simulation set using seed 1234, results could be different in other simulations because the sampling is different."
+  },
+  {
+    "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#compute-morans-i-correlogram",
+    "href": "Hands-on_Ex2/Hands-on_Ex2B.html#compute-morans-i-correlogram",
+    "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
+    "section": "Compute Moran’s I correlogram",
+    "text": "Compute Moran’s I correlogram\nFirst, I generated the correlogram for Morans’s I.\n\nMI_corr &lt;- sp.correlogram(wm_q, \n                          hunan$GDPPC, \n                          order=6, \n                          method=\"I\", \n                          style=\"W\")\nplot(MI_corr)\n\n\n\n\nThis did not provide me much information and I didn’t know how to interpret it so I printed the full result.\n\nprint(MI_corr)\n\nSpatial correlogram for hunan$GDPPC \nmethod: Moran's I\n         estimate expectation   variance standard deviate Pr(I) two sided    \n1 (88)  0.3007500  -0.0114943  0.0043484           4.7351       2.189e-06 ***\n2 (88)  0.2060084  -0.0114943  0.0020962           4.7505       2.029e-06 ***\n3 (88)  0.0668273  -0.0114943  0.0014602           2.0496        0.040400 *  \n4 (88)  0.0299470  -0.0114943  0.0011717           1.2107        0.226015    \n5 (88) -0.1530471  -0.0114943  0.0012440          -4.0134       5.984e-05 ***\n6 (88) -0.1187070  -0.0114943  0.0016791          -2.6164        0.008886 ** \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n\n\n\n\n\n\n\nTip\n\n\n\nFrom my understanding, since Moran’s I values are greater than 0 and highest on lag 1, it means that the spatial correlation is most significant the closer the regions are."
+  },
+  {
+    "objectID": "Hands-on_Ex2/Hands-on_Ex2B.html#compute-gearys-c-correlogram",
+    "href": "Hands-on_Ex2/Hands-on_Ex2B.html#compute-gearys-c-correlogram",
+    "title": "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation",
+    "section": "Compute Geary’s C correlogram",
+    "text": "Compute Geary’s C correlogram\nNext, I generated the correlogram for Geary’s C.\n\nGC_corr &lt;- sp.correlogram(wm_q, \n                          hunan$GDPPC, \n                          order=6, \n                          method=\"C\", \n                          style=\"W\")\nplot(GC_corr)\n\n\n\n\nNext was to print the results.\n\nprint(GC_corr)\n\nSpatial correlogram for hunan$GDPPC \nmethod: Geary's C\n        estimate expectation  variance standard deviate Pr(I) two sided    \n1 (88) 0.6907223   1.0000000 0.0073364          -3.6108       0.0003052 ***\n2 (88) 0.7630197   1.0000000 0.0049126          -3.3811       0.0007220 ***\n3 (88) 0.9397299   1.0000000 0.0049005          -0.8610       0.3892612    \n4 (88) 1.0098462   1.0000000 0.0039631           0.1564       0.8757128    \n5 (88) 1.2008204   1.0000000 0.0035568           3.3673       0.0007592 ***\n6 (88) 1.0773386   1.0000000 0.0058042           1.0151       0.3100407    \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n\n\n\n\n\n\n\nTip\n\n\n\nThe Geary’s C values are closest to 0 on the lag distance 1. Similar to Compute Moran’s I correlogram, the spatial correlation is strongest the closer the regions are.\nThe pattern is inverse of the Moran’s I correlogram, which makes sense as Moran’s I and Geary’s C trends are inverse of each other."
   }
 ]

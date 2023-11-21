@@ -16,12 +16,8 @@ This hands-on exercise covers [Chapter 9: Global Measures of Spatial Autocorrela
 
 I learned about the following:
 
--   Spatial correlation
--   Global Spatial Autocorrelation (GSA) statistics
--   Local Indicator of Spatial Association (LISA) statistics
--   Getis-Ord\'s Gi-statistics
-
-# Getting Started
+-   Spatial correlation using Moran's I and Geary's C
+-   Correlograms
 
 ## Preparing the data sets
 
@@ -58,7 +54,7 @@ I used the code below to install the R packages used in the exercise:
 pacman::p_load(sf, spdep, tmap, tidyverse)
 ```
 
-# Getting the Data Into R Environment\*\*
+# Getting the Data Into R Environment
 
 ## Importing data sets
 
@@ -94,6 +90,251 @@ We did not specify any columns to join by but `left_join` detected common column
 At the end of this, we are left with 7 columns, which includes **GDPPC** from the aspatial data, which contains data for **Gross Domestic Product per Capita**.
 :::
 
+## Visualizing Regional Development Indicator
+
+Next, I plotted the GDPPC maps using **equal interval classification** and **equal quantile classification**.
+
+```{r}
+equal <- tm_shape(hunan) +
+  tm_fill("GDPPC",
+          n = 5,
+          style = "equal") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Equal interval classification")
+
+quantile <- tm_shape(hunan) +
+  tm_fill("GDPPC",
+          n = 5,
+          style = "quantile") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Equal quantile classification")
+
+tmap_arrange(equal, 
+             quantile, 
+             asp=1, 
+             ncol=2)
+```
+
+# Global Spatial Autocorrelation
+
+## Computing Contiguity Spatial Weights
+
+First, I built the neighbor list using Queen contiguity-based neighbors. This means the regions must share a border (minimum a point) to be considered neighbors.
+
+```{r}
+wm_q <- poly2nb(hunan, 
+                queen=TRUE)
+summary(wm_q)
+```
+
+## Row-standardized weights matrix
+
+Next, I assigned weights to each neighboring county with value `1/(# of neighbors)`. This could be done by using `style="W"` to `nb2listw()`.
+
+```{r}
+rswm_q <- nb2listw(wm_q, 
+                   style="W", 
+                   zero.policy = TRUE)
+rswm_q
+```
+
+## Global Spatial Autocorrelation: Moran's I
+
+### Moran's I test {#morans-i-test}
+
+Next, I used Moran's I statistical testing using `moran.test()`.
+
+```{r}
+moran.test(hunan$GDPPC, 
+           listw=rswm_q, 
+           zero.policy = TRUE, 
+           na.action=na.omit)
+```
+
+::: callout-tip
+The Moran's I value is **0.30075**, which is greater than 0. This means that observations are **clustered**, and tend to be similar.
+
+The p-value is also very close to 0, which indicates **high confidence on the correlation**.
+:::
+
+### Computing Monte Carlo Moran's I
+
+Next, a Monte Carlo simulation was performed for the Moran's I statistic. 1000 simulations were performed by the code below:
+
+```{r}
+set.seed(1234)
+bperm = moran.mc(hunan$GDPPC, 
+                listw=rswm_q, 
+                nsim=999, 
+                zero.policy = TRUE, 
+                na.action=na.omit)
+bperm
+```
+
+::: callout-tip
+The Moran's I value is **0.30075**, same result as that of the [Moran's I test](#morans-i-test). Similarly, it means that observations are **clustered**, and tend to be similar.
+
+The p-value is also very close to 0, which indicates **high confidence on the correlation**.
+:::
+
+### Visualizing Monte Carlo Moran's I
+
+First, I examined the statistics of the Monte Carlo Moran's I. I checked the **mean**, **variance**, and the quantiles.
+
+```{r}
+mean(bperm$res[1:999])
+```
+
+```{r}
+var(bperm$res[1:999])
+```
+
+```{r}
+summary(bperm$res[1:999])
+```
+
+Next, I also plotted the histogram.
+
+::: callout-important
+I plotted using **ggplot2** as an additional challenge from the exercise.
+:::
+
+```{r}
+mc_results_df <- data.frame(moran_i = bperm$res)
+ggplot(mc_results_df, aes(x = moran_i)) +
+  geom_histogram(bins = 20, fill = "grey", color = "black") +
+  geom_vline(xintercept = 0, color = "red") +
+  labs(x = "Sumilated Moran's I",
+       y = "Frequency")
+```
+
+::: callout-note
+From this Monte Carlo simulations, results are skewed to the left, meaning most of the Moran's I simulations result in negative values. It means that in most simulation results, there is dispersion so there is **no spatial correlation**.
+
+This is quite contradictory to the statistic from `moran.test`.
+
+However, as this is a simulation set using seed **1234**, results could be different in other simulations because the sampling is different.
+:::
+
+## Global Spatial Autocorrelation: Geary's
+
+Next I used Geary's method for spatial correlation.
+
+### Geary's C test {#gearys-c-test}
+
+```{r}
+geary.test(hunan$GDPPC, listw=rswm_q)
+```
+
+::: callout-tip
+Geary's C statistic is **0.6907**, which is **less than 1**. This means that observations are **clustered**, and tend to be similar. P-value is also very close to 0, suggesting high-confidence.\
+\
+It is consistent with the conclusions in [Moran's I test](#morans-i-test).
+:::
+
+### Computing Monte Carlo Geary's C
+
+Similarly, I did permutation test via Monte Carlo simulations.
+
+```{r}
+set.seed(1234)
+bperm=geary.mc(hunan$GDPPC, 
+               listw=rswm_q, 
+               nsim=999)
+bperm
+```
+
+::: callout-tip
+The Moran's I value is **0.6907**, same result as that of the [Geary's C test](#gearys-c-test). Similarly, it means that observations are **clustered**, and tend to be similar.
+
+The p-value is also very close to 0, which indicates **high confidence on the correlation**.
+:::
+
+### Visualizing Monte Carlo Geary's C
+
+First, I examined the statistics of the Monte Carlo Geary's C. I checked the **mean**, **variance**, and the quantiles.
+
+```{r}
+mean(bperm$res[1:999])
+```
+
+```{r}
+var(bperm$res[1:999])
+```
+
+```{r}
+summary(bperm$res[1:999])
+```
+
+Finally, visualizing it.
+
+```{r}
+hist(bperm$res, freq=TRUE, breaks=20, xlab="Simulated Geary c")
+abline(v=1, col="red")
+```
+
+::: callout-note
+From this Monte Carlo simulations, results are quite balanced on 1, which makes it inconclusive as to the spatial clustering and dispersion.
+
+This is quite contrary to the statistic resulting from `geary.test()`, which was more conclusive.
+
+However, as this is a simulation set using seed **1234**, results could be different in other simulations because the sampling is different.
+:::
+
+# Spatial Correlograms
+
+Next, was to generate correlograms to look at patterns from a different perspective. This is done via `st.correlogram()`.
+
+## Compute Moran's I correlogram {#compute-morans-i-correlogram}
+
+First, I generated the correlogram for Morans's I.
+
+```{r}
+MI_corr <- sp.correlogram(wm_q, 
+                          hunan$GDPPC, 
+                          order=6, 
+                          method="I", 
+                          style="W")
+plot(MI_corr)
+```
+
+This did not provide me much information and I didn't know how to interpret it so I printed the full result.
+
+```{r}
+print(MI_corr)
+```
+
+::: callout-tip
+From my understanding, since Moran's I values are greater than 0 and highest on lag 1, it means that the spatial correlation is most significant the closer the regions are.
+:::
+
+## Compute Geary's C correlogram
+
+Next, I generated the correlogram for Geary's C.
+
+```{r}
+GC_corr <- sp.correlogram(wm_q, 
+                          hunan$GDPPC, 
+                          order=6, 
+                          method="C", 
+                          style="W")
+plot(GC_corr)
+```
+
+Next was to print the results.
+
+```{r}
+print(GC_corr)
+```
+
+::: callout-tip
+The Geary's C values are closest to 0 on the lag distance 1. Similar to [Compute Moran's I correlogram](#compute-morans-i-correlogram), the spatial correlation is strongest the closer the regions are.
+
+The pattern is inverse of the Moran's I correlogram, which makes sense as Moran's I and Geary's C trends are inverse of each other.
+:::
+
 # Reflections
 
-*Reflections go here*
+-   It took me a while to understand the implications of the Monte Carlo simulations with Moran's I and Geary's C. I spent a much longer time than expected on this shorter chapter.
+
+-   Moran's I and Geary's C are inverse of each other and the patterns shown in this exercise look consistent. I wonder if it is worth knowing both or knowing just one is enough since they are for the same purpose.
