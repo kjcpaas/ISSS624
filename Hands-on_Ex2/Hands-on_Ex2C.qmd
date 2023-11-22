@@ -18,7 +18,7 @@ I learned about the following:
 
 -   Global Spatial Autocorrelation (GSA) statistics
 -   Local Indicator of Spatial Association (LISA) statistics
--   Getis-Ord\'s Gi-statistics
+-   Getis-Ord's Gi-statistics
 
 ## Preparing the data sets
 
@@ -55,4 +55,516 @@ I used the code below to install the R packages used in the exercise:
 pacman::p_load(sf, spdep, tmap, tidyverse)
 ```
 
+# Getting the Data Into R Environment
+
+::: callout-important
+The steps here are similar to [Hands-on Exercise 2B's Getting the Data Into R Environment](/Hands-on_Ex2/Hands-on_Ex2B.html#getting-the-data-into-r-environment)
+
+However, I copied all steps here so this page can run all the R code by itself.
+:::
+
+## Importing data sets
+
+I used `st_read()` to import the geospatial `shp` data.
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial",
+                 layer = "Hunan")
+```
+
+::: callout-note
+In the previous exercises, we transformed the data with **EPSG:3414**. However, that is not applicable for this data set as we are not working with Singapore 🇸🇬 data set.
+:::
+
+As with the previous exercises, I used `read_csv()` to import aspatial `csv` data.
+
+```{r}
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+## Joining the data sets
+
+In the exercise, we have to join the 2 data sets using this code:
+
+```{r}
+hunan <- left_join(hunan, hunan2012)%>%
+  select(1:4, 7, 15)
+```
+
+::: callout-note
+We did not specify any columns to join by but `left_join` detected common column, `County`, so it joined the 2 data sets by this column.
+
+At the end of this, we are left with 7 columns, which includes **GDPPC** from the aspatial data, which contains data for **Gross Domestic Product per Capita**.
+:::
+
+## Visualizing Regional Development Indicator
+
+Next, I plotted the GDPPC maps using **equal interval classification** and **equal quantile classification**.
+
+```{r}
+equal <- tm_shape(hunan) +
+  tm_fill("GDPPC",
+          n = 5,
+          style = "equal") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Equal interval classification")
+
+quantile <- tm_shape(hunan) +
+  tm_fill("GDPPC",
+          n = 5,
+          style = "quantile") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Equal quantile classification")
+
+tmap_arrange(equal, 
+             quantile, 
+             asp=1, 
+             ncol=2)
+```
+
+# Global Spatial Autocorrelation
+
+::: callout-important
+The steps here are similar to [Hands-on Exercise 2B's Global Spatial Autocorrelation](/Hands-on_Ex2/Hands-on_Ex2B.html#global-spatial-autocorrelation)
+
+However, I copied all steps here so this page can run all the R code by itself.
+:::
+
+## Computing Contiguity Spatial Weights
+
+First, I built the neighbor list using Queen contiguity-based neighbors. This means the regions must share a border (minimum a point) to be considered neighbors.
+
+```{r}
+wm_q <- poly2nb(hunan, 
+                queen=TRUE)
+summary(wm_q)
+```
+
+## Row-standardized weights matrix
+
+Next, I assigned weights to each neighboring county with value `1/(# of neighbors)`. This could be done by using `style="W"` to `nb2listw()`.
+
+```{r}
+rswm_q <- nb2listw(wm_q, 
+                   style="W", 
+                   zero.policy = TRUE)
+rswm_q
+```
+
+## Global Spatial Autocorrelation: Moran's I
+
+### Moran's I test {#morans-i-test}
+
+Next, I used Moran's I statistical testing using `moran.test()`.
+
+```{r}
+moran.test(hunan$GDPPC, 
+           listw=rswm_q, 
+           zero.policy = TRUE, 
+           na.action=na.omit)
+```
+
+::: callout-tip
+The Moran's I value is **0.30075**, which is greater than 0. This means that observations are **clustered**, and tend to be similar.
+
+The p-value is also very close to 0, which indicates **high confidence on the correlation**.
+:::
+
+### Computing Monte Carlo Moran's I
+
+Next, a Monte Carlo simulation was performed for the Moran's I statistic. 1000 simulations were performed by the code below:
+
+```{r}
+set.seed(1234)
+bperm = moran.mc(hunan$GDPPC, 
+                listw=rswm_q, 
+                nsim=999, 
+                zero.policy = TRUE, 
+                na.action=na.omit)
+bperm
+```
+
+::: callout-tip
+The Moran's I value is **0.30075**, same result as that of the [Moran's I test](#morans-i-test). Similarly, it means that observations are **clustered**, and tend to be similar.
+
+The p-value is also very close to 0, which indicates **high confidence on the correlation**.
+:::
+
+### Visualizing Monte Carlo Moran's I
+
+First, I examined the statistics of the Monte Carlo Moran's I. I checked the **mean**, **variance**, and the quantiles.
+
+```{r}
+mean(bperm$res[1:999])
+```
+
+```{r}
+var(bperm$res[1:999])
+```
+
+```{r}
+summary(bperm$res[1:999])
+```
+
+Next, I also plotted the histogram.
+
+::: callout-important
+I plotted using **ggplot2** as an additional challenge from the exercise.
+:::
+
+```{r}
+mc_results_df <- data.frame(moran_i = bperm$res)
+ggplot(mc_results_df, aes(x = moran_i)) +
+  geom_histogram(bins = 20, fill = "grey", color = "black") +
+  geom_vline(xintercept = 0, color = "red") +
+  labs(x = "Sumilated Moran's I",
+       y = "Frequency")
+```
+
+::: callout-note
+From this Monte Carlo simulations, results are skewed to the left, meaning most of the Moran's I simulations result in negative values. It means that in most simulation results, there is dispersion so there is **no spatial correlation**.
+
+This is quite contradictory to the statistic from `moran.test`.
+
+However, as this is a simulation set using seed **1234**, results could be different in other simulations because the sampling is different.
+:::
+
+## Global Spatial Autocorrelation: Geary's
+
+Next I used Geary's method for spatial correlation.
+
+### Geary's C test {#gearys-c-test}
+
+```{r}
+geary.test(hunan$GDPPC, listw=rswm_q)
+```
+
+::: callout-tip
+Geary's C statistic is **0.6907**, which is **less than 1**. This means that observations are **clustered**, and tend to be similar. P-value is also very close to 0, suggesting high-confidence.\
+\
+It is consistent with the conclusions in [Moran's I test](#morans-i-test).
+:::
+
+### Computing Monte Carlo Geary's C
+
+Similarly, I did permutation test via Monte Carlo simulations.
+
+```{r}
+set.seed(1234)
+bperm=geary.mc(hunan$GDPPC, 
+               listw=rswm_q, 
+               nsim=999)
+bperm
+```
+
+::: callout-tip
+The Moran's I value is **0.6907**, same result as that of the [Geary's C test](#gearys-c-test). Similarly, it means that observations are **clustered**, and tend to be similar.
+
+The p-value is also very close to 0, which indicates **high confidence on the correlation**.
+:::
+
+### Visualizing Monte Carlo Geary's C
+
+First, I examined the statistics of the Monte Carlo Geary's C. I checked the **mean**, **variance**, and the quantiles.
+
+```{r}
+mean(bperm$res[1:999])
+```
+
+```{r}
+var(bperm$res[1:999])
+```
+
+```{r}
+summary(bperm$res[1:999])
+```
+
+Finally, visualizing it.
+
+```{r}
+hist(bperm$res, freq=TRUE, breaks=20, xlab="Simulated Geary c")
+abline(v=1, col="red")
+```
+
+::: callout-note
+From this Monte Carlo simulations, results are quite balanced on 1, which makes it inconclusive as to the spatial clustering and dispersion.
+
+This is quite contrary to the statistic resulting from `geary.test()`, which was more conclusive.
+
+However, as this is a simulation set using seed **1234**, results could be different in other simulations because the sampling is different.
+:::
+
+# Spatial Correlograms
+
+::: callout-important
+The steps here are similar to [Hands-on Exercise 2B's Spatial Correlograms](/Hands-on_Ex2/Hands-on_Ex2B.html#spatial-correlograms)
+
+However, I copied all steps here so this page can run all the R code by itself.
+:::
+
+Next, was to generate correlograms to look at patterns from a different perspective. This is done via `st.correlogram()`.
+
+## Compute Moran's I correlogram {#compute-morans-i-correlogram}
+
+First, I generated the correlogram for Morans's I.
+
+```{r}
+MI_corr <- sp.correlogram(wm_q, 
+                          hunan$GDPPC, 
+                          order=6, 
+                          method="I", 
+                          style="W")
+plot(MI_corr)
+```
+
+This did not provide me much information and I didn't know how to interpret it so I printed the full result.
+
+```{r}
+print(MI_corr)
+```
+
+::: callout-tip
+From my understanding, since Moran's I values are greater than 0 and highest on lag 1, it means that the spatial correlation is most significant the closer the regions are.
+:::
+
+## Compute Geary's C correlogram
+
+Next, I generated the correlogram for Geary's C.
+
+```{r}
+GC_corr <- sp.correlogram(wm_q, 
+                          hunan$GDPPC, 
+                          order=6, 
+                          method="C", 
+                          style="W")
+plot(GC_corr)
+```
+
+Next was to print the results.
+
+```{r}
+print(GC_corr)
+```
+
+::: callout-tip
+The Geary's C values are closest to 0 on the lag distance 1. Similar to [Compute Moran's I correlogram](#compute-morans-i-correlogram), the spatial correlation is strongest the closer the regions are.
+
+The pattern is inverse of the Moran's I correlogram, which makes sense as Moran's I and Geary's C trends are inverse of each other.
+:::
+
+# Cluster and Outlier Analysis
+
+The previous chapters are about Global Spatial Autocorrelation. In this part, I looked for local patterns that occur in subsets of the geospatial data.
+
+## Computing Local Moran's I
+
+First, I started with computing local Moran's I values.
+
+The code chunks below were used to compute local Moran's I of *GDPPC2012* at the county level.
+
+```{r}
+fips <- order(hunan$County)
+localMI <- localmoran(hunan$GDPPC, rswm_q)
+head(localMI)
+```
+
+This code chunk result in a matrix with columns:
+
+-   Ii: the local Moran's I statistics
+
+-   E.Ii: the expectation of local moran statistic under the randomisation hypothesis
+
+-   Var.Ii: the variance of local moran statistic under the randomisation hypothesis
+
+-   Z.Ii:the standard deviate of local moran statistic
+
+-   Pr(): the p-value of local moran statistic
+
+The local Moran's I values were inspected by:
+
+```{r}
+printCoefmat(data.frame(
+  localMI[fips,], 
+  row.names=hunan$County[fips]),
+  check.names=FALSE)
+```
+
+## Mapping local Moran's I
+
+Before proceeding with the mapping, I appended `localMI` dataframe onto the `hunan` dataframe.
+
+```{r}
+hunan.localMI <- cbind(hunan,localMI) %>%
+  rename(Pr.Ii = Pr.z....E.Ii..)
+```
+
+Then, I plotted a cloropeth map of the local Moran's I values and the p-values using `tmap` functions. These maps were plotted side by side for easier analysis.
+
+```{r}
+localMI.map <- tm_shape(hunan.localMI) +
+  tm_fill(col = "Ii", 
+          style = "pretty", 
+          title = "local moran statistics") +
+  tm_borders(alpha = 0.5)
+
+pvalue.map <- tm_shape(hunan.localMI) +
+  tm_fill(col = "Pr.Ii", 
+          breaks=c(-Inf, 0.001, 0.01, 0.05, 0.1, Inf),
+          palette="-Blues", 
+          title = "local Moran's I p-values") +
+  tm_borders(alpha = 0.5)
+
+tmap_arrange(localMI.map, pvalue.map, asp=1, ncol=2)
+```
+
+# Creating a LISA Cluster Map
+
+The LISA Cluster Map shows the significant locations color coded by type of spatial autocorrelation.
+
+## Plotting Moran scatterplot
+
+In order to do this, I have to plot the Moran's I scatterplot first. This can be via `moran.plot()`.
+
+```{r}
+nci <- moran.plot(hunan$GDPPC, rswm_q,
+                  labels=as.character(hunan$County), 
+                  xlab="GDPPC 2012", 
+                  ylab="Spatially Lag GDPPC 2012")
+```
+
+::: callout-note
+This can be be interpreted such that the counties on the upper-right quadrant (e.g., **Shaosan**, **Ningxian**, **Liuyang**, **Wangchen**, **Changsa**) are within an affluent region, i.e., cluster of counties with high GDP per capita.
+
+Some other counties of interest are **Zixing** and **Lengshuijiang**, which are more affluent than their neighbors. Lastly, **Pingjian** is less affluent compared to its neighbors.
+:::
+
+## Plotting Moran scatterplot with standardized variable
+
+Next is to scale the plot by normalizing the axes, which should align the axes to `0`. `scale()` was used for this purpose.
+
+```{r}
+hunan$Z.GDPPC <- scale(hunan$GDPPC) %>% 
+  as.vector 
+```
+
+After scaling, I replotted the scatterplot.
+
+```{r}
+nci2 <- moran.plot(hunan$Z.GDPPC, rswm_q,
+                   labels=as.character(hunan$County),
+                   xlab="z-GDPPC 2012", 
+                   ylab="Spatially Lag z-GDPPC 2012")
+```
+
+## Preparing LISA map classes
+
+To prepare LISA cluster map, I had to first create a numeric vector with the same number of elements as `localMI`, which is `88`.
+
+```{r}
+quadrant <- vector(mode="numeric",length=nrow(localMI))
+```
+
+Next was to compute the lag values and centering on the `mean`.
+
+```{r}
+hunan$lag_GDPPC <- lag.listw(rswm_q, hunan$GDPPC)
+DV <- hunan$lag_GDPPC - mean(hunan$lag_GDPPC)
+```
+
+Similarly, i also centered the local Moran's I values around the mean.
+
+```{r}
+LM_I <- localMI[,1] - mean(localMI[,1])    
+```
+
+I also set the significant value to `0.05` as per standards.
+
+```{r}
+signif <- 0.05
+```
+
+Then, I defined the low-low (1), low-high (2), high-low (3) and high-high (4) categories. This corresponds to the quadrants in the scatterplot from [Plotting Moran scatterplot].
+
+```{r}
+quadrant[DV <0 & LM_I>0] <- 1
+quadrant[DV >0 & LM_I<0] <- 2
+quadrant[DV <0 & LM_I<0] <- 3  
+quadrant[DV >0 & LM_I>0] <- 4
+```
+
+Lastly, was to add a category for non-significant Moran's I values.
+
+```{r}
+quadrant[localMI[,5]>signif] <- 0
+```
+
+## Plotting LISA map
+
+After preparing the classes, I could finally plot the LISA map. As with the other maps so far, I used `tmap()` functions to created this map.
+
+For easier analysis, I plotted the LISA map next to the GDPPC map.
+
+```{r}
+gdppc <- qtm(hunan, "GDPPC")
+
+hunan.localMI$quadrant <- quadrant
+colors <- c("#ffffff", "#2c7bb6", "#abd9e9", "#fdae61", "#d7191c")
+clusters <- c("insignificant", "low-low", "low-high", "high-low", "high-high")
+
+LISAmap <- tm_shape(hunan.localMI) +
+  tm_fill(col = "quadrant", 
+          style = "cat", 
+          palette = colors[c(sort(unique(quadrant)))+1], 
+          labels = clusters[c(sort(unique(quadrant)))+1],
+          popup.vars = c("")) +
+  tm_view(set.zoom.limits = c(11,17)) +
+  tm_borders(alpha=0.5)
+
+tmap_arrange(gdppc, LISAmap, 
+             asp=1, ncol=2)
+```
+
+::: callout-note
+I was expecting the 2 standalone orange counties from the GDPPC map (**Zixing** and **Lengshuijiang**) to be part of the high-low category. This is because they are relatively more affluent than their neighbors.
+
+They were also on the high-low quadrant in the scatterplot. Hence, this result was surprising for me.
+
+A possible explanation for this is that their GDPPC are just **a little bit higher than 60,000**, while their neighbors are in the high **50,000s**. Visually, they distinct but a closer look at the number might reveal that the values are not really far-off.
+:::
+
+I also plotted the local Moran's I values and p-values side by side again to find clues as to why.
+
+```{r}
+localMI.map <- tm_shape(hunan.localMI) +
+  tm_fill(col = "Ii", 
+          style = "pretty", 
+          title = "local moran statistics") +
+  tm_borders(alpha = 0.5)
+
+pvalue.map <- tm_shape(hunan.localMI) +
+  tm_fill(col = "Pr.Ii", 
+          breaks=c(-Inf, 0.001, 0.01, 0.05, 0.1, Inf),
+          palette="-Blues", 
+          title = "local Moran's I p-values") +
+  tm_borders(alpha = 0.5)
+
+tmap_arrange(localMI.map, pvalue.map, asp=1, ncol=2)
+```
+
+::: callout-note
+As I mentioned, **Zixing** and **Lengshuijiang** were part of the high-low category as I originally expected.
+
+The p-value provides a sound explanation why. This is because the p-values for these counties are **0.100 or more**, which is more than the significance value that was set, which was **0.05**.
+
+We can say that the p-value map can be use as a filter such that those counties with p-values greater than the significance value are considered **insignificant**, and only those are not included in this group will be categorized.
+:::
+
 # Reflections
+
+From this exercise, I realized how maps (and graphs) can be misleading. Difference in colors in the maps made me intuitively think that 2 counties have much different GDPPC values compared to their neighbors, when in reality, the difference is actually insignificant.
+
+For example, if 0-99 is colored as light orange while 100-199 is orange, a region in the map with value of 99 can look much different than its neighbor with value 100. In contrast, another neighbor with value 50 would look similar despite its value being much farther to 99 than 100 (which is actually insignificant).
+
+This is dangerous in a way that data visualization can be weaponized. These boundaries between values can be manipulated to fit certain narratives. I just realized that even a relatively data literate person can me can be fooled by this and this makes me scared, given the misinformation in the digital age.
+
+From now on, I will do more diligence in verifying the data presented to me.
