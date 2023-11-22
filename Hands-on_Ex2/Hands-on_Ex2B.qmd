@@ -1,5 +1,5 @@
 ---
-title: "Hands-on Exercisa 2B: Global Measures of Spatial Autocorrelation"
+title: "Hands-on Exercise 2B: Global Measures of Spatial Autocorrelation"
 author: "Kristine Joy Paas"
 date: "20 November 2023"
 date-modified: "last-modified"

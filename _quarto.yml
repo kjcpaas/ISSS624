@@ -15,6 +15,8 @@ website:
             href: Hands-on_Ex2/Hands-on_Ex2A.qmd
           - text: "2B: Global Measures of Spatial Autocorrelation"
             href: Hands-on_Ex2/Hands-on_Ex2B.qmd
+          - text: "2C: Local Measures of Spatial Autocorrelation"
+            href: Hands-on_Ex2/Hands-on_Ex2C.qmd
       - text: In-class Exercises
         menu:
           - text: In-class Exercise 1

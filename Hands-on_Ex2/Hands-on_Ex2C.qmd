@@ -1,0 +1,58 @@
+---
+title: "Hands-on Exercise 2C: Local Measures of Spatial Autocorrelation"
+author: "Kristine Joy Paas"
+date: "20 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Overview
+
+This hands-on exercise covers [Chapter 10: Local Measures of Spatial Autocorrelation](https://r4gdsa.netlify.app/chap10)
+
+I learned about the following:
+
+-   Global Spatial Autocorrelation (GSA) statistics
+-   Local Indicator of Spatial Association (LISA) statistics
+-   Getis-Ord\'s Gi-statistics
+
+## Preparing the data sets
+
+Data sets used on this exercise were downloaded from [E-learn](https://elearn.smu.edu.sg/d2l/home/357628).
+
+### Geospatial
+
+-   Hunan county boundary layer (`shp` format)
+
+### Aspatial
+
+-   Hunan's local development indicators in 2012 (`csv` format)
+
+Next, is putting them under the `Hands-on_Ex2` directory, with the following file structure:
+
+``` bash
+Hands-on_Ex2
+└── data
+    ├── aspatial
+    │   └── Hunan_2012.csv
+    └── geospatial
+        ├── Hunan.dbf
+        ├── Hunan.prj
+        ├── Hunan.qpj
+        ├── Hunan.shp
+        └── Hunan.shx
+```
+
+## Installing R packages
+
+I used the code below to install the R packages used in the exercise:
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse)
+```
+
+# Reflections
