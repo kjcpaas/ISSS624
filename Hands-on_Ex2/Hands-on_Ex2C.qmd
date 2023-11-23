@@ -559,6 +559,160 @@ The p-value provides a sound explanation why. This is because the p-values for t
 We can say that the p-value map can be use as a filter such that those counties with p-values greater than the significance value are considered **insignificant**, and only those are not included in this group will be categorized.
 :::
 
+# Hot Spot and Cold Spot Area Analysis
+
+Beside detecting cluster and outliers, localised spatial statistics can be also used to detect hot spot and/or cold spot areas.
+
+::: callout-tip
+In the current exercise, these are what the terminologies mean:
+
+**Hot spot** - counties with higher GDPPC compared to its surroundings
+
+**Cold spot** - counties with lower GDPPC compares to its surroundings
+:::
+
+The analysis was done with Getis and Ord's G-statistics and consists of 3 steps:
+
+-   Deriving spatial weight matrix
+
+-   Computing Gi statistics
+
+-   Mapping Gi statistics
+
+## Deriving spatial weight matrix
+
+::: callout-important
+The code chunks used in this part are the same as the ones used in [Hands-on Exercise 2A: Spatial Weights and Applications](/Hands-on_Ex2/Hands-on_Ex2A.html). I didn't dive deep into these part as these was already learned.
+
+For this exercise, **binary spatial weights** are used.
+:::
+
+In order to calculate the spatial weights, I needed to get determine the cut-off distance first. This was done by deriving the centroids and calculating the distances to the nearest neighbor for each county.
+
+```{r}
+longitude <- map_dbl(hunan$geometry, ~st_centroid(.x)[[1]])
+latitude <- map_dbl(hunan$geometry, ~st_centroid(.x)[[2]])
+coords <- cbind(longitude, latitude)
+head(coords)
+```
+
+These are the same steps as in \[Hands-on Exercise 2A: Spatial Weights and Applications\](/Hands-on_Ex2/Hands-on_Ex2A.html#determining-cut-off-distance), where we determined the cut-off distance to be **62km**.
+
+```{r}
+k1 <- knn2nb(knearneigh(coords))
+k1dists <- unlist(nbdists(k1, coords, longlat = TRUE))
+summary(k1dists)
+```
+
+Finally, the spatial weights matrix can be generated.
+
+```{r}
+wm_d62 <- dnearneigh(coords, 0, 62, longlat = TRUE)
+wm_d62
+wm62_lw <- nb2listw(wm_d62, style = 'B')
+summary(wm62_lw)
+```
+
+As in the previous exercise, we could standardize the number of neighbors. This is because denser areas have more neighbors, while rural areas have less.
+
+The code chunks below demonstrates how to standardize to 8 neighbors.
+
+```{r}
+knn <- knn2nb(knearneigh(coords, k=8))
+knn
+knn_lw <- nb2listw(knn, style = 'B')
+summary(knn_lw)
+```
+
+## Gi statistics with using fixed distance weights
+
+Continuing from the steps above, I looked at two cases. In this part, I used the fixed distance weights.
+
+First, I calculated the Gi statistics using the fixed distance weights.
+
+```{r}
+fips <- order(hunan$County)
+gi.fixed <- localG(hunan$GDPPC, wm62_lw)
+gi.fixed
+```
+
+Next is to add the Gi statistics to the `hunan` data frame.
+
+```{r}
+hunan.gi <- cbind(hunan, as.matrix(gi.fixed)) %>%
+  rename(gstat_fixed = as.matrix.gi.fixed.)
+```
+
+Finally, we could map the Gi values.
+
+```{r}
+gdppc <- qtm(hunan, "GDPPC")
+
+Gimap <-tm_shape(hunan.gi) +
+  tm_fill(col = "gstat_fixed", 
+          style = "pretty",
+          palette="-RdBu",
+          title = "local Gi") +
+  tm_borders(alpha = 0.5)
+
+tmap_arrange(gdppc, Gimap, asp=1, ncol=2)
+```
+
+::: callout-note
+There is a cluster of counties with high GDDPC in the Eastern part of China.
+
+A striking observation is that the other orange cities outside of this cluster are **cold** in the local Gi map. This means that they are surrounded by counties with low GDPPC.
+
+There should be caution when interpreting the map on the right as it is not intuitive because the values are actually based on the neighbors, and not the counties themselves.
+:::
+
+## Gi statistics with using adaptive distance weights
+
+Next we calculate the Gi statistics using adaptive distance weights.
+
+The steps are the same as in [Gi statistics with using fixed distance weights] but instead using the adaptive weights (`knn_lw`) instead of the fixed weights(`wm62_lw`).
+
+First was to calculate the Gi statistics.
+
+```{r}
+fips <- order(hunan$County)
+gi.adaptive <- localG(hunan$GDPPC, knn_lw)
+gi.adaptive
+```
+
+Then attaching the Gi statistics to the `hunan` data frame.
+
+```{r}
+hunan.gi <- cbind(hunan, as.matrix(gi.adaptive)) %>%
+  rename(gstat_adaptive = as.matrix.gi.adaptive.)
+```
+
+And finally, mapping it.
+
+```{r}
+gdppc<- qtm(hunan, "GDPPC")
+
+Gimap <- tm_shape(hunan.gi) + 
+  tm_fill(col = "gstat_adaptive", 
+          style = "pretty", 
+          palette="-RdBu", 
+          title = "local Gi") + 
+  tm_borders(alpha = 0.5)
+
+tmap_arrange(gdppc, 
+             Gimap, 
+             asp=1, 
+             ncol=2)
+```
+
+::: callout-note
+With this plot, the clusters are a lot more clearer and we can clearly see that the East side is the **hot spot** in terms on GDDPC.
+
+However, we can also notice that on the Southwest, the most affluent county is a **cold spot** in the Gi map because it is surrounded by less affluent counties.
+:::
+
+Another observation is that the Gi map using adaptive distance weights are *less scattered* and bigger compared to the Gi map using fixed distance weights.
+
 # Reflections
 
 From this exercise, I realized how maps (and graphs) can be misleading. Difference in colors in the maps made me intuitively think that 2 counties have much different GDPPC values compared to their neighbors, when in reality, the difference is actually insignificant.
