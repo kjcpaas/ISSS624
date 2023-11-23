@@ -1,0 +1,31 @@
+---
+title: "Take Home Exercise 1"
+author: "Kristine Joy Paas"
+date: "24 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Overview
+
+In this hands-on exercise, I learned about the following:
+
+-   *Put summarry of learnings here*
+
+# Getting Started
+
+## Preparing the data sets
+
+*Add what data sets are used*
+
+## Installing R packages
+
+*What R packages are needed?*
+
+# Reflections
+
+*Reflections are very important for learning. I'll write them down here.*
