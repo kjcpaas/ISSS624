@@ -9,7 +9,7 @@
 <meta name="author" content="Kristine Joy Paas">
 <meta name="dcterms.date" content="2023-11-24">
 
-<title>ISSS624 - Take Home Exercise 1</title>
+<title>ISSS624 - Take Home Exercise 1: Geospatial Analysis for the Public Good</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -21,6 +21,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -155,12 +189,16 @@ ul.task-list li input[type="checkbox"] {
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#getting-started" id="toc-getting-started" class="nav-link" data-scroll-target="#getting-started">Getting Started</a>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
   <ul class="collapse">
-  <li><a href="#preparing-the-data-sets" id="toc-preparing-the-data-sets" class="nav-link" data-scroll-target="#preparing-the-data-sets">Preparing the data sets</a></li>
-  <li><a href="#installing-r-packages" id="toc-installing-r-packages" class="nav-link" data-scroll-target="#installing-r-packages">Installing R packages</a></li>
+  <li><a href="#preparing-the-data-sets" id="toc-preparing-the-data-sets" class="nav-link" data-scroll-target="#preparing-the-data-sets">Preparing the data sets</a>
+  <ul class="collapse">
+  <li><a href="#geospatial" id="toc-geospatial" class="nav-link" data-scroll-target="#geospatial">Geospatial</a></li>
+  <li><a href="#aspatial" id="toc-aspatial" class="nav-link" data-scroll-target="#aspatial">Aspatial</a></li>
   </ul></li>
-  <li><a href="#reflections" id="toc-reflections" class="nav-link" data-scroll-target="#reflections">Reflections</a></li>
+  <li><a href="#preparing-the-data-directory" id="toc-preparing-the-data-directory" class="nav-link" data-scroll-target="#preparing-the-data-directory">Preparing the <code>data/</code> directory</a></li>
+  <li><a href="#setting-up-the-r-environment" id="toc-setting-up-the-r-environment" class="nav-link" data-scroll-target="#setting-up-the-r-environment">Setting Up the R Environment</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -169,7 +207,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Take Home Exercise 1</h1>
+<h1 class="title">Take Home Exercise 1: Geospatial Analysis for the Public Good</h1>
 </div>
 
 
@@ -193,7 +231,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">November 24, 2023</p>
+      <p class="date-modified">November 25, 2023</p>
     </div>
   </div>
     
@@ -204,27 +242,111 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="overview" class="level1">
 <h1>Overview</h1>
-<p>In this hands-on exercise, I learned about the following:</p>
-<ul>
-<li><em>Put summarry of learnings here</em></li>
-</ul>
+<p>The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.</p>
+<p>The main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).</p>
+<p>In doing these study, we will be looking at bus trips started during the hours below.</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Peak hour period</th>
+<th>Bus tap on time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Weekday morning peak</td>
+<td>6am to 9am</td>
+</tr>
+<tr class="even">
+<td>Weekday afternoon peak</td>
+<td>5pm to 8pm</td>
+</tr>
+<tr class="odd">
+<td>Weekend/holiday morning peak</td>
+<td>11am to 2pm</td>
+</tr>
+<tr class="even">
+<td>Weekend/holiday evening peak</td>
+<td>4pm to 7pm</td>
+</tr>
+</tbody>
+</table>
+<p>More details about the study can be found <a href="https://isss624-ay2023-24nov.netlify.app/take-home_ex01">here</a>.</p>
 </section>
-<section id="getting-started" class="level1">
-<h1>Getting Started</h1>
+<section id="setup" class="level1">
+<h1>Setup</h1>
 <section id="preparing-the-data-sets" class="level2">
 <h2 class="anchored" data-anchor-id="preparing-the-data-sets">Preparing the data sets</h2>
-<p><em>Add what data sets are used</em></p>
+<section id="geospatial" class="level3">
+<h3 class="anchored" data-anchor-id="geospatial">Geospatial</h3>
+<p>These data sets are in <code>shp</code> format.</p>
+<ul>
+<li><p>Master Plan 2019 Subzone Boundary (Web), originally from <a href="https://data.gov.sg/">data.gov.sg</a> but used the one provided on <a href="https://elearn.smu.edu.sg/d2l/home/357628">E-learn</a>.</p></li>
+<li><p>Bus Stop Locations, available publicly from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a></p></li>
+</ul>
 </section>
-<section id="installing-r-packages" class="level2">
-<h2 class="anchored" data-anchor-id="installing-r-packages">Installing R packages</h2>
-<p><em>What R packages are needed?</em></p>
+<section id="aspatial" class="level3">
+<h3 class="anchored" data-anchor-id="aspatial">Aspatial</h3>
+<p>These data sets are in <code>csv</code> format.</p>
+<ul>
+<li><p>Passenger Volume By Origin Destination Bus Stops from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API (need to <a href="https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html">request for access</a>)</p>
+<ul>
+<li><p>August 2023</p></li>
+<li><p>September 2023</p></li>
+<li><p>October 2023 - we will focus on this as the <strong>main data set</strong></p></li>
+</ul></li>
+</ul>
 </section>
 </section>
-<section id="reflections" class="level1">
-<h1>Reflections</h1>
-<p><em>Reflections are very important for learning. I’ll write them down here.</em></p>
+<section id="preparing-the-data-directory" class="level2">
+<h2 class="anchored" data-anchor-id="preparing-the-data-directory">Preparing the <code>data/</code> directory</h2>
+<p>Before starting our analysis, we have to organize the data sets in a directory.</p>
+<ul>
+<li><p>Geospatial data will be located under <code>data/geospatial</code></p></li>
+<li><p>Aspatial data will be located under <code>data/aspatial</code></p></li>
+<li><p><code>data/rds</code> to be created to store data that we can reuse and to make our code reproduceable.</p></li>
+</ul>
+<p>Finally, we are left with the following file structure:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Take-home_Ex1</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> Take-home_Ex1.qmd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">└──</span> data</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">├──</span> aspatial</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── origin_destination_bus_202308.csv</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── origin_destination_bus_202309.csv</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   └── origin_destination_bus_202310.csv</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">├──</span> geospatial</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.cpg</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.dbf</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.lyr</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.prj</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.sbn</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.sbx</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.shp</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.shp.xml</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.shx</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.cpg</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.dbf</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.prj</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.qmd</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.shp</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   └── MPSZ-2019.shx</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="ex">└──</span> rds</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="setting-up-the-r-environment" class="level2">
+<h2 class="anchored" data-anchor-id="setting-up-the-r-environment">Setting Up the R Environment</h2>
+<p>After preparing the data sets, we can finally proceed to load the R packages needed for this study.</p>
+<ul>
+<li><p><a href="https://cran.r-project.org/web/packages/tmap/index.html"><strong>tmap</strong></a>: for thematic mapping</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/sf/index.html"><strong>sf</strong></a>: for geospatial data handling</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/tidyverse/index.html"><strong>tidyverse</strong></a>: for non-spatial data handling</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/spdep/index.html"><strong>spdep</strong></a>: for spatial dependence analysis (weighting schemes, statistics)</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spdep, tmap, tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

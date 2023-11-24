@@ -863,16 +863,16 @@
   {
     "objectID": "Take-home_Ex1/Take-home_Ex1.html",
     "href": "Take-home_Ex1/Take-home_Ex1.html",
-    "title": "Take Home Exercise 1",
+    "title": "Take Home Exercise 1: Geospatial Analysis for the Public Good",
     "section": "",
-    "text": "In this hands-on exercise, I learned about the following:\n\nPut summarry of learnings here"
+    "text": "The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.\nThe main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).\nIn doing these study, we will be looking at bus trips started during the hours below.\n\n\n\nPeak hour period\nBus tap on time\n\n\n\n\nWeekday morning peak\n6am to 9am\n\n\nWeekday afternoon peak\n5pm to 8pm\n\n\nWeekend/holiday morning peak\n11am to 2pm\n\n\nWeekend/holiday evening peak\n4pm to 7pm\n\n\n\nMore details about the study can be found here."
   },
   {
     "objectID": "Take-home_Ex1/Take-home_Ex1.html#preparing-the-data-sets",
     "href": "Take-home_Ex1/Take-home_Ex1.html#preparing-the-data-sets",
-    "title": "Take Home Exercise 1",
+    "title": "Take Home Exercise 1: Geospatial Analysis for the Public Good",
     "section": "Preparing the data sets",
-    "text": "Preparing the data sets\nAdd what data sets are used"
+    "text": "Preparing the data sets\n\nGeospatial\nThese data sets are in shp format.\n\nMaster Plan 2019 Subzone Boundary (Web), originally from data.gov.sg but used the one provided on E-learn.\nBus Stop Locations, available publicly from LTA DataMall\n\n\n\nAspatial\nThese data sets are in csv format.\n\nPassenger Volume By Origin Destination Bus Stops from LTA DataMall via API (need to request for access)\n\nAugust 2023\nSeptember 2023\nOctober 2023 - we will focus on this as the main data set"
   },
   {
     "objectID": "Take-home_Ex1/Take-home_Ex1.html#installing-r-packages",
@@ -880,5 +880,26 @@
     "title": "Take Home Exercise 1",
     "section": "Installing R packages",
     "text": "Installing R packages\nWhat R packages are needed?"
+  },
+  {
+    "objectID": "Take-home_Ex1/Take-home_Ex1.html#data-sets-to-use",
+    "href": "Take-home_Ex1/Take-home_Ex1.html#data-sets-to-use",
+    "title": "Take Home Exercise 1: Geospatial Analysis for the Public Good",
+    "section": "Data sets to use",
+    "text": "Data sets to use\n\nGeospatial\nThese data sets are in shp format.\n\nMaster Plan 2019 Subzone Boundary (Web), originally from data.gov.sg but used the one provided on E-learn.\nBus Stop Locations, available publicly from LTA DataMall\n\n\n\nAspatial\nThese data sets are in csv format.\n\nPassenger Volume By Origin Destination Bus Stops from LTA DataMall via API (need to request for access)\n\nAugust 2023\nSeptember 2023\nOctober 2023 - we will focus on this as the main data set"
+  },
+  {
+    "objectID": "Take-home_Ex1/Take-home_Ex1.html#preparing-the-data-directory",
+    "href": "Take-home_Ex1/Take-home_Ex1.html#preparing-the-data-directory",
+    "title": "Take Home Exercise 1: Geospatial Analysis for the Public Good",
+    "section": "Preparing the data/ directory",
+    "text": "Preparing the data/ directory\nBefore starting our analysis, we have to organize the data sets in a directory.\n\nGeospatial data will be located under data/geospatial\nAspatial data will be located under data/aspatial\ndata/rds to be created to store data that we can reuse and to make our code reproduceable.\n\nFinally, we are left with the following file structure:\nTake-home_Ex1\n├── Take-home_Ex1.qmd\n└── data\n    ├── aspatial\n    │   ├── origin_destination_bus_202308.csv\n    │   ├── origin_destination_bus_202309.csv\n    │   └── origin_destination_bus_202310.csv\n    ├── geospatial\n    │   ├── BusStop.cpg\n    │   ├── BusStop.dbf\n    │   ├── BusStop.lyr\n    │   ├── BusStop.prj\n    │   ├── BusStop.sbn\n    │   ├── BusStop.sbx\n    │   ├── BusStop.shp\n    │   ├── BusStop.shp.xml\n    │   ├── BusStop.shx\n    │   ├── MPSZ-2019.cpg\n    │   ├── MPSZ-2019.dbf\n    │   ├── MPSZ-2019.prj\n    │   ├── MPSZ-2019.qmd\n    │   ├── MPSZ-2019.shp\n    │   └── MPSZ-2019.shx\n    └── rds"
+  },
+  {
+    "objectID": "Take-home_Ex1/Take-home_Ex1.html#setting-up-the-r-environment",
+    "href": "Take-home_Ex1/Take-home_Ex1.html#setting-up-the-r-environment",
+    "title": "Take Home Exercise 1: Geospatial Analysis for the Public Good",
+    "section": "Setting Up the R Environment",
+    "text": "Setting Up the R Environment\nAfter preparing the data sets, we can finally proceed to load the R packages needed for this study.\n\ntmap: for thematic mapping\nsf: for geospatial data handling\ntidyverse: for non-spatial data handling\nspdep: for spatial dependence analysis (weighting schemes, statistics)\n\n\npacman::p_load(sf, spdep, tmap, tidyverse)"
   }
 ]

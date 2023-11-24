@@ -1,5 +1,5 @@
 ---
-title: "Take Home Exercise 1"
+title: "Take Home Exercise 1: Geospatial Analysis for the Public Good"
 author: "Kristine Joy Paas"
 date: "24 November 2023"
 date-modified: "last-modified"
@@ -12,20 +12,96 @@ execute:
 
 # Overview
 
-In this hands-on exercise, I learned about the following:
+The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.
 
--   *Put summarry of learnings here*
+The main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).
 
-# Getting Started
+In doing these study, we will be looking at bus trips started during the hours below.
+
+| Peak hour period             | Bus tap on time |
+|------------------------------|-----------------|
+| Weekday morning peak         | 6am to 9am      |
+| Weekday afternoon peak       | 5pm to 8pm      |
+| Weekend/holiday morning peak | 11am to 2pm     |
+| Weekend/holiday evening peak | 4pm to 7pm      |
+
+More details about the study can be found [here](https://isss624-ay2023-24nov.netlify.app/take-home_ex01).
+
+# Setup
 
 ## Preparing the data sets
 
-*Add what data sets are used*
+### Geospatial
 
-## Installing R packages
+These data sets are in `shp` format.
 
-*What R packages are needed?*
+-   Master Plan 2019 Subzone Boundary (Web), originally from [data.gov.sg](https://data.gov.sg/) but used the one provided on [E-learn](https://elearn.smu.edu.sg/d2l/home/357628).
 
-# Reflections
+-   Bus Stop Locations, available publicly from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html)
 
-*Reflections are very important for learning. I'll write them down here.*
+### Aspatial
+
+These data sets are in `csv` format.
+
+-   Passenger Volume By Origin Destination Bus Stops from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API (need to [request for access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html))
+
+    -   August 2023
+
+    -   September 2023
+
+    -   October 2023 - we will focus on this as the **main data set**
+
+## Preparing the `data/` directory
+
+Before starting our analysis, we have to organize the data sets in a directory.
+
+-   Geospatial data will be located under `data/geospatial`
+
+-   Aspatial data will be located under `data/aspatial`
+
+-   `data/rds` to be created to store data that we can reuse and to make our code reproduceable.
+
+Finally, we are left with the following file structure:
+
+``` bash
+Take-home_Ex1
+├── Take-home_Ex1.qmd
+└── data
+    ├── aspatial
+    │   ├── origin_destination_bus_202308.csv
+    │   ├── origin_destination_bus_202309.csv
+    │   └── origin_destination_bus_202310.csv
+    ├── geospatial
+    │   ├── BusStop.cpg
+    │   ├── BusStop.dbf
+    │   ├── BusStop.lyr
+    │   ├── BusStop.prj
+    │   ├── BusStop.sbn
+    │   ├── BusStop.sbx
+    │   ├── BusStop.shp
+    │   ├── BusStop.shp.xml
+    │   ├── BusStop.shx
+    │   ├── MPSZ-2019.cpg
+    │   ├── MPSZ-2019.dbf
+    │   ├── MPSZ-2019.prj
+    │   ├── MPSZ-2019.qmd
+    │   ├── MPSZ-2019.shp
+    │   └── MPSZ-2019.shx
+    └── rds
+```
+
+## Setting Up the R Environment
+
+After preparing the data sets, we can finally proceed to load the R packages needed for this study.
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html): for thematic mapping
+
+-   [**sf**](https://cran.r-project.org/web/packages/sf/index.html): for geospatial data handling
+
+-   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
+
+-   [**spdep**](https://cran.r-project.org/web/packages/spdep/index.html): for spatial dependence analysis (weighting schemes, statistics)
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse)
+```
