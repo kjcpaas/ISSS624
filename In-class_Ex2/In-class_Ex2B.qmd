@@ -1,0 +1,106 @@
+---
+title: "In-class Exercise 2: EHSA"
+author: "Kristine Joy Paas"
+date: "25 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Overview
+
+# Getting Started
+
+Four R packages will be used for this in-class exercise are: `sf`, `sfdep`, `tmap`, `tidyverse`, and `knitr`.
+
+-   [sf](https://cran.r-project.org/web/packages/sf/index.html) - for processing geospatial data
+
+-   [sfdep](https://cran.r-project.org/web/packages/sfdep/index.html) - provides tools Emerging Hot Spot Analysis
+
+-   [tmap](https://cran.r-project.org/web/packages/tmap/index.html) - for generating thematic maps
+
+-   [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) - for processing aspatial data
+
+-   [knitr](https://cran.r-project.org/web/packages/knitr/index.html) - for generating HTML tables
+
+```{r}
+pacman::p_load(sf, sfdep, tmap, tidyverse)
+```
+
+# Preparing the data
+
+Next we move the [provided data from E-learn](https://elearn.smu.edu.sg/d2l/le/content/357628/viewContent/2308366/View) under the `data/` directory. We will also create \`rds/\` directory for saving the calculated data for later use.
+
+## Importing the data
+
+First, we will import the geospatial data in `shp` format.
+
+```{r}
+hunan = st_read(dsn = "data/geospatial",
+                layer = "Hunan")
+```
+
+Second, we import the aspatial data `Hunan_GDPPC`, which contains the **GDP Per Capita** (GDPPC) of Chinese counties.
+
+```{r}
+GDPPC = read_csv("data/aspatial/Hunan_GDPPC.csv")
+```
+
+# Creating a Time Series Cube
+
+```{r}
+GDPPC_st <- spacetime(GDPPC, hunan,
+                      .loc_col = "County",
+                      .time_col = "Year")
+GDPPC_st
+```
+
+## Computing Gi\*
+
+```{r}
+GDPPC_nb <- GDPPC_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(st_contiguity(geometry)),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1)
+GDPPC_nb
+```
+
+```{r}
+# Did not work. Check after class
+#gi_stars <- GDPPC_nb %>%
+#  group_by(Year) %>%
+#  mutate(gi_star = local_gstar_perm(
+#    GDPPC, nb, wt)) %>%
+#  tidyr::unnest(gi_star)
+```
+
+# Performing Emerging Hotspot Analysis
+
+```{r}
+# Not working. Check after class
+#ehsa <- emerging_hotspot_analysis(
+#  x = GDPPC_st,
+#  .var = "GDPPC",
+#  k = 1,
+#  nsim = 99
+#)
+```
+
+```{r}
+# Not working. Check after class
+#ehsa_sig <- hunan_ehsa %>%
+#  filter(p_value < 0.05)
+#tmap_mode("plot")
+#tm_shape(hunan_ehsa) +
+#  tm_polygons() +
+#  tm_borders(alpha = 0.5) +
+#tm_shape(ehsa_sig) +
+#  tm_fill("classification") +
+#  tm_borders(alpah = 0.4)
+```

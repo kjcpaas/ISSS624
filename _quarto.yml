@@ -19,10 +19,12 @@ website:
             href: Hands-on_Ex2/Hands-on_Ex2C.qmd
       - text: In-class Exercises
         menu:
-          - text: In-class Exercise 1
+          - text: "1: Bus Commuter Flow by Origin"
             href: In-class_Ex1/In-class_Ex1.qmd
-          - text: In-class Exercise 2
-            href: In-class_Ex2/In-class_Ex2.qmd
+          - text: "2A: LISA"
+            href: In-class_Ex2/In-class_Ex2A.qmd
+          - text: "2B: EHSA"
+            href: In-class_Ex2/In-class_Ex2B.qmd
       - text: Take-home Exercises
         menu:
           - text: Take-home Exercise 1

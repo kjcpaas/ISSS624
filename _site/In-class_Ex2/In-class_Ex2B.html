@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Kristine Joy Paas">
-<meta name="dcterms.date" content="2023-11-24">
+<meta name="dcterms.date" content="2023-11-25">
 
-<title>ISSS624 - Take Home Exercise 1: Geospatial Analysis for the Public Good</title>
+<title>ISSS624 - In-class Exercise 2: EHSA</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -197,23 +197,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
+  <li><a href="#getting-started" id="toc-getting-started" class="nav-link" data-scroll-target="#getting-started">Getting Started</a></li>
+  <li><a href="#preparing-the-data" id="toc-preparing-the-data" class="nav-link" data-scroll-target="#preparing-the-data">Preparing the data</a>
   <ul class="collapse">
-  <li><a href="#preparing-the-data-sets" id="toc-preparing-the-data-sets" class="nav-link" data-scroll-target="#preparing-the-data-sets">Preparing the data sets</a>
+  <li><a href="#importing-the-data" id="toc-importing-the-data" class="nav-link" data-scroll-target="#importing-the-data">Importing the data</a></li>
+  </ul></li>
+  <li><a href="#creating-a-time-series-cube" id="toc-creating-a-time-series-cube" class="nav-link" data-scroll-target="#creating-a-time-series-cube">Creating a Time Series Cube</a>
   <ul class="collapse">
-  <li><a href="#geospatial" id="toc-geospatial" class="nav-link" data-scroll-target="#geospatial">Geospatial</a></li>
-  <li><a href="#aspatial" id="toc-aspatial" class="nav-link" data-scroll-target="#aspatial">Aspatial</a></li>
+  <li><a href="#computing-gi" id="toc-computing-gi" class="nav-link" data-scroll-target="#computing-gi">Computing Gi*</a></li>
   </ul></li>
-  <li><a href="#preparing-the-data-directory" id="toc-preparing-the-data-directory" class="nav-link" data-scroll-target="#preparing-the-data-directory">Preparing the <code>data/</code> directory</a></li>
-  <li><a href="#setting-up-the-r-environment" id="toc-setting-up-the-r-environment" class="nav-link" data-scroll-target="#setting-up-the-r-environment">Setting Up the R Environment</a></li>
-  </ul></li>
-  <li><a href="#data-wrangling" id="toc-data-wrangling" class="nav-link" data-scroll-target="#data-wrangling">Data Wrangling</a>
-  <ul class="collapse">
-  <li><a href="#importing-data-into-r-environment" id="toc-importing-data-into-r-environment" class="nav-link" data-scroll-target="#importing-data-into-r-environment">Importing data into R environment</a>
-  <ul class="collapse">
-  <li><a href="#busstop-data-set" id="toc-busstop-data-set" class="nav-link" data-scroll-target="#busstop-data-set">BusStop data set</a></li>
-  </ul></li>
-  </ul></li>
+  <li><a href="#performing-emerging-hotspot-analysis" id="toc-performing-emerging-hotspot-analysis" class="nav-link" data-scroll-target="#performing-emerging-hotspot-analysis">Performing Emerging Hotspot Analysis</a></li>
   </ul>
 </nav>
     </div>
@@ -222,7 +215,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Take Home Exercise 1: Geospatial Analysis for the Public Good</h1>
+<h1 class="title">In-class Exercise 2: EHSA</h1>
 </div>
 
 
@@ -239,7 +232,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 24, 2023</p>
+      <p class="date">November 25, 2023</p>
     </div>
   </div>
   
@@ -257,169 +250,170 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="overview" class="level1">
 <h1>Overview</h1>
-<p>The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.</p>
-<p>The main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).</p>
-<p>In doing these study, we will be looking at bus trips started during the hours below.</p>
-<table class="table">
-<thead>
-<tr class="header">
-<th>Peak hour period</th>
-<th>Bus tap on time</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Weekday morning peak</td>
-<td>6am to 9am</td>
-</tr>
-<tr class="even">
-<td>Weekday afternoon peak</td>
-<td>5pm to 8pm</td>
-</tr>
-<tr class="odd">
-<td>Weekend/holiday morning peak</td>
-<td>11am to 2pm</td>
-</tr>
-<tr class="even">
-<td>Weekend/holiday evening peak</td>
-<td>4pm to 7pm</td>
-</tr>
-</tbody>
-</table>
-<p>More details about the study can be found <a href="https://isss624-ay2023-24nov.netlify.app/take-home_ex01">here</a>.</p>
 </section>
-<section id="setup" class="level1">
-<h1>Setup</h1>
-<section id="preparing-the-data-sets" class="level2">
-<h2 class="anchored" data-anchor-id="preparing-the-data-sets">Preparing the data sets</h2>
-<section id="geospatial" class="level3">
-<h3 class="anchored" data-anchor-id="geospatial">Geospatial</h3>
-<p>These data sets are in <code>shp</code> format.</p>
+<section id="getting-started" class="level1">
+<h1>Getting Started</h1>
+<p>Four R packages will be used for this in-class exercise are: <code>sf</code>, <code>sfdep</code>, <code>tmap</code>, <code>tidyverse</code>, and <code>knitr</code>.</p>
 <ul>
-<li><p>Master Plan 2019 Subzone Boundary (Web), originally from <a href="https://data.gov.sg/">data.gov.sg</a> but used the one provided on <a href="https://elearn.smu.edu.sg/d2l/home/357628">E-learn</a>.</p></li>
-<li><p>Bus Stop Locations, available publicly from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a></p></li>
-</ul>
-</section>
-<section id="aspatial" class="level3">
-<h3 class="anchored" data-anchor-id="aspatial">Aspatial</h3>
-<p>These data sets are in <code>csv</code> format.</p>
-<ul>
-<li><p>Passenger Volume By Origin Destination Bus Stops from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API (need to <a href="https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html">request for access</a>)</p>
-<ul>
-<li><p>August 2023</p></li>
-<li><p>September 2023</p></li>
-<li><p>October 2023 - we will focus on this as the <strong>main data set</strong></p></li>
-</ul></li>
-</ul>
-</section>
-</section>
-<section id="preparing-the-data-directory" class="level2">
-<h2 class="anchored" data-anchor-id="preparing-the-data-directory">Preparing the <code>data/</code> directory</h2>
-<p>Before starting our analysis, we have to organize the data sets in a directory.</p>
-<ul>
-<li><p>Geospatial data will be located under <code>data/geospatial</code></p></li>
-<li><p>Aspatial data will be located under <code>data/aspatial</code></p></li>
-<li><p><code>data/rds</code> to be created to store data that we can reuse and to make our code reproduceable.</p></li>
-</ul>
-<p>Finally, we are left with the following file structure:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Take-home_Ex1</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> Take-home_Ex1.qmd</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">└──</span> data</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">├──</span> aspatial</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── origin_destination_bus_202308.csv</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── origin_destination_bus_202309.csv</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   └── origin_destination_bus_202310.csv</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">├──</span> geospatial</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.cpg</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.dbf</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.lyr</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.prj</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.sbn</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.sbx</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.shp</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.shp.xml</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── BusStop.shx</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.cpg</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.dbf</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.prj</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.qmd</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   ├── MPSZ-2019.shp</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="ex">│</span>   └── MPSZ-2019.shx</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="ex">└──</span> rds</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="setting-up-the-r-environment" class="level2">
-<h2 class="anchored" data-anchor-id="setting-up-the-r-environment">Setting Up the R Environment</h2>
-<p>After preparing the data sets, we can finally proceed to load the R packages needed for this study.</p>
-<ul>
-<li><p><a href="https://cran.r-project.org/web/packages/tmap/index.html"><strong>tmap</strong></a>: for thematic mapping</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/sf/index.html"><strong>sf</strong></a>: for geospatial data handling</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/tidyverse/index.html"><strong>tidyverse</strong></a>: for non-spatial data handling</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/spdep/index.html"><strong>spdep</strong></a>: for spatial dependence analysis (weighting schemes, statistics)</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/sf/index.html">sf</a> - for processing geospatial data</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/sfdep/index.html">sfdep</a> - provides tools Emerging Hot Spot Analysis</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/tmap/index.html">tmap</a> - for generating thematic maps</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/tidyverse/index.html">tidyverse</a> - for processing aspatial data</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/knitr/index.html">knitr</a> - for generating HTML tables</p></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spdep, tmap, tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sfdep, tmap, tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-</section>
-<section id="data-wrangling" class="level1">
-<h1>Data Wrangling</h1>
-<p>After setting up the data sets and the R environment, we can finally proceed with data wrangling.</p>
-<section id="importing-data-into-r-environment" class="level2">
-<h2 class="anchored" data-anchor-id="importing-data-into-r-environment">Importing data into R environment</h2>
-<section id="busstop-data-set" class="level3">
-<h3 class="anchored" data-anchor-id="busstop-data-set">BusStop data set</h3>
-<p>The <code>BusStop</code> data set is a in <code>shp</code> format. We can import it by using <code>st_read()</code> from the <code>sf</code> package.</p>
+<section id="preparing-the-data" class="level1">
+<h1>Preparing the data</h1>
+<p>Next we move the <a href="https://elearn.smu.edu.sg/d2l/le/content/357628/viewContent/2308366/View">provided data from E-learn</a> under the <code>data/</code> directory. We will also create `rds/` directory for saving the calculated data for later use.</p>
+<section id="importing-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="importing-the-data">Importing the data</h2>
+<p>First, we will import the geospatial data in <code>shp</code> format.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>busstops <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">layer =</span> <span class="st">"BusStop"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">=</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">layer =</span> <span class="st">"Hunan"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Reading layer `BusStop' from data source 
-  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex1/data/geospatial' 
+<pre><code>Reading layer `Hunan' from data source 
+  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex2/data/geospatial' 
   using driver `ESRI Shapefile'
-Simple feature collection with 5161 features and 3 fields
-Geometry type: POINT
+Simple feature collection with 88 features and 7 fields
+Geometry type: POLYGON
 Dimension:     XY
-Bounding box:  xmin: 3970.122 ymin: 26482.1 xmax: 48284.56 ymax: 52983.82
-Projected CRS: SVY21</code></pre>
+Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
+Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
-<div class="callout callout-style-default callout-tip callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Tip
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>As this already uses <a href="https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem">SVY21</a> datum that is appropriate for Singapore 🇸🇬 local context, we can proceed with using data on its own.</p>
-</div>
-</div>
-<p>Next, let’s take a look at the available columns to identify which columns we can use for analysis. We will decide this later after looking at other data sets.</p>
+<p>Second, we import the aspatial data <code>Hunan_GDPPC</code>, which contains the <strong>GDP Per Capita</strong> (GDPPC) of Chinese counties.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(busstops)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>GDPPC <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/Hunan_GDPPC.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="creating-a-time-series-cube" class="level1">
+<h1>Creating a Time Series Cube</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>GDPPC_st <span class="ot">&lt;-</span> <span class="fu">spacetime</span>(GDPPC, hunan,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">.loc_col =</span> <span class="st">"County"</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">.time_col =</span> <span class="st">"Year"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>GDPPC_st</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 5,161
-Columns: 4
-$ BUS_STOP_N &lt;chr&gt; "22069", "32071", "44331", "96081", "11561", "66191", "2338…
-$ BUS_ROOF_N &lt;chr&gt; "B06", "B23", "B01", "B05", "B05", "B03", "B02A", "B02", "B…
-$ LOC_DESC   &lt;chr&gt; "OPP CEVA LOGISTICS", "AFT TRACK 13", "BLK 239", "GRACE IND…
-$ geometry   &lt;POINT [m]&gt; POINT (13576.31 32883.65), POINT (13228.59 44206.38),…</code></pre>
+<pre><code># A tibble: 1,496 × 3
+    Year County    GDPPC
+ * &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;
+ 1  2005 Longshan   3469
+ 2  2005 Changsha  24612
+ 3  2005 Wangcheng 14659
+ 4  2005 Ningxiang 11687
+ 5  2005 Liuyang   13406
+ 6  2005 Zhuzhou    8546
+ 7  2005 You       10944
+ 8  2005 Chaling    8040
+ 9  2005 Yanling    7383
+10  2005 Liling    11688
+# ℹ 1,486 more rows</code></pre>
 </div>
 </div>
-<p>Lastly, let’s do a quick plot to see a visual glimpse of the data.</p>
+<section id="computing-gi" class="level2">
+<h2 class="anchored" data-anchor-id="computing-gi">Computing Gi*</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(busstops[<span class="st">'BUS_STOP_N'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="Take-home_Ex1_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>GDPPC_nb <span class="ot">&lt;-</span> GDPPC_st <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">activate</span>(<span class="st">"geometry"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nb =</span> <span class="fu">include_self</span>(<span class="fu">st_contiguity</span>(geometry)),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">wt =</span> <span class="fu">st_inverse_distance</span>(nb, geometry,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">scale =</span> <span class="dv">1</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">alpha =</span> <span class="dv">1</span>),</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>GDPPC_nb</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 88 features and 9 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
+Geodetic CRS:  WGS 84
+First 10 features:
+                                   nb
+1                  1, 2, 3, 4, 57, 85
+2                1, 2, 57, 58, 78, 85
+3                      1, 3, 4, 5, 85
+4                       1, 3, 4, 5, 6
+5                      3, 4, 5, 6, 85
+6                 4, 5, 6, 69, 75, 85
+7                   7, 67, 71, 74, 84
+8        8, 9, 46, 47, 56, 78, 80, 86
+9            8, 9, 66, 68, 78, 84, 86
+10 10, 16, 17, 19, 20, 22, 70, 72, 73
+                                                                                                           wt
+1                                      0.00000000, 0.01526149, 0.03515537, 0.02176677, 0.02836978, 0.01029857
+2                                      0.01526149, 0.00000000, 0.01601100, 0.01911052, 0.02327058, 0.01591694
+3                                                  0.03515537, 0.00000000, 0.04581089, 0.04116397, 0.01208437
+4                                                  0.02176677, 0.04581089, 0.00000000, 0.04637578, 0.01585302
+5                                                  0.04116397, 0.04637578, 0.00000000, 0.01896212, 0.01351099
+6                                      0.01585302, 0.01896212, 0.00000000, 0.02710909, 0.01140718, 0.01080890
+7                                                  0.00000000, 0.01621067, 0.01536702, 0.01133628, 0.01836488
+8              0.00000000, 0.01930410, 0.02675555, 0.02151751, 0.01076895, 0.02608065, 0.01519804, 0.01337412
+9                          0.01930410, 0.00000000, 0.01651371, 0.01798519, 0.01473155, 0.03015561, 0.01612293
+10 0.00000000, 0.02737233, 0.01390810, 0.01458881, 0.02156771, 0.02419268, 0.02350470, 0.01784174, 0.01621545
+     NAME_2  ID_3    NAME_3   ENGTYPE_3 Shape_Leng Shape_Area    County
+1   Changde 21098   Anxiang      County   1.869074 0.10056190   Anxiang
+2   Changde 21100   Hanshou      County   2.360691 0.19978745   Hanshou
+3   Changde 21101    Jinshi County City   1.425620 0.05302413    Jinshi
+4   Changde 21102        Li      County   3.474325 0.18908121        Li
+5   Changde 21103     Linli      County   2.289506 0.11450357     Linli
+6   Changde 21104    Shimen      County   4.171918 0.37194707    Shimen
+7  Changsha 21109   Liuyang County City   4.060579 0.46016789   Liuyang
+8  Changsha 21110 Ningxiang      County   3.323754 0.26614198 Ningxiang
+9  Changsha 21111 Wangcheng      County   2.292093 0.13049161 Wangcheng
+10 Chenzhou 21112     Anren      County   2.240739 0.13343936     Anren
+                         geometry
+1  POLYGON ((112.0625 29.75523...
+2  POLYGON ((112.2288 29.11684...
+3  POLYGON ((111.8927 29.6013,...
+4  POLYGON ((111.3731 29.94649...
+5  POLYGON ((111.6324 29.76288...
+6  POLYGON ((110.8825 30.11675...
+7  POLYGON ((113.9905 28.5682,...
+8  POLYGON ((112.7181 28.38299...
+9  POLYGON ((112.7914 28.52688...
+10 POLYGON ((113.1757 26.82734...</code></pre>
 </div>
 </div>
-<p>This is not enough information to do the analysis as we are missing information on which regions of Singapore 🇸🇬 the bus stops are located.</p>
-
-
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Did not work. Check after class</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#gi_stars &lt;- GDPPC_nb %&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#  group_by(Year) %&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#  mutate(gi_star = local_gstar_perm(</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#    GDPPC, nb, wt)) %&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#  tidyr::unnest(gi_star)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 </section>
+<section id="performing-emerging-hotspot-analysis" class="level1">
+<h1>Performing Emerging Hotspot Analysis</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not working. Check after class</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#ehsa &lt;- emerging_hotspot_analysis(</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#  x = GDPPC_st,</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#  .var = "GDPPC",</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#  k = 1,</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#  nsim = 99</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not working. Check after class</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">#ehsa_sig &lt;- hunan_ehsa %&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#  filter(p_value &lt; 0.05)</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#tmap_mode("plot")</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#tm_shape(hunan_ehsa) +</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#  tm_polygons() +</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">#  tm_borders(alpha = 0.5) +</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#tm_shape(ehsa_sig) +</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#  tm_fill("classification") +</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">#  tm_borders(alpah = 0.4)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+
 </section>
 
 </main> <!-- /main -->

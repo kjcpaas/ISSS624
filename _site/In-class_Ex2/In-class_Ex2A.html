@@ -9,7 +9,7 @@
 <meta name="author" content="Kristine Joy Paas">
 <meta name="dcterms.date" content="2023-11-25">
 
-<title>ISSS624 - In-class Exercise 2</title>
+<title>ISSS624 - In-class Exercise 2: LISA</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -151,11 +151,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <ul class="dropdown-menu" aria-labelledby="nav-menu-in-class-exercises">    
         <li>
     <a class="dropdown-item" href="../In-class_Ex1/In-class_Ex1.html" rel="" target="">
- <span class="dropdown-text">In-class Exercise 1</span></a>
+ <span class="dropdown-text">1: Bus Commuter Flow by Origin</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../In-class_Ex2/In-class_Ex2.html" rel="" target="">
- <span class="dropdown-text">In-class Exercise 2</span></a>
+    <a class="dropdown-item" href="../In-class_Ex2/In-class_Ex2A.html" rel="" target="">
+ <span class="dropdown-text">2A: LISA</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../In-class_Ex2/In-class_Ex2B.html" rel="" target="">
+ <span class="dropdown-text">2B: EHSA</span></a>
   </li>  
     </ul>
   </li>
@@ -199,6 +203,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#importing-the-data" id="toc-importing-the-data" class="nav-link" data-scroll-target="#importing-the-data">Importing the data</a></li>
   <li><a href="#combining-them-all-together" id="toc-combining-them-all-together" class="nav-link" data-scroll-target="#combining-them-all-together">Combining them all together</a></li>
   </ul></li>
+  <li><a href="#deriving-contiguity-weights-queens-method" id="toc-deriving-contiguity-weights-queens-method" class="nav-link" data-scroll-target="#deriving-contiguity-weights-queens-method">Deriving contiguity weights: Queen’s method</a>
+  <ul class="collapse">
+  <li><a href="#computing-local-morans-i" id="toc-computing-local-morans-i" class="nav-link" data-scroll-target="#computing-local-morans-i">Computing local Moran’s I</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -207,7 +215,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">In-class Exercise 2</h1>
+<h1 class="title">In-class Exercise 2: LISA</h1>
 </div>
 
 
@@ -277,7 +285,7 @@ Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
 Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
-<p>Second, we import the aspatial data <code>Hunan_2012</code>, which contains the <strong>GDP Per Capita</strong> (GDPPC) of Chinese counties and 2012.</p>
+<p>Second, we import the aspatial data <code>Hunan_2012</code>, which contains the <strong>GDP Per Capita</strong> (GDPPC) of Chinese counties in 2012.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>hunan2012 <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/Hunan_2012.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -305,6 +313,93 @@ Note
 </div>
 <div class="callout-body-container callout-body">
 <p>We do not need to specify the columns to join as both dataframes have the <code>County</code> column so <code>left_join()</code> is able to detect that this is the column to join by.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="deriving-contiguity-weights-queens-method" class="level1">
+<h1>Deriving contiguity weights: Queen’s method</h1>
+<p>In the code chunk below, <strong>queen</strong> method is used to derive the contiguity weights.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span> hunan <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nb =</span> <span class="fu">st_contiguity</span>(hunan<span class="sc">$</span>geometry),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">wt =</span> <span class="fu">st_weights</span>(nb,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">style =</span> <span class="st">"W"</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>wm_q</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 88 features and 4 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
+Geodetic CRS:  WGS 84
+First 10 features:
+                               nb
+1                 2, 3, 4, 57, 85
+2               1, 57, 58, 78, 85
+3                     1, 4, 5, 85
+4                      1, 3, 5, 6
+5                     3, 4, 6, 85
+6                4, 5, 69, 75, 85
+7                  67, 71, 74, 84
+8       9, 46, 47, 56, 78, 80, 86
+9           8, 66, 68, 78, 84, 86
+10 16, 17, 19, 20, 22, 70, 72, 73
+                                                                            wt
+1                                                      0.2, 0.2, 0.2, 0.2, 0.2
+2                                                      0.2, 0.2, 0.2, 0.2, 0.2
+3                                                       0.25, 0.25, 0.25, 0.25
+4                                                       0.25, 0.25, 0.25, 0.25
+5                                                       0.25, 0.25, 0.25, 0.25
+6                                                      0.2, 0.2, 0.2, 0.2, 0.2
+7                                                       0.25, 0.25, 0.25, 0.25
+8  0.1428571, 0.1428571, 0.1428571, 0.1428571, 0.1428571, 0.1428571, 0.1428571
+9             0.1666667, 0.1666667, 0.1666667, 0.1666667, 0.1666667, 0.1666667
+10                      0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125
+      County GDPPC                       geometry
+1    Anxiang 23667 POLYGON ((112.0625 29.75523...
+2    Hanshou 20981 POLYGON ((112.2288 29.11684...
+3     Jinshi 34592 POLYGON ((111.8927 29.6013,...
+4         Li 24473 POLYGON ((111.3731 29.94649...
+5      Linli 25554 POLYGON ((111.6324 29.76288...
+6     Shimen 27137 POLYGON ((110.8825 30.11675...
+7    Liuyang 63118 POLYGON ((113.9905 28.5682,...
+8  Ningxiang 62202 POLYGON ((112.7181 28.38299...
+9  Wangcheng 70666 POLYGON ((112.7914 28.52688...
+10     Anren 12761 POLYGON ((113.1757 26.82734...</code></pre>
+</div>
+</div>
+<section id="computing-local-morans-i" class="level2">
+<h2 class="anchored" data-anchor-id="computing-local-morans-i">Computing local Moran’s I</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>lisa <span class="ot">&lt;-</span> wm_q <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    GDPPC, nb, wt, <span class="at">nsim =</span> <span class="dv">99</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>lisa</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 88 features and 16 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
+Geodetic CRS:  WGS 84
+# A tibble: 88 × 17
+         ii        eii     var_ii    z_ii    p_ii p_ii_sim p_folded_sim skewness
+      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;
+ 1 -0.00147 -0.00208   0.000455    0.0286 9.77e-1     0.86         0.43   -0.967
+ 2  0.0259  -0.00121   0.0121      0.246  8.06e-1     0.96         0.48   -0.492
+ 3 -0.0120  -0.0290    0.104       0.0526 9.58e-1     0.72         0.36    0.909
+ 4  0.00102  0.0000335 0.00000409  0.489  6.25e-1     0.6          0.3     0.574
+ 5  0.0148  -0.00491   0.00159     0.494  6.21e-1     0.56         0.28    1.26 
+ 6 -0.0388  -0.0160    0.00484    -0.328  7.43e-1     0.94         0.47    0.637
+ 7  3.37    -0.0767    1.89        2.51   1.22e-2     0.06         0.03    0.997
+ 8  1.56    -0.00585   0.975       1.59   1.13e-1     0.18         0.09    0.768
+ 9  4.42    -0.224     1.18        4.27   1.96e-5     0.02         0.01    0.740
+10 -0.399    0.0144    0.0637     -1.64   1.01e-1     0.14         0.07   -0.309
+# ℹ 78 more rows
+# ℹ 9 more variables: kurtosis &lt;dbl&gt;, mean &lt;fct&gt;, median &lt;fct&gt;, pysal &lt;fct&gt;,
+#   nb &lt;nb&gt;, wt &lt;list&gt;, County &lt;chr&gt;, GDPPC &lt;dbl&gt;, geometry &lt;POLYGON [°]&gt;</code></pre>
 </div>
 </div>
 
