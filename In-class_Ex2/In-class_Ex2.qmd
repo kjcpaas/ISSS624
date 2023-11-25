@@ -1,7 +1,7 @@
 ---
 title: "In-class Exercise 2"
 author: "Kristine Joy Paas"
-date: "18 November 2023"
+date: "25 November 2023"
 date-modified: "last-modified"
 format: html
 execute: 
@@ -9,3 +9,61 @@ execute:
   eval: true
   warning: false
 ---
+
+# Overview
+
+# Getting Started
+
+Four R packages will be used for this in-class exercise are: `sf`, `sfdep`, `tmap`, `tidyverse`, and `knitr`.
+
+-   [sf](https://cran.r-project.org/web/packages/sf/index.html) - for processing geospatial data
+
+-   [sfdep](https://cran.r-project.org/web/packages/sfdep/index.html) - provides tools Emerging Hot Spot Analysis
+
+-   [tmap](https://cran.r-project.org/web/packages/tmap/index.html) - for generating thematic maps
+
+-   [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) - for processing aspatial data
+
+-   [knitr](https://cran.r-project.org/web/packages/knitr/index.html) - for generating HTML tables
+
+```{r}
+pacman::p_load(sf, sfdep, tmap, tidyverse)
+```
+
+# Preparing the data
+
+Next we move the [provided data from E-learn](https://elearn.smu.edu.sg/d2l/le/content/357628/viewContent/2308366/View) under the `data/` directory. We will also create \`rds/\` directory for saving the calculated data for later use.
+
+## Importing the data
+
+First, we will import the geospatial data in `shp` format.
+
+```{r}
+hunan = st_read(dsn = "data/geospatial",
+                layer = "Hunan")
+```
+
+Second, we import the aspatial data `Hunan_2012`, which contains the **GDP Per Capita** (GDPPC) of Chinese counties and 2012.
+
+```{r}
+hunan2012 = read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+## Combining them all together
+
+As seen from the import above, each of the dataframes have 88 rows each. Each row corresponds to a record per county.
+
+However, we are already interested in the following columns:
+
+-   County
+
+-   GDPPC
+
+```{r}
+hunan <- left_join(hunan, hunan2012)%>%
+  select(7, 15)
+```
+
+::: callout-note
+We do not need to specify the columns to join as both dataframes have the `County` column so `left_join()` is able to detect that this is the column to join by.
+:::
