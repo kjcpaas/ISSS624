@@ -21,10 +21,12 @@ website:
         menu:
           - text: "1: Bus Commuter Flow by Origin"
             href: In-class_Ex1/In-class_Ex1.qmd
-          - text: "2A: LISA"
+          - text: "2A: Spatial Weights with sfdep"
             href: In-class_Ex2/In-class_Ex2A.qmd
-          - text: "2B: EHSA"
+          - text: "2B: GLSA"
             href: In-class_Ex2/In-class_Ex2B.qmd
+          - text: "2C: EHSA"
+            href: In-class_Ex2/In-class_Ex2C.qmd
       - text: Take-home Exercises
         menu:
           - text: Take-home Exercise 1
