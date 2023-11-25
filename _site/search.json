@@ -901,5 +901,12 @@
     "title": "Take Home Exercise 1: Geospatial Analysis for the Public Good",
     "section": "Setting Up the R Environment",
     "text": "Setting Up the R Environment\nAfter preparing the data sets, we can finally proceed to load the R packages needed for this study.\n\ntmap: for thematic mapping\nsf: for geospatial data handling\ntidyverse: for non-spatial data handling\nspdep: for spatial dependence analysis (weighting schemes, statistics)\n\n\npacman::p_load(sf, spdep, tmap, tidyverse)"
+  },
+  {
+    "objectID": "Take-home_Ex1/data/geospatial/MPSZ-2019.html",
+    "href": "Take-home_Ex1/data/geospatial/MPSZ-2019.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
   }
 ]
