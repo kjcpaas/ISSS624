@@ -105,3 +105,36 @@ After preparing the data sets, we can finally proceed to load the R packages nee
 ```{r}
 pacman::p_load(sf, spdep, tmap, tidyverse)
 ```
+
+# Data Wrangling
+
+After setting up the data sets and the R environment, we can finally proceed with data wrangling.
+
+## Importing data into R environment
+
+### BusStop data set
+
+The `BusStop` data set is a in `shp` format. We can import it by using `st_read()` from the `sf` package.
+
+```{r}
+busstops <- st_read(dsn = "data/geospatial",
+                    layer = "BusStop")
+```
+
+::: callout-tip
+As this already uses [SVY21](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) datum that is appropriate for Singapore 🇸🇬 local context, we can proceed with using data on its own.
+:::
+
+Next, let's take a look at the available columns to identify which columns we can use for analysis. We will decide this later after looking at other data sets.
+
+```{r}
+glimpse(busstops)
+```
+
+Lastly, let's do a quick plot to see a visual glimpse of the data.
+
+```{r}
+plot(busstops['BUS_STOP_N'])
+```
+
+This is not enough information to do the analysis as we are missing information on which regions of Singapore 🇸🇬 the bus stops are located.
