@@ -768,5 +768,12 @@
     "title": "In-class Exercise 2C: EHSA",
     "section": "Performing Emerging Hot spot Analysis",
     "text": "Performing Emerging Hot spot Analysis\n\nehsa &lt;- emerging_hotspot_analysis(\n  x = GDPPC_st,\n  .var = \"GDPPC\",\n  k = 1,\n  nsim = 99\n)\n\n\nVisualizing the distribution of EHSA classes\n\nggplot(data = ehsa,\n       aes(x = classification)) +\n  geom_bar()\n\n\n\n\nFigure above shows that sporadic cold spots class has the high numbers of county. Visualizing EHSA\nTo generate a map, we have to add geospatial component to the data to we have join ehsa with hunan.\n\nhunan_ehsa &lt;- hunan %&gt;%\n  left_join(ehsa,\n            by = join_by(County == location))\n\nThen we can finally generate the map.\n\nehsa_sig &lt;- hunan_ehsa  %&gt;%\n  filter(p_value &lt; 0.05)\ntmap_mode(\"plot\")\ntm_shape(hunan_ehsa) +\n  tm_polygons() +\n  tm_borders(alpha = 0.5) +\ntm_shape(ehsa_sig) +\n  tm_fill(\"classification\") + \n  tm_borders(alpha = 0.4)"
+  },
+  {
+    "objectID": "In-class_Ex2/In-class_Ex2A.html",
+    "href": "In-class_Ex2/In-class_Ex2A.html",
+    "title": "In-class Exercise 2: Spatial Weights with sfdep",
+    "section": "",
+    "text": "This introduces sfdep functions for getting spatial weights."
   }
 ]

@@ -12,6 +12,8 @@ execute:
 
 # Overview
 
+This introduces `sfdep` functions for getting spatial weights.
+
 # Getting Started
 
 Four R packages will be used for this in-class exercise are: `sf`, `sfdep`, `tmap`, `tidyverse`, and `knitr`.
