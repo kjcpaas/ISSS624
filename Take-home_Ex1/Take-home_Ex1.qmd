@@ -162,8 +162,9 @@ head(mpsz)
 Let's do a quick mapping of the boundary map and the bus stops for a visual check.
 
 ```{r}
+tmap_style("natural")
 tm_shape(mpsz) +
-  tm_fill("lightblue", title = "Singapore Boundary") +
+  tm_fill("lightgreen", title = "Singapore Boundary") +
   tm_borders(alpha = 0.5) +
   tm_layout(main.title = "Bus Stop Locations in Singapore",
             main.title.position = "center",
@@ -188,8 +189,134 @@ Finally, we import the bus commuter data. We will use the **Passenger Volume By 
 
 These files are in `csv` file format so we will use `read_csv` to import them.
 
+::: callout-important
+We aim to analyze data for 3 months. However, we will focus on the **September 2023** for now to simplify the steps.
+:::
+
 ```{r}
-odbus202308 <- read_csv("data/aspatial/origin_destination_bus_202308.csv")
-odbus202309 <- read_csv("data/aspatial/origin_destination_bus_202309.csv")
 odbus202310 <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
+```
+
+## Extracting bus trips started during peak areas
+
+*TODO: Filter by time period and aggregate the number of trips with origin of the bus stops*
+
+## Combining them all together
+
+*TODO: Join bus stop data with peak data, **do not** combine with mpsz as we will use honeycomb for polygon data*
+
+# Generating a honeycomb grid based on Singapore map
+
+A honeycomb grid contains a grid of tessellated or tiled **hexagons**.
+
+## Why hexagons?
+
+Some benefits of using a hexagon grid are:
+
+-   A hexagon is the polygon with the most number of sides that can tessellate (or tile). Hence it is the most "circular" of the polygons that can be tessellated.
+
+-   Distances of the centroid from one hexagon to the next are consistent all around the hexagon, making it easy to find neighbors.
+
+More information about hexagons in the context of spatial analysis can be found in <https://desktop.arcgis.com/en/arcmap/latest/tools/spatial-statistics-toolbox/h-whyhexagons.htm>
+
+::: callout-tip
+As in the map in [Singapore boundary data], the subzones have different shapes and sizes. The analysis will benefit from using a consistently-shaped regions because our analysis requires a lot of neighbor calculations.
+:::
+
+## Generating hexagons
+
+For this study, we will create hexagons with [apothem](https://www.merriam-webster.com/dictionary/apothem) of **250m.** This is the distance of the line segment from the **center** to the **midpoint of the** **edge**.
+
+::: callout-tip
+The edge length is **288.675**m.
+
+$$
+250m/cos(30) = 288.675m
+$$
+:::
+
+Following the steps on <https://urbandatapalette.com/post/2021-08-tessellation-sf/>, we will use [st_make_grid()](https://search.r-project.org/CRAN/refmans/sf/html/st_make_grid.html) to generate the hexagons for analysis.
+
+We need to provide a value for `cellsize` in the function, which is defined as *"for hexagonal cells the distance between opposite edges"*.
+
+This is equivalent to $2 \times L_{apothem} = 2 \times 250m$, which is **500m**.
+
+```{r}
+sg_honeycomb <- st_make_grid(mpsz,
+                       cellsize = 500,
+                       what = "polygon",
+                       square = FALSE) %>%
+  st_sf()
+```
+
+::: callout-important
+We have to apply \`st_sf()\` to convert the result to a data frame that can be used for the succeeding steps.
+:::
+
+Let's check if the honeycomb grid fits with Singapore.
+
+```{r}
+tm_shape(sg_honeycomb) +
+  tm_fill(col = "white", title = "Hexagons") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Singapore with honeycomb grid",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5)
+```
+
+::: callout-note
+The grid has been generated correctly because:
+
+-   It covers exactly the whole country of Singapore.
+
+-   Looking at the scale, there are 10 hexagons within a 5 km length. This means each hexagon has an apothem of 250m.
+:::
+
+## Fitting grid exactly to the region
+
+The grid above has hexagons outside of Singapore bounds. We need to filter the grids such that we are left with only those that intersect with Singapore boundary.
+
+We will use `st_intersects()` and `filter()` to filter out the hexagons that intersect Singapore.
+
+```{r}
+sg_honeycomb$n_collisions = lengths(st_intersects(sg_honeycomb, mpsz))
+sg_honeycomb <- filter(sg_honeycomb, n_collisions > 0)
+```
+
+Let's generate a map again if the cleaning generated our expected result.
+
+```{r}
+tm_shape(sg_honeycomb) +
+  tm_fill(col = "white", title = "Hexagons") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Singapore with honeycomb grid",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha =0.2) +
+  tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.001, title = "Bus Stops")
+```
+
+::: callout-important
+There are some tiny islands outside of the Singapore mainland. Although they have no bus stops, we will keep them in the data frame for now as other hexagons also do not have bus stops in them (as they have no red dots inside).
+:::
+
+As we now have a perfectly fitting honeycomb grid, we will save this to an `rds` file for later reuse.
+
+```{r}
+write_rds(sg_honeycomb, "data/rds/sg_honeycomb.rds")
 ```
