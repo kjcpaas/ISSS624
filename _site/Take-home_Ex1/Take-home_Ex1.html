@@ -221,10 +221,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#singapore-boundary-data" id="toc-singapore-boundary-data" class="nav-link" data-scroll-target="#singapore-boundary-data">Singapore boundary data</a></li>
   <li><a href="#bus-commuter-data" id="toc-bus-commuter-data" class="nav-link" data-scroll-target="#bus-commuter-data">Bus commuter data</a></li>
   </ul></li>
-  <li><a href="#extracting-bus-trips-started-during-peak-areas" id="toc-extracting-bus-trips-started-during-peak-areas" class="nav-link" data-scroll-target="#extracting-bus-trips-started-during-peak-areas">Extracting bus trips started during peak areas</a></li>
-  <li><a href="#combining-them-all-together" id="toc-combining-them-all-together" class="nav-link" data-scroll-target="#combining-them-all-together">Combining them all together</a></li>
+  <li><a href="#agregating-bus-trips-based-on-origin" id="toc-agregating-bus-trips-based-on-origin" class="nav-link" data-scroll-target="#agregating-bus-trips-based-on-origin">Agregating bus trips based on origin</a></li>
+  <li><a href="#extracting-bus-trips-started-during-peak-areas" id="toc-extracting-bus-trips-started-during-peak-areas" class="nav-link" data-scroll-target="#extracting-bus-trips-started-during-peak-areas">Extracting bus trips started during peak areas</a>
+  <ul class="collapse">
+  <li><a href="#weekday-morning-peak-6-to-9-am" id="toc-weekday-morning-peak-6-to-9-am" class="nav-link" data-scroll-target="#weekday-morning-peak-6-to-9-am">Weekday morning peak (6 to 9 am)</a></li>
+  <li><a href="#weekday-afternoon-peak-5-to-8-pm" id="toc-weekday-afternoon-peak-5-to-8-pm" class="nav-link" data-scroll-target="#weekday-afternoon-peak-5-to-8-pm">Weekday afternoon peak (5 to 8 pm)</a></li>
+  <li><a href="#weekendholiday-morning-peak-11-am-to-2-pm" id="toc-weekendholiday-morning-peak-11-am-to-2-pm" class="nav-link" data-scroll-target="#weekendholiday-morning-peak-11-am-to-2-pm">Weekend/Holiday morning peak (11 am to 2 pm)</a></li>
+  <li><a href="#weekendholiday-evening-peak-4-to-7-pm" id="toc-weekendholiday-evening-peak-4-to-7-pm" class="nav-link" data-scroll-target="#weekendholiday-evening-peak-4-to-7-pm">Weekend/Holiday evening peak (4 to 7 pm)</a></li>
   </ul></li>
-  <li><a href="#generating-a-honeycomb-grid-based-on-singapore-map" id="toc-generating-a-honeycomb-grid-based-on-singapore-map" class="nav-link" data-scroll-target="#generating-a-honeycomb-grid-based-on-singapore-map">Generating a honeycomb grid based on Singapore map</a>
+  <li><a href="#combining-them-all-together" id="toc-combining-them-all-together" class="nav-link" data-scroll-target="#combining-them-all-together">Combining them all together</a>
+  <ul class="collapse">
+  <li><a href="#adding-geometry-to-the-data" id="toc-adding-geometry-to-the-data" class="nav-link" data-scroll-target="#adding-geometry-to-the-data">Adding geometry to the data</a></li>
+  <li><a href="#setting-the-correct-values" id="toc-setting-the-correct-values" class="nav-link" data-scroll-target="#setting-the-correct-values">Setting the correct values</a></li>
+  <li><a href="#applying-to-the-other-data-sets" id="toc-applying-to-the-other-data-sets" class="nav-link" data-scroll-target="#applying-to-the-other-data-sets">Applying to the other data sets</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#generating-a-honeycomb-grid" id="toc-generating-a-honeycomb-grid" class="nav-link" data-scroll-target="#generating-a-honeycomb-grid">Generating a honeycomb grid</a>
   <ul class="collapse">
   <li><a href="#why-hexagons" id="toc-why-hexagons" class="nav-link" data-scroll-target="#why-hexagons">Why hexagons?</a></li>
   <li><a href="#generating-hexagons" id="toc-generating-hexagons" class="nav-link" data-scroll-target="#generating-hexagons">Generating hexagons</a></li>
@@ -542,25 +554,318 @@ Important
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>odbus202310 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/origin_destination_bus_202310.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>odbus202310 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/origin_destination_bus_202310.csv"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(odbus202310)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,694,297
+Columns: 7
+$ YEAR_MONTH          &lt;chr&gt; "2023-10", "2023-10", "2023-10", "2023-10", "2023-…
+$ DAY_TYPE            &lt;chr&gt; "WEEKENDS/HOLIDAY", "WEEKDAY", "WEEKENDS/HOLIDAY",…
+$ TIME_PER_HOUR       &lt;dbl&gt; 16, 16, 14, 14, 17, 17, 17, 7, 14, 14, 10, 20, 20,…
+$ PT_TYPE             &lt;chr&gt; "BUS", "BUS", "BUS", "BUS", "BUS", "BUS", "BUS", "…
+$ ORIGIN_PT_CODE      &lt;chr&gt; "04168", "04168", "80119", "80119", "44069", "2028…
+$ DESTINATION_PT_CODE &lt;chr&gt; "10051", "10051", "90079", "90079", "17229", "2014…
+$ TOTAL_TRIPS         &lt;dbl&gt; 3, 5, 3, 5, 4, 1, 24, 2, 1, 7, 3, 2, 5, 1, 1, 1, 1…</code></pre>
+</div>
 </div>
 </section>
 </section>
+<section id="agregating-bus-trips-based-on-origin" class="level2">
+<h2 class="anchored" data-anchor-id="agregating-bus-trips-based-on-origin">Agregating bus trips based on origin</h2>
+<p><em>Revise to reduce the data size and to reduce noise.</em></p>
+</section>
 <section id="extracting-bus-trips-started-during-peak-areas" class="level2">
 <h2 class="anchored" data-anchor-id="extracting-bus-trips-started-during-peak-areas">Extracting bus trips started during peak areas</h2>
-<p><em>TODO: Filter by time period and aggregate the number of trips with origin of the bus stops</em></p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For the <strong>odbus202310</strong> data set, the <code>TIME_PER_HOUR</code> column contains the <strong>hour of day (in 24-hr format)</strong> when the trip was started.</p>
+<p>Hence, if <code>TIME_PER_HOUR</code> is 18, it means that the trip was started between 6pm to just before 7pm.</p>
+<p>We will keep this in mind when extracting the data on this part.</p>
+</div>
+</div>
+<section id="weekday-morning-peak-6-to-9-am" class="level3">
+<h3 class="anchored" data-anchor-id="weekday-morning-peak-6-to-9-am">Weekday morning peak (6 to 9 am)</h3>
+<p>As <code>ORIGIN_PT_CODE</code> and <code>DESTINATION_PT_CODE</code> contain a discrete set of values, we can convert them to <code>factor</code> data type to make it easier to work with.</p>
+<p>We are only interested in the origin bus stops so we will only convert that.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>odbus202310<span class="sc">$</span>ORIGIN_PT_CODE <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(odbus202310<span class="sc">$</span>ORIGIN_PT_CODE)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next, we will filter and aggregate the records using the following functions:</p>
+<ul>
+<li><p><code>filter()</code> - to filter out udesired records</p></li>
+<li><p><code>group_by()</code> - to group based on a column value</p></li>
+<li><p><code>summarise()</code> - to aggregate values of elements within the group</p></li>
+<li><p><code>unique</code> - to ensure that there are no duplicates</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday6_9 <span class="ot">&lt;-</span> odbus202310 <span class="sc">%&gt;%</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKDAY"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">6</span> <span class="sc">&amp;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>           TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">9</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ORIGIN_PT_CODE) <span class="sc">%&gt;%</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TOTAL_TRIPS)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(odbus202310_weekday6_9)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,019
+Columns: 2
+$ ORIGIN_PT_CODE &lt;fct&gt; 01012, 01013, 01019, 01029, 01039, 01059, 01109, 01112,…
+$ TRIPS          &lt;dbl&gt; 1330, 572, 936, 1678, 1865, 1262, 165, 5925, 5829, 2134…</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Let’s save this data set for later use:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekday6_9, <span class="st">"data/rds/odbus202310_weekday6_9.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>We will do the same method for the rest of the peak times.</p>
+</section>
+<section id="weekday-afternoon-peak-5-to-8-pm" class="level3">
+<h3 class="anchored" data-anchor-id="weekday-afternoon-peak-5-to-8-pm">Weekday afternoon peak (5 to 8 pm)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday17_20 <span class="ot">&lt;-</span> odbus202310 <span class="sc">%&gt;%</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKDAY"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">17</span> <span class="sc">&amp;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>           TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">20</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ORIGIN_PT_CODE) <span class="sc">%&gt;%</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TOTAL_TRIPS)) <span class="sc">%&gt;%</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(odbus202310_weekday17_20)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,037
+Columns: 2
+$ ORIGIN_PT_CODE &lt;fct&gt; 01012, 01013, 01019, 01029, 01039, 01059, 01109, 01112,…
+$ TRIPS          &lt;dbl&gt; 6778, 5839, 3035, 7785, 9385, 1903, 233, 33241, 19995, …</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Let’s save this data set for later use:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekday17_20, <span class="st">"data/rds/odbus202310_weekday17_20.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="weekendholiday-morning-peak-11-am-to-2-pm" class="level3">
+<h3 class="anchored" data-anchor-id="weekendholiday-morning-peak-11-am-to-2-pm">Weekend/Holiday morning peak (11 am to 2 pm)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend11_14 <span class="ot">&lt;-</span> odbus202310 <span class="sc">%&gt;%</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKENDS/HOLIDAY"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">11</span> <span class="sc">&amp;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>           TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">14</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ORIGIN_PT_CODE) <span class="sc">%&gt;%</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TOTAL_TRIPS)) <span class="sc">%&gt;%</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(odbus202310_weekend11_14)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,998
+Columns: 2
+$ ORIGIN_PT_CODE &lt;fct&gt; 01012, 01013, 01019, 01029, 01039, 01059, 01109, 01112,…
+$ TRIPS          &lt;dbl&gt; 1559, 1233, 1140, 2275, 3509, 875, 90, 10398, 5890, 440…</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Let’s save this data set for later use:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekend11_14, <span class="st">"data/rds/odbus202310_weekend11_14.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="weekendholiday-evening-peak-4-to-7-pm" class="level3">
+<h3 class="anchored" data-anchor-id="weekendholiday-evening-peak-4-to-7-pm">Weekend/Holiday evening peak (4 to 7 pm)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend16_19 <span class="ot">&lt;-</span> odbus202310 <span class="sc">%&gt;%</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKENDS/HOLIDAY"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">16</span> <span class="sc">&amp;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>           TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">19</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ORIGIN_PT_CODE) <span class="sc">%&gt;%</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TOTAL_TRIPS)) <span class="sc">%&gt;%</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(odbus202310_weekend16_19)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,979
+Columns: 2
+$ ORIGIN_PT_CODE &lt;fct&gt; 01012, 01013, 01019, 01029, 01039, 01059, 01109, 01112,…
+$ TRIPS          &lt;dbl&gt; 2359, 2162, 1346, 3300, 5540, 911, 81, 16316, 8642, 495…</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Let’s save this data set for later use:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekend16_19, <span class="st">"data/rds/odbus202310_weekend16_19.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="combining-them-all-together" class="level2">
 <h2 class="anchored" data-anchor-id="combining-them-all-together">Combining them all together</h2>
-<p><em>TODO: Join bus stop data with peak data, <strong>do not</strong> combine with mpsz as we will use honeycomb for polygon data</em></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Run the code chunk below if you want to replay the code chunks from this part.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday6_9 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/odbus202310_weekday6_9.rds"</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday17_20 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/odbus202310_weekday17_20.rds"</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend11_14 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/odbus202310_weekend11_14.rds"</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend16_19 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/odbus202310_weekend16_19.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<section id="adding-geometry-to-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="adding-geometry-to-the-data">Adding geometry to the data</h3>
+<p>The extracted bus commuter data has no geometry so we have no way to plot it in a map as it is now. We can do that by joining it with <code>busstops</code> data. We do this by doing a <code>left_join</code> on <code>busstops.BUS_STOP_N</code> = <code>odbus202310_weekday6_9.ORIGIN_PT_CODE</code>.</p>
+<p>We also only need the <code>BUS_STOP_N</code> (to be renamed to <code>ORIGIN_BS</code>) and <code>TRIPS</code> so we will select only those.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday6_9_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(busstops, odbus202310_weekday6_9,</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"BUS_STOP_N"</span> <span class="ot">=</span> <span class="st">"ORIGIN_PT_CODE"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ORIGIN_BS =</span> BUS_STOP_N)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(odbus202310_weekday6_9_sf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,161
+Columns: 3
+$ ORIGIN_BS &lt;chr&gt; "22069", "32071", "44331", "96081", "11561", "66191", "23389…
+$ TRIPS     &lt;dbl&gt; 37, NA, 1644, 365, 160, 312, 37, 1997, 8051, 3985, 47, 8085,…
+$ geometry  &lt;POINT [m]&gt; POINT (13576.31 32883.65), POINT (13228.59 44206.38), …</code></pre>
+</div>
+</div>
+</section>
+<section id="setting-the-correct-values" class="level3">
+<h3 class="anchored" data-anchor-id="setting-the-correct-values">Setting the correct values</h3>
+<p>Upon inspection, we see that there are <code>NA</code> values in <code>TRIPS</code>. This is because the number of rows of <code>busstops</code> do not necessarily match the number of rows in the <code>odbus</code> data frames. This makes sense as some <strong>bus stops may not have passengers</strong> in those times.</p>
+<p>We will correct this by filtering the rows will <code>NA</code> values and setting the values to 0.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday6_9_sf<span class="sc">$</span>TRIPS[<span class="fu">is.na</span>(odbus202310_weekday6_9_sf<span class="sc">$</span>TRIPS)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(odbus202310_weekday6_9_sf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,161
+Columns: 3
+$ ORIGIN_BS &lt;chr&gt; "22069", "32071", "44331", "96081", "11561", "66191", "23389…
+$ TRIPS     &lt;dbl&gt; 37, 0, 1644, 365, 160, 312, 37, 1997, 8051, 3985, 47, 8085, …
+$ geometry  &lt;POINT [m]&gt; POINT (13576.31 32883.65), POINT (13228.59 44206.38), …</code></pre>
+</div>
+</div>
+<p>After this correction, the <code>NA</code> is gone. Let’s save this in an <code>rds</code> file for reuse later.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekday6_9_sf, <span class="st">"data/rds/odbus202310_weekday6_9_sf.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="applying-to-the-other-data-sets" class="level3">
+<h3 class="anchored" data-anchor-id="applying-to-the-other-data-sets">Applying to the other data sets</h3>
+<p>We will do the same methods to do data wrangling on the rest of the <code>odbus</code> data frames.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday17_20_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(busstops, odbus202310_weekday17_20,</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"BUS_STOP_N"</span> <span class="ot">=</span> <span class="st">"ORIGIN_PT_CODE"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ORIGIN_BS =</span> BUS_STOP_N)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>odbus202310_weekday17_20_sf<span class="sc">$</span>TRIPS[<span class="fu">is.na</span>(odbus202310_weekday17_20_sf<span class="sc">$</span>TRIPS)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekday17_20_sf, <span class="st">"data/rds/odbus202310_weekday17_20_sf.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend11_14_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(busstops, odbus202310_weekend11_14,</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"BUS_STOP_N"</span> <span class="ot">=</span> <span class="st">"ORIGIN_PT_CODE"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ORIGIN_BS =</span> BUS_STOP_N)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend11_14_sf<span class="sc">$</span>TRIPS[<span class="fu">is.na</span>(odbus202310_weekend11_14_sf<span class="sc">$</span>TRIPS)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekend11_14_sf, <span class="st">"data/rds/odbus202310_weekend11_14_sf.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend16_19_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(busstops, odbus202310_weekend16_19,</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"BUS_STOP_N"</span> <span class="ot">=</span> <span class="st">"ORIGIN_PT_CODE"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ORIGIN_BS =</span> BUS_STOP_N)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>odbus202310_weekend16_19_sf<span class="sc">$</span>TRIPS[<span class="fu">is.na</span>(odbus202310_weekend16_19_sf<span class="sc">$</span>TRIPS)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(odbus202310_weekend16_19_sf, <span class="st">"data/rds/odbus202310_weekend16_19_sf.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-default callout-caution callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Caution
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We don’t need the filtered aspatial <code>odbus</code> datasets anymore so we can remove them from the environment. This is to make it easier to inspect the rest of the data we will use later on.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  odbus202310_weekday6_9,</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  odbus202310_weekday17_20,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  odbus202310_weekend11_14,</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  odbus202310_weekend16_19</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 </section>
 </section>
-<section id="generating-a-honeycomb-grid-based-on-singapore-map" class="level1">
-<h1>Generating a honeycomb grid based on Singapore map</h1>
+</section>
+<section id="generating-a-honeycomb-grid" class="level1">
+<h1>Generating a honeycomb grid</h1>
 <p>A honeycomb grid contains a grid of tessellated or tiled <strong>hexagons</strong>.</p>
+<p>In this part, we will generate a honeycomb grid that covers the Singapore 🇸🇬 map. We will use the <code>mpsz</code> data set to provide the boundaries.</p>
 <section id="why-hexagons" class="level2">
 <h2 class="anchored" data-anchor-id="why-hexagons">Why hexagons?</h2>
-<p>Some benefits of using a hexagon grid are:</p>
+<p>Some benefits of using a hexagons are:</p>
 <ul>
 <li><p>A hexagon is the polygon with the most number of sides that can tessellate (or tile). Hence it is the most “circular” of the polygons that can be tessellated.</p></li>
 <li><p>Distances of the centroid from one hexagon to the next are consistent all around the hexagon, making it easy to find neighbors.</p></li>
@@ -603,11 +908,11 @@ Tip
 <p>We need to provide a value for <code>cellsize</code> in the function, which is defined as <em>“for hexagonal cells the distance between opposite edges”</em>.</p>
 <p>This is equivalent to <span class="math inline">\(2 \times L_{apothem} = 2 \times 250m\)</span>, which is <strong>500m</strong>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sg_honeycomb <span class="ot">&lt;-</span> <span class="fu">st_make_grid</span>(mpsz,</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">cellsize =</span> <span class="dv">500</span>,</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">what =</span> <span class="st">"polygon"</span>,</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">square =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_sf</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>sg_honeycomb <span class="ot">&lt;-</span> <span class="fu">st_make_grid</span>(mpsz,</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">cellsize =</span> <span class="dv">500</span>,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">what =</span> <span class="st">"polygon"</span>,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">square =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_sf</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -624,21 +929,21 @@ Important
 </div>
 <p>Let’s check if the honeycomb grid fits with Singapore.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>) <span class="sc">+</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Singapore with honeycomb grid"</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>) <span class="sc">+</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Singapore with honeycomb grid"</span>,</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex1_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex1_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -664,29 +969,29 @@ Note
 <p>The grid above has hexagons outside of Singapore bounds. We need to filter the grids such that we are left with only those that intersect with Singapore boundary.</p>
 <p>We will use <code>st_intersects()</code> and <code>filter()</code> to filter out the hexagons that intersect Singapore.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sg_honeycomb<span class="sc">$</span>n_collisions <span class="ot">=</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(sg_honeycomb, mpsz))</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>sg_honeycomb <span class="ot">&lt;-</span> <span class="fu">filter</span>(sg_honeycomb, n_collisions <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>sg_honeycomb<span class="sc">$</span>n_collisions <span class="ot">=</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(sg_honeycomb, mpsz))</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>sg_honeycomb <span class="ot">&lt;-</span> <span class="fu">filter</span>(sg_honeycomb, n_collisions <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s generate a map again if the cleaning generated our expected result.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>) <span class="sc">+</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Singapore with honeycomb grid"</span>,</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(busstops) <span class="sc">+</span></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.001</span>, <span class="at">title =</span> <span class="st">"Bus Stops"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>) <span class="sc">+</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Singapore with honeycomb grid"</span>,</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(busstops) <span class="sc">+</span></span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.001</span>, <span class="at">title =</span> <span class="st">"Bus Stops"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex1_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex1_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="callout callout-style-default callout-important callout-titled">
@@ -704,7 +1009,23 @@ Important
 </div>
 <p>As we now have a perfectly fitting honeycomb grid, we will save this to an <code>rds</code> file for later reuse.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(sg_honeycomb, <span class="st">"data/rds/sg_honeycomb.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(sg_honeycomb, <span class="st">"data/rds/sg_honeycomb.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-default callout-caution callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Caution
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>From this point forward, we will be using <code>sg_honeycomb</code> to do the analysis. Hence, we can already remove <code>mpsz</code> from the environment.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(mpsz)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
 </div>
 
 

@@ -195,23 +195,227 @@ We aim to analyze data for 3 months. However, we will focus on the **September 2
 
 ```{r}
 odbus202310 <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
+glimpse(odbus202310)
 ```
+
+## Agregating bus trips based on origin
+
+*Revise to reduce the data size and to reduce noise.*
 
 ## Extracting bus trips started during peak areas
 
-*TODO: Filter by time period and aggregate the number of trips with origin of the bus stops*
+::: callout-important
+For the **odbus202310** data set, the `TIME_PER_HOUR` column contains the **hour of day (in 24-hr format)** when the trip was started.
+
+Hence, if `TIME_PER_HOUR` is 18, it means that the trip was started between 6pm to just before 7pm.
+
+We will keep this in mind when extracting the data on this part.
+:::
+
+### Weekday morning peak (6 to 9 am)
+
+As `ORIGIN_PT_CODE` and `DESTINATION_PT_CODE` contain a discrete set of values, we can convert them to `factor` data type to make it easier to work with.
+
+We are only interested in the origin bus stops so we will only convert that.
+
+```{r}
+odbus202310$ORIGIN_PT_CODE <- as.factor(odbus202310$ORIGIN_PT_CODE)
+```
+
+Next, we will filter and aggregate the records using the following functions:
+
+-   `filter()` - to filter out udesired records
+
+-   `group_by()` - to group based on a column value
+
+-   `summarise()` - to aggregate values of elements within the group
+
+-   `unique` - to ensure that there are no duplicates
+
+```{r}
+odbus202310_weekday6_9 <- odbus202310 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(TIME_PER_HOUR >= 6 &
+           TIME_PER_HOUR < 9) %>%
+  group_by(ORIGIN_PT_CODE) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  unique()
+glimpse(odbus202310_weekday6_9)
+```
+
+::: callout-tip
+Let's save this data set for later use:
+
+```{r}
+write_rds(odbus202310_weekday6_9, "data/rds/odbus202310_weekday6_9.rds")
+```
+:::
+
+We will do the same method for the rest of the peak times.
+
+### Weekday afternoon peak (5 to 8 pm)
+
+```{r}
+odbus202310_weekday17_20 <- odbus202310 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(TIME_PER_HOUR >= 17 &
+           TIME_PER_HOUR < 20) %>%
+  group_by(ORIGIN_PT_CODE) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  unique()
+glimpse(odbus202310_weekday17_20)
+```
+
+::: callout-tip
+Let's save this data set for later use:
+
+```{r}
+write_rds(odbus202310_weekday17_20, "data/rds/odbus202310_weekday17_20.rds")
+```
+:::
+
+### Weekend/Holiday morning peak (11 am to 2 pm)
+
+```{r}
+odbus202310_weekend11_14 <- odbus202310 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(TIME_PER_HOUR >= 11 &
+           TIME_PER_HOUR < 14) %>%
+  group_by(ORIGIN_PT_CODE) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  unique()
+glimpse(odbus202310_weekend11_14)
+```
+
+::: callout-tip
+Let's save this data set for later use:
+
+```{r}
+write_rds(odbus202310_weekend11_14, "data/rds/odbus202310_weekend11_14.rds")
+```
+:::
+
+### Weekend/Holiday evening peak (4 to 7 pm)
+
+```{r}
+odbus202310_weekend16_19 <- odbus202310 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(TIME_PER_HOUR >= 16 &
+           TIME_PER_HOUR < 19) %>%
+  group_by(ORIGIN_PT_CODE) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  unique()
+glimpse(odbus202310_weekend16_19)
+```
+
+::: callout-tip
+Let's save this data set for later use:
+
+```{r}
+write_rds(odbus202310_weekend16_19, "data/rds/odbus202310_weekend16_19.rds")
+```
+:::
 
 ## Combining them all together
 
-*TODO: Join bus stop data with peak data, **do not** combine with mpsz as we will use honeycomb for polygon data*
+::: callout-tip
+Run the code chunk below if you want to replay the code chunks from this part.
 
-# Generating a honeycomb grid based on Singapore map
+```{r}
+odbus202310_weekday6_9 <- read_rds("data/rds/odbus202310_weekday6_9.rds")
+odbus202310_weekday17_20 <- read_rds("data/rds/odbus202310_weekday17_20.rds")
+odbus202310_weekend11_14 <- read_rds("data/rds/odbus202310_weekend11_14.rds")
+odbus202310_weekend16_19 <- read_rds("data/rds/odbus202310_weekend16_19.rds")
+```
+:::
+
+### Adding geometry to the data
+
+The extracted bus commuter data has no geometry so we have no way to plot it in a map as it is now. We can do that by joining it with `busstops` data. We do this by doing a `left_join` on `busstops.BUS_STOP_N` = `odbus202310_weekday6_9.ORIGIN_PT_CODE`.
+
+We also only need the `BUS_STOP_N` (to be renamed to `ORIGIN_BS`) and `TRIPS` so we will select only those.
+
+```{r}
+odbus202310_weekday6_9_sf <- left_join(busstops, odbus202310_weekday6_9,
+                                    by = c("BUS_STOP_N" = "ORIGIN_PT_CODE")) %>%
+  select(c(1,4)) %>%
+  rename(ORIGIN_BS = BUS_STOP_N)
+glimpse(odbus202310_weekday6_9_sf)
+```
+
+### Setting the correct values
+
+Upon inspection, we see that there are `NA` values in `TRIPS`. This is because the number of rows of `busstops` do not necessarily match the number of rows in the `odbus` data frames. This makes sense as some **bus stops may not have passengers** in those times.
+
+We will correct this by filtering the rows will `NA` values and setting the values to 0.
+
+```{r}
+odbus202310_weekday6_9_sf$TRIPS[is.na(odbus202310_weekday6_9_sf$TRIPS)] <- 0
+glimpse(odbus202310_weekday6_9_sf)
+```
+
+After this correction, the `NA` is gone. Let's save this in an `rds` file for reuse later.
+
+```{r}
+write_rds(odbus202310_weekday6_9_sf, "data/rds/odbus202310_weekday6_9_sf.rds")
+```
+
+### Applying to the other data sets
+
+We will do the same methods to do data wrangling on the rest of the `odbus` data frames.
+
+```{r}
+odbus202310_weekday17_20_sf <- left_join(busstops, odbus202310_weekday17_20,
+                                    by = c("BUS_STOP_N" = "ORIGIN_PT_CODE")) %>%
+  select(c(1,4)) %>%
+  rename(ORIGIN_BS = BUS_STOP_N)
+
+odbus202310_weekday17_20_sf$TRIPS[is.na(odbus202310_weekday17_20_sf$TRIPS)] <- 0
+write_rds(odbus202310_weekday17_20_sf, "data/rds/odbus202310_weekday17_20_sf.rds")
+```
+
+```{r}
+odbus202310_weekend11_14_sf <- left_join(busstops, odbus202310_weekend11_14,
+                                    by = c("BUS_STOP_N" = "ORIGIN_PT_CODE")) %>%
+  select(c(1,4)) %>%
+  rename(ORIGIN_BS = BUS_STOP_N)
+
+odbus202310_weekend11_14_sf$TRIPS[is.na(odbus202310_weekend11_14_sf$TRIPS)] <- 0
+write_rds(odbus202310_weekend11_14_sf, "data/rds/odbus202310_weekend11_14_sf.rds")
+```
+
+```{r}
+odbus202310_weekend16_19_sf <- left_join(busstops, odbus202310_weekend16_19,
+                                    by = c("BUS_STOP_N" = "ORIGIN_PT_CODE")) %>%
+  select(c(1,4)) %>%
+  rename(ORIGIN_BS = BUS_STOP_N)
+
+odbus202310_weekend16_19_sf$TRIPS[is.na(odbus202310_weekend16_19_sf$TRIPS)] <- 0
+write_rds(odbus202310_weekend16_19_sf, "data/rds/odbus202310_weekend16_19_sf.rds")
+```
+
+::: callout-caution
+We don't need the filtered aspatial `odbus` datasets anymore so we can remove them from the environment. This is to make it easier to inspect the rest of the data we will use later on.
+
+```{r}
+rm(
+  odbus202310_weekday6_9,
+  odbus202310_weekday17_20,
+  odbus202310_weekend11_14,
+  odbus202310_weekend16_19
+  )
+```
+:::
+
+# Generating a honeycomb grid
 
 A honeycomb grid contains a grid of tessellated or tiled **hexagons**.
 
+In this part, we will generate a honeycomb grid that covers the Singapore 🇸🇬 map. We will use the `mpsz` data set to provide the boundaries.
+
 ## Why hexagons?
 
-Some benefits of using a hexagon grid are:
+Some benefits of using a hexagons are:
 
 -   A hexagon is the polygon with the most number of sides that can tessellate (or tile). Hence it is the most "circular" of the polygons that can be tessellated.
 
@@ -320,3 +524,11 @@ As we now have a perfectly fitting honeycomb grid, we will save this to an `rds`
 ```{r}
 write_rds(sg_honeycomb, "data/rds/sg_honeycomb.rds")
 ```
+
+::: callout-caution
+From this point forward, we will be using `sg_honeycomb` to do the analysis. Hence, we can already remove `mpsz` from the environment.
+
+```{r}
+rm(mpsz)
+```
+:::
