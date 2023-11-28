@@ -386,7 +386,7 @@ Some bus stops on the North are outside of the border. These are the bus stops t
 
 Next, we have to figure out which hexagons contains each point corresponding to bus stop locations.
 
-This can be done using `st_intersection()`. We will also drop the geometry here using `st_drop_geometry()` and make the data spatial as the resulting mapping will be use as the **connector** to join the aspatial bus commuter data with the hexagons.
+This can be done using `st_intersection()`. We will also drop the geometry here using `st_drop_geometry()` and make the data spatial as the resulting mapping will be used as the **connector** to join the aspatial bus commuter data with the hexagons.
 
 ```{r}
 busstop_cells <- st_intersection(busstops, sg_honeycomb) %>%
@@ -394,7 +394,7 @@ busstop_cells <- st_intersection(busstops, sg_honeycomb) %>%
   select(c(BUS_STOP_N, LOC_DESC, HEXAGON_ID)) %>%
   rename(BUS_STOP_ID = BUS_STOP_N) %>%
   rename(BUS_STOP_NAME = LOC_DESC)
-busstop_cells
+kable(head(busstop_cells))
 ```
 
 ::: callout-note
@@ -474,7 +474,7 @@ The columns we are interested in are:
 These are data with finite values with these corresponding number of values:
 
 | Column Name                          | Number of Values | Description                                        |
-|-----------------------|-----------------|--------------------------------|
+|-----------------------|------------------|-------------------------------|
 | `ORIGIN_PT_CODE`                     | 5156             | Corresponding to number of rows in `busstop_cells` |
 | `DAY_TYPE`                           | 2                | `Weekday`, `Weekdays/Holidays`                     |
 | `TIME_PER_HOUR`                      | 24               | corresponding to hours per day                     |
@@ -523,7 +523,7 @@ hourly_from_bs202310 <-
   summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
   rename(BUS_STOP_ID = ORIGIN_PT_CODE) %>%
   rename(HOUR_OF_DAY = TIME_PER_HOUR)
-kable(head(hourly_from_bs202310, n = 30))
+kable(hourly_from_bs202310[15:50,])
 ```
 
 ::: callout-tip
