@@ -31,6 +31,8 @@ website:
         menu:
           - text: "1A: Data Wrangling"
             href: Take-home_Ex1/Take-home_Ex1A.qmd
+          - text: "1B: Geovisualization and Analysis"
+            href: Take-home_Ex1/Take-home_Ex1B.qmd
     right:
       - href: index.qmd
         text: Home

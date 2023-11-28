@@ -27,9 +27,7 @@ In doing these study, we will be looking at bus trips started during the hours b
 
 More details about the study can be found [here](https://isss624-ay2023-24nov.netlify.app/take-home_ex01).
 
-::: callout-important
-This document covers only the **Data Wrangling** part of the study.
-:::
+In this part of the study, we will do **data wrangling** on the data sets so that they are transformed into a form that can be used for geovisualization and spatial analysis.
 
 # Setup
 
@@ -104,12 +102,10 @@ After preparing the data sets, we can finally proceed to load the R packages nee
 
 -   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
 
--   [**sfdep**](https://sfdep.josiahparry.com/): for spatial analysis
-
--   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
+-   **knitr**:for prettifying presentation
 
 ```{r}
-pacman::p_load(sf, spdep, tmap, tidyverse, knitr)
+pacman::p_load(sf, tmap, tidyverse, knitr)
 ```
 
 # Methodology
@@ -478,7 +474,7 @@ The columns we are interested in are:
 These are data with finite values with these corresponding number of values:
 
 | Column Name                          | Number of Values | Description                                        |
-|-----------------------|-------------------|-------------------------------|
+|-----------------------|-----------------|--------------------------------|
 | `ORIGIN_PT_CODE`                     | 5156             | Corresponding to number of rows in `busstop_cells` |
 | `DAY_TYPE`                           | 2                | `Weekday`, `Weekdays/Holidays`                     |
 | `TIME_PER_HOUR`                      | 24               | corresponding to hours per day                     |
@@ -697,6 +693,19 @@ We can see that `WEEKDAY_AM_TRIPS` is `NA` for some rows. We will set these to `
 
 ```{r}
 bus_peaks_hc202310$WEEKDAY_AM_TRIPS[is.na(bus_peaks_hc202310$WEEKDAY_AM_TRIPS)] <- 0
+summary(bus_peaks_hc202310$WEEKDAY_AM_TRIPS)
+```
+
+The **median** of `WEEKDAY_AM_TRIPS` is 0. This is problematic as this heavily skews the data. Let's revert the `NA` values for **hexagons without bus stops** as counting the bus trips started in those areas does not make sense anyway.
+
+```{r}
+bus_peaks_hc202310$WEEKDAY_AM_TRIPS[bus_peaks_hc202310$NUM_BUS_STOPS == 0] <- NA
+summary(bus_peaks_hc202310$WEEKDAY_AM_TRIPS)
+```
+
+The data distribution is much less skewed now. Let's have a peek at the data again.
+
+```{r}
 kable(bus_peaks_hc202310[121:130,])
 ```
 
@@ -728,7 +737,10 @@ bus_peaks_hc202310 <-
   left_join(bus_peaks_hc202310, weekday_pm) %>%
   rename(WEEKDAY_PM_TRIPS = TRIPS)
 
-bus_peaks_hc202310$WEEKDAY_PM_TRIPS[is.na(bus_peaks_hc202310$WEEKDAY_PM_TRIPS)] <- 0
+bus_peaks_hc202310$WEEKDAY_PM_TRIPS[
+  bus_peaks_hc202310$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202310$WEEKDAY_PM_TRIPS)
+  ] <- 0
 kable(bus_peaks_hc202310[121:130,])
 ```
 
@@ -758,7 +770,10 @@ bus_peaks_hc202310 <-
   left_join(bus_peaks_hc202310, weekend_am) %>%
   rename(WEEKEND_AM_TRIPS = TRIPS)
 
-bus_peaks_hc202310$WEEKEND_AM_TRIPS[is.na(bus_peaks_hc202310$WEEKEND_AM_TRIPS)] <- 0
+bus_peaks_hc202310$WEEKEND_AM_TRIPS[
+  bus_peaks_hc202310$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202310$WEEKEND_AM_TRIPS)
+  ] <- 0
 kable(bus_peaks_hc202310[121:130,])
 ```
 
@@ -788,7 +803,10 @@ bus_peaks_hc202310 <-
   left_join(bus_peaks_hc202310, weekend_pm) %>%
   rename(WEEKEND_PM_TRIPS = TRIPS)
 
-bus_peaks_hc202310$WEEKEND_PM_TRIPS[is.na(bus_peaks_hc202310$WEEKEND_PM_TRIPS)] <- 0
+bus_peaks_hc202310$WEEKEND_PM_TRIPS[
+  bus_peaks_hc202310$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202310$WEEKEND_PM_TRIPS)
+  ] <- 0
 kable(bus_peaks_hc202310[121:130,])
 ```
 
@@ -885,7 +903,10 @@ bus_peaks_hc202308 <-
   left_join(bus_peaks_hc202308, weekday_am) %>%
   rename(WEEKDAY_AM_TRIPS = TRIPS)
 
-bus_peaks_hc202308$WEEKDAY_AM_TRIPS[is.na(bus_peaks_hc202308$WEEKDAY_AM_TRIPS)] <- 0
+bus_peaks_hc202308$WEEKDAY_AM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKDAY_AM_TRIPS)
+  ] <- 0
 rm(weekday_am)
 
 weekday_pm <-
@@ -900,7 +921,10 @@ bus_peaks_hc202308 <-
   left_join(bus_peaks_hc202308, weekday_pm) %>%
   rename(WEEKDAY_PM_TRIPS = TRIPS)
 
-bus_peaks_hc202308$WEEKDAY_PM_TRIPS[is.na(bus_peaks_hc202308$WEEKDAY_PM_TRIPS)] <- 0
+bus_peaks_hc202308$WEEKDAY_PM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKDAY_PM_TRIPS)
+  ] <- 0
 rm(weekday_pm)
 
 weekend_am <-
@@ -915,7 +939,10 @@ bus_peaks_hc202308 <-
   left_join(bus_peaks_hc202308, weekend_am) %>%
   rename(WEEKEND_AM_TRIPS = TRIPS)
 
-bus_peaks_hc202308$WEEKEND_AM_TRIPS[is.na(bus_peaks_hc202308$WEEKEND_AM_TRIPS)] <- 0
+bus_peaks_hc202308$WEEKEND_AM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKEND_AM_TRIPS)
+  ] <- 0
 rm(weekend_am)
 
 weekend_pm <-
@@ -930,7 +957,10 @@ bus_peaks_hc202308 <-
   left_join(bus_peaks_hc202308, weekend_pm) %>%
   rename(WEEKEND_PM_TRIPS = TRIPS)
 
-bus_peaks_hc202308$WEEKEND_PM_TRIPS[is.na(bus_peaks_hc202308$WEEKEND_PM_TRIPS)] <- 0
+bus_peaks_hc202308$WEEKEND_PM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKEND_PM_TRIPS)
+  ] <- 0
 rm(weekend_pm)
 
 write_rds(bus_peaks_hc202308, "data/rds/bus_peaks_hc202308.rds")
@@ -992,7 +1022,10 @@ bus_peaks_hc202309 <-
   left_join(bus_peaks_hc202309, weekday_am) %>%
   rename(WEEKDAY_AM_TRIPS = TRIPS)
 
-bus_peaks_hc202309$WEEKDAY_AM_TRIPS[is.na(bus_peaks_hc202309$WEEKDAY_AM_TRIPS)] <- 0
+bus_peaks_hc202309$WEEKDAY_AM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKDAY_AM_TRIPS)
+  ] <- 0
 rm(weekday_am)
 
 weekday_pm <-
@@ -1007,7 +1040,10 @@ bus_peaks_hc202309 <-
   left_join(bus_peaks_hc202309, weekday_pm) %>%
   rename(WEEKDAY_PM_TRIPS = TRIPS)
 
-bus_peaks_hc202309$WEEKDAY_PM_TRIPS[is.na(bus_peaks_hc202309$WEEKDAY_PM_TRIPS)] <- 0
+bus_peaks_hc202309$WEEKDAY_PM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKDAY_PM_TRIPS)
+  ] <- 0
 rm(weekday_pm)
 
 weekend_am <-
@@ -1022,7 +1058,10 @@ bus_peaks_hc202309 <-
   left_join(bus_peaks_hc202309, weekend_am) %>%
   rename(WEEKEND_AM_TRIPS = TRIPS)
 
-bus_peaks_hc202309$WEEKEND_AM_TRIPS[is.na(bus_peaks_hc202309$WEEKEND_AM_TRIPS)] <- 0
+bus_peaks_hc202309$WEEKEND_AM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKEND_AM_TRIPS)
+  ] <- 0
 rm(weekend_am)
 
 weekend_pm <-
@@ -1037,7 +1076,10 @@ bus_peaks_hc202309 <-
   left_join(bus_peaks_hc202309, weekend_pm) %>%
   rename(WEEKEND_PM_TRIPS = TRIPS)
 
-bus_peaks_hc202309$WEEKEND_PM_TRIPS[is.na(bus_peaks_hc202309$WEEKEND_PM_TRIPS)] <- 0
+bus_peaks_hc202309$WEEKEND_PM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKEND_PM_TRIPS)
+  ] <- 0
 rm(weekend_pm)
 
 write_rds(bus_peaks_hc202309, "data/rds/bus_peaks_hc202309.rds")
