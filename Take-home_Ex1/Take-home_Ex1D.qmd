@@ -1,0 +1,54 @@
+---
+title: "Take-home Exercise 1D: Spatio-temporal Analysis with EHSA"
+author: "Kristine Joy Paas"
+date: "29 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Overview
+
+The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.
+
+The main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).
+
+In doing these study, we will be looking at bus trips started during the hours below.
+
+| Peak hour period             | Bus tap on time |
+|------------------------------|-----------------|
+| Weekday morning peak         | 6am to 9am      |
+| Weekday evening peak         | 5pm to 8pm      |
+| Weekend/holiday morning peak | 11am to 2pm     |
+| Weekend/holiday evening peak | 4pm to 7pm      |
+
+More details about the study can be found [here](https://isss624-ay2023-24nov.netlify.app/take-home_ex01).
+
+In this part of the study, we will do spatio-temporal analysis with EHSA using bus commuter traffic data generated from [Data Wrangling](/Take-home_Ex1/Take-home_Ex1A.qmd). We will also attempt the answer the [Open Questions](/Take-home_Ex1/Take-home_Ex1B.html#conclusion) from [Geovisualization and Analysis](/Take-home_Ex1/Take-home_Ex1B.html):
+
+-   What are the commuting patterns of people during weekdays? weekends?
+
+-   Are bus trips really more spread out throughout the day during weekend?
+
+# Setup
+
+## Setting Up the R Environment
+
+We will load the following R packages needed for this study.
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html): for thematic mapping
+
+-   [**sf**](https://cran.r-project.org/web/packages/sf/index.html): for geospatial data handling
+
+-   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
+
+-   [**sfdep**](https://sfdep.josiahparry.com/): for spatial analysis
+
+-   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
+
+```{r}
+pacman::p_load(sf, sfdep, tmap, tidyverse, knitr)
+```

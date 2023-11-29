@@ -1,7 +1,7 @@
 ---
 title: "Take-home Exercise 1B: Geovisualization and Analysis"
 author: "Kristine Joy Paas"
-date: "24 November 2023"
+date: "28 November 2023"
 date-modified: "last-modified"
 format: html
 execute: 
@@ -41,12 +41,10 @@ We will load the following R packages needed for this study.
 
 -   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
 
--   [**sfdep**](https://sfdep.josiahparry.com/): for spatial analysis
-
 -   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
 
 ```{r}
-pacman::p_load(sf, sfdep, tmap, tidyverse, knitr)
+pacman::p_load(sf, tmap, tidyverse, knitr)
 ```
 
 ## Loading the data

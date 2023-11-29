@@ -102,7 +102,7 @@ After preparing the data sets, we can finally proceed to load the R packages nee
 
 -   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
 
--   **knitr**:for prettifying presentation
+-   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
 
 ```{r}
 pacman::p_load(sf, tmap, tidyverse, knitr)
