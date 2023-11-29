@@ -1,5 +1,5 @@
 ---
-title: "Take-home Exercise 1B: Geovisualization and Analysis"
+title: "Take Home Exercise 1B: Geovisualization and Analysis"
 author: "Kristine Joy Paas"
 date: "28 November 2023"
 date-modified: "last-modified"
@@ -45,6 +45,16 @@ We will load the following R packages needed for this study.
 
 ```{r}
 pacman::p_load(sf, tmap, tidyverse, knitr)
+```
+
+## Environment settings
+
+We will also set the default settings on for this document
+
+-   `tmap_style` to **natural**: for displaying the maps with preferred style
+
+```{r}
+tmap_style("natural")
 ```
 
 ## Loading the data
@@ -113,8 +123,8 @@ bus_peaks_hc202310 % filter(NUM_BUS_STOPS > 0)
 The 3rd quartile of `WEEKDAY_PM_TRIPS` is **14,602** while it is **4,312** for `WEEKDEND_PM_TRIPS`. Our analysis focuses on **comparison** so plotting these maps together can be misleading. To demonstrate:
 
 ```{r}
-tmap_style("natural")
-
+#| code-fold: true
+#| code-summary: "**Show the code**"
 tm_shape(bus_peaks_hc202310) +
   tm_fill(
     "WEEKDAY_PM_TRIPS", 
@@ -136,6 +146,8 @@ tm_shape(bus_peaks_hc202310) +
 ```
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
 tm_shape(bus_peaks_hc202310) +
   tm_fill(
     "WEEKEND_PM_TRIPS", 
@@ -312,6 +324,9 @@ get_map_quantiles(
 #### August 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202308,
@@ -340,6 +355,9 @@ In **August 2023**, weekday morning peak hours **is busier** than weekend/holida
 #### September 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202309,
@@ -368,6 +386,9 @@ In **September 2023**, weekday morning peak hours **is busier** than weekend/hol
 #### October 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202310,
@@ -451,6 +472,9 @@ get_map_quantiles(
 #### August 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202308,
@@ -479,6 +503,9 @@ In **August 2023**, weekday evening peak hours **is busier** than weekend/holida
 #### September 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202309,
@@ -507,6 +534,9 @@ In **September 2023**, weekday morning peak hours **is busier** than weekend/hol
 #### October 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202310,
@@ -592,6 +622,9 @@ get_map_quantiles(
 #### August 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202308,
@@ -622,6 +655,9 @@ Despite this general trend, the South-Central area stands out as redder that it 
 #### September 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202309,
@@ -652,6 +688,9 @@ Despite this general trend, the South-Central area stands out as redder that it 
 #### October 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202310,
@@ -737,6 +776,9 @@ get_map_quantiles(
 #### August 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202308,
@@ -765,6 +807,9 @@ In the weekends of **August 2023**, morning peak hours **is busier** than evenin
 #### September 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202309,
@@ -793,6 +838,9 @@ In the weekends of **September 2023**, morning peak hours **is busier** than eve
 #### October 2023
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
 tmap_arrange(
   plot_bus_commuter_traffic(
     source = bus_peaks_hc202310,

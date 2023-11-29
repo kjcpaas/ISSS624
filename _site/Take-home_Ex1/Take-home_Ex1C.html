@@ -9,7 +9,7 @@
 <meta name="author" content="Kristine Joy Paas">
 <meta name="dcterms.date" content="2023-11-29">
 
-<title>ISSS624 - Take-home Exercise 1C: Spatial Analysis with LISA</title>
+<title>ISSS624 - Take Home Exercise 1C: Spatial Analysis with LISA</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -218,12 +218,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
   <ul class="collapse">
   <li><a href="#setting-up-the-r-environment" id="toc-setting-up-the-r-environment" class="nav-link" data-scroll-target="#setting-up-the-r-environment">Setting Up the R Environment</a></li>
+  <li><a href="#environment-settings" id="toc-environment-settings" class="nav-link" data-scroll-target="#environment-settings">Environment settings</a></li>
   <li><a href="#loading-the-data" id="toc-loading-the-data" class="nav-link" data-scroll-target="#loading-the-data">Loading the data</a></li>
   </ul></li>
   <li><a href="#methodology" id="toc-methodology" class="nav-link" data-scroll-target="#methodology">Methodology</a></li>
   <li><a href="#deriving-contiguity-weights-using-queens-method" id="toc-deriving-contiguity-weights-using-queens-method" class="nav-link" data-scroll-target="#deriving-contiguity-weights-using-queens-method">Deriving contiguity weights using Queens’ method</a></li>
   <li><a href="#calculating-global-morans-i" id="toc-calculating-global-morans-i" class="nav-link" data-scroll-target="#calculating-global-morans-i">Calculating global Moran’s I</a></li>
   <li><a href="#calculating-local-morans-i" id="toc-calculating-local-morans-i" class="nav-link" data-scroll-target="#calculating-local-morans-i">Calculating local Moran’s I</a></li>
+  <li><a href="#plotting-local-morans-i-and-p-value" id="toc-plotting-local-morans-i-and-p-value" class="nav-link" data-scroll-target="#plotting-local-morans-i-and-p-value">Plotting local Moran’s I and p-value</a></li>
+  <li><a href="#plotting-lisa-maps" id="toc-plotting-lisa-maps" class="nav-link" data-scroll-target="#plotting-lisa-maps">Plotting LISA maps</a>
+  <ul class="collapse">
+  <li><a href="#general-observations" id="toc-general-observations" class="nav-link" data-scroll-target="#general-observations">General observations</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -232,7 +238,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Take-home Exercise 1C: Spatial Analysis with LISA</h1>
+<h1 class="title">Take Home Exercise 1C: Spatial Analysis with LISA</h1>
 </div>
 
 
@@ -256,7 +262,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">November 29, 2023</p>
+      <p class="date-modified">November 30, 2023</p>
     </div>
   </div>
     
@@ -319,6 +325,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sfdep, tmap, tidyverse, knitr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+<section id="environment-settings" class="level2">
+<h2 class="anchored" data-anchor-id="environment-settings">Environment settings</h2>
+<p>We will also set the default settings on for this document</p>
+<ul>
+<li><p><code>tmap_style</code> to <strong>natural</strong>: for displaying the maps with preferred style</p></li>
+<li><p>set <strong>seed</strong> for reproducibility of results</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_style</span>(<span class="st">"natural"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 <section id="loading-the-data" class="level2">
 <h2 class="anchored" data-anchor-id="loading-the-data">Loading the data</h2>
 <div class="callout callout-style-default callout-important callout-titled">
@@ -336,9 +354,9 @@ Important
 </div>
 <p>Use <code>read_rds()</code> to load the <code>rds</code> data needed for geovisualization and analysis.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sg_honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/sg_honeycomb_with_num_busstops.rds"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>bus_peaks_hc <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/bus_peaks_hc202310.rds"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(NUM_BUS_STOPS <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sg_honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/sg_honeycomb_with_num_busstops.rds"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>bus_peaks_hc <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/bus_peaks_hc202310.rds"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(NUM_BUS_STOPS <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li><code>sg_honeycomb</code> - contains the honeycomb grid that covers Singapore boundaries</li>
@@ -405,15 +423,15 @@ Note
 </div>
 <p>We will use <code>st_contiguity()</code> and <code>st_contiguity()</code> to get the contiguity weights. We will set <code>allow_zero = TRUE</code> as we have <em>island hexagons</em> in our data set.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  bus_peaks_hc <span class="sc">%&gt;%</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">nb =</span> <span class="fu">st_contiguity</span>(geometry),</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">wt =</span> <span class="fu">st_weights</span>(nb,</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">style =</span> <span class="st">"W"</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">allow_zero =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(wm_q)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  bus_peaks_hc <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">nb =</span> <span class="fu">st_contiguity</span>(geometry),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">wt =</span> <span class="fu">st_weights</span>(nb,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">style =</span> <span class="st">"W"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">allow_zero =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(wm_q)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 1,519
 Columns: 9
@@ -435,16 +453,12 @@ $ wt               &lt;list&gt; &lt;NULL&gt;, &lt;0.3333333, 0.3333333, 0.333333
 <ul>
 <li><p>When <span class="math inline">\(I &gt; 0\)</span>, observations are similar (sign of clustering)</p></li>
 <li><p>When <span class="math inline">\(I &lt; 0\)</span>, observations are dissimilar (low indication of clustering)</p></li>
-<li><p>If <span class="math inline">\(p &lt; \alpha\)</span> (<strong>0.05</strong>)<strong>,</strong> reject the <strong>Null hypothesis</strong>: the observed pattern happened by chance.</p></li>
+<li><p>If <span class="math inline">\(p &lt; \alpha\)</span> (<strong>0.05</strong>)<strong>,</strong> the result is significant and <strong>did not happen by chance</strong></p></li>
 </ul>
 <p>We will do this for all peak times.</p>
-<p>Before running the permutation test, we must set the seed first:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 <p>To perform the permutation test, we will use <code>global_moran_perm()</code>.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Weekday morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Weekday evening</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Weekend morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Weekend evening</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Weekday morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Weekday evening</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Weekend morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false"></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-5" role="tab" aria-controls="tabset-1-5" aria-selected="false">Weekend evening</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="cell">
@@ -467,6 +481,11 @@ statistic = 0.23237, observed rank = 100, p-value &lt; 2.2e-16
 alternative hypothesis: two.sided</code></pre>
 </div>
 </div>
+<ul>
+<li><p><span class="math inline">\(0.23237 &gt; 0\)</span> means there are signs of clustering</p></li>
+<li><p><span class="math inline">\(p-value &lt; 2.2\times10^{-16} &lt; 0.05\)</span> means the result is significant</p></li>
+</ul>
+<p><strong>Conclusion:</strong> There are signs of geospatial clusters in the data.</p>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <div class="cell">
@@ -489,6 +508,11 @@ statistic = 0.06418, observed rank = 100, p-value &lt; 2.2e-16
 alternative hypothesis: two.sided</code></pre>
 </div>
 </div>
+<ul>
+<li><p><span class="math inline">\(0.06418 &gt; 0\)</span> means there are signs of clustering</p></li>
+<li><p><span class="math inline">\(p-value &lt; 2.2\times10^{-16} &lt; 0.05\)</span> means the result is significant</p></li>
+</ul>
+<p><strong>Conclusion:</strong> There are signs of geospatial clusters in the data.</p>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
 <div class="cell">
@@ -511,8 +535,16 @@ statistic = 0.17209, observed rank = 100, p-value &lt; 2.2e-16
 alternative hypothesis: two.sided</code></pre>
 </div>
 </div>
+<ul>
+<li><p><span class="math inline">\(0.17209 &gt; 0\)</span> means there are signs of clustering</p></li>
+<li><p><span class="math inline">\(p-value &lt; 2.2\times10^{-16} &lt; 0.05\)</span> means the result is significant</p></li>
+</ul>
+<p><strong>Conclusion:</strong> There are signs of geospatial clusters in the data.</p>
 </div>
 <div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
+
+</div>
+<div id="tabset-1-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-5-tab">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">global_moran_perm</span>(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  wm_q<span class="sc">$</span>WEEKEND_PM_TRIPS,</span>
@@ -533,19 +565,24 @@ statistic = 0.11845, observed rank = 100, p-value &lt; 2.2e-16
 alternative hypothesis: two.sided</code></pre>
 </div>
 </div>
+<ul>
+<li><p><span class="math inline">\(0.11845 &gt; 0\)</span> means there are signs of clustering</p></li>
+<li><p><span class="math inline">\(p-value &lt; 2.2\times10^{-16} &lt; 0.05\)</span> means the result is significant</p></li>
+</ul>
+<p><strong>Conclusion:</strong> There are signs of geospatial clusters in the data.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="calculating-local-morans-i" class="level1">
 <h1>Calculating local Moran’s I</h1>
-<p>Now that we have identified signs of clustering, we will identify where those clusters are</p>
-<p>We will do this for all peak times.</p>
+<p>Now that we have identified signs of clustering, we will identify where those clusters are.</p>
+<p>We will do this for all peak times as clusters where detected for all</p>
 <p>Before running the permutation test, we must set the seed first:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>To perform the permutation test, we will use <code>global_moran_perm()</code>.</p>
+<p>To perform the permutation test, we will use <code>global_moran_perm()</code>. We need to set <code>zero.policy = TRUE</code> as there are island hexagons in our data.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Weekday morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">Weekday evening</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Weekend morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-4" role="tab" aria-controls="tabset-2-4" aria-selected="false">Weekend evening</a></li></ul>
 <div class="tab-content">
@@ -555,57 +592,1099 @@ alternative hypothesis: two.sided</code></pre>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    WEEKDAY_AM_TRIPS, nb, wt, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>),</span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(lisa_weekday_am))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 4%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">ii</th>
+<th style="text-align: right;">eii</th>
+<th style="text-align: right;">var_ii</th>
+<th style="text-align: right;">z_ii</th>
+<th style="text-align: right;">p_ii</th>
+<th style="text-align: right;">p_ii_sim</th>
+<th style="text-align: right;">p_folded_sim</th>
+<th style="text-align: right;">skewness</th>
+<th style="text-align: right;">kurtosis</th>
+<th style="text-align: left;">mean</th>
+<th style="text-align: left;">median</th>
+<th style="text-align: left;">pysal</th>
+<th style="text-align: right;">HEXAGON_ID</th>
+<th style="text-align: right;">NUM_BUS_STOPS</th>
+<th style="text-align: right;">WEEKDAY_AM_TRIPS</th>
+<th style="text-align: right;">WEEKDAY_PM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_AM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_PM_TRIPS</th>
+<th style="text-align: left;">geometry</th>
+<th style="text-align: left;">nb</th>
+<th style="text-align: left;">wt</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: right;">384</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">NULL</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.3629677</td>
+<td style="text-align: right;">-0.0047783</td>
+<td style="text-align: right;">0.1104989</td>
+<td style="text-align: right;">1.1062899</td>
+<td style="text-align: right;">0.2686010</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">-1.897223</td>
+<td style="text-align: right;">4.9999911</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: right;">263</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">89</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+<td style="text-align: left;">4, 5, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.3696953</td>
+<td style="text-align: right;">0.0502917</td>
+<td style="text-align: right;">0.2420379</td>
+<td style="text-align: right;">0.6492294</td>
+<td style="text-align: right;">0.5161901</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">-3.202394</td>
+<td style="text-align: right;">15.3993505</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">82</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">185</td>
+<td style="text-align: right;">1812</td>
+<td style="text-align: right;">154</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.3486887</td>
+<td style="text-align: right;">-0.0225795</td>
+<td style="text-align: right;">0.1768984</td>
+<td style="text-align: right;">0.8827258</td>
+<td style="text-align: right;">0.3773845</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">-3.273004</td>
+<td style="text-align: right;">16.7251919</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">84</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+<td style="text-align: left;">2, 7, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.3573719</td>
+<td style="text-align: right;">0.0417333</td>
+<td style="text-align: right;">0.0521348</td>
+<td style="text-align: right;">1.3823766</td>
+<td style="text-align: right;">0.1668561</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">-1.044111</td>
+<td style="text-align: right;">0.7061863</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">211</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+<td style="text-align: left;">2, 8, 9, 12</td>
+<td style="text-align: left;">0.25, 0.25, 0.25, 0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.3702654</td>
+<td style="text-align: right;">-0.0010197</td>
+<td style="text-align: right;">0.1367820</td>
+<td style="text-align: right;">1.0039060</td>
+<td style="text-align: right;">0.3154239</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">-1.544507</td>
+<td style="text-align: right;">2.8607848</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+<td style="text-align: left;">3, 11</td>
+<td style="text-align: left;">0.5, 0.5</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 <div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
-
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>lisa_weekday_pm <span class="ot">&lt;-</span> wm_q <span class="sc">%&gt;%</span> </span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    WEEKDAY_PM_TRIPS, nb, wt, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(lisa_weekday_pm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 4%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">ii</th>
+<th style="text-align: right;">eii</th>
+<th style="text-align: right;">var_ii</th>
+<th style="text-align: right;">z_ii</th>
+<th style="text-align: right;">p_ii</th>
+<th style="text-align: right;">p_ii_sim</th>
+<th style="text-align: right;">p_folded_sim</th>
+<th style="text-align: right;">skewness</th>
+<th style="text-align: right;">kurtosis</th>
+<th style="text-align: left;">mean</th>
+<th style="text-align: left;">median</th>
+<th style="text-align: left;">pysal</th>
+<th style="text-align: right;">HEXAGON_ID</th>
+<th style="text-align: right;">NUM_BUS_STOPS</th>
+<th style="text-align: right;">WEEKDAY_AM_TRIPS</th>
+<th style="text-align: right;">WEEKDAY_PM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_AM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_PM_TRIPS</th>
+<th style="text-align: left;">geometry</th>
+<th style="text-align: left;">nb</th>
+<th style="text-align: left;">wt</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: right;">384</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">NULL</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.2029408</td>
+<td style="text-align: right;">-0.0133949</td>
+<td style="text-align: right;">0.0654765</td>
+<td style="text-align: right;">0.8454449</td>
+<td style="text-align: right;">0.3978625</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">-2.995133</td>
+<td style="text-align: right;">10.66000</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: right;">263</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">89</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+<td style="text-align: left;">4, 5, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.1873929</td>
+<td style="text-align: right;">-0.0533844</td>
+<td style="text-align: right;">0.4717347</td>
+<td style="text-align: right;">0.3505634</td>
+<td style="text-align: right;">0.7259159</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">-6.733234</td>
+<td style="text-align: right;">52.48787</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">82</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">185</td>
+<td style="text-align: right;">1812</td>
+<td style="text-align: right;">154</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.1902561</td>
+<td style="text-align: right;">-0.0084096</td>
+<td style="text-align: right;">0.1048145</td>
+<td style="text-align: right;">0.6136377</td>
+<td style="text-align: right;">0.5394548</td>
+<td style="text-align: right;">0.08</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">-4.979333</td>
+<td style="text-align: right;">28.40620</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">84</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+<td style="text-align: left;">2, 7, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.2006681</td>
+<td style="text-align: right;">-0.0106624</td>
+<td style="text-align: right;">0.0614515</td>
+<td style="text-align: right;">0.8525028</td>
+<td style="text-align: right;">0.3939351</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">-4.405853</td>
+<td style="text-align: right;">24.39884</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">211</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+<td style="text-align: left;">2, 8, 9, 12</td>
+<td style="text-align: left;">0.25, 0.25, 0.25, 0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.1976531</td>
+<td style="text-align: right;">-0.0015011</td>
+<td style="text-align: right;">0.1975444</td>
+<td style="text-align: right;">0.4480816</td>
+<td style="text-align: right;">0.6540943</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">-5.541946</td>
+<td style="text-align: right;">34.26504</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+<td style="text-align: left;">3, 11</td>
+<td style="text-align: left;">0.5, 0.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
-
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>lisa_weekend_am <span class="ot">&lt;-</span> wm_q <span class="sc">%&gt;%</span> </span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    WEEKEND_AM_TRIPS, nb, wt, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(lisa_weekend_am))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 4%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">ii</th>
+<th style="text-align: right;">eii</th>
+<th style="text-align: right;">var_ii</th>
+<th style="text-align: right;">z_ii</th>
+<th style="text-align: right;">p_ii</th>
+<th style="text-align: right;">p_ii_sim</th>
+<th style="text-align: right;">p_folded_sim</th>
+<th style="text-align: right;">skewness</th>
+<th style="text-align: right;">kurtosis</th>
+<th style="text-align: left;">mean</th>
+<th style="text-align: left;">median</th>
+<th style="text-align: left;">pysal</th>
+<th style="text-align: right;">HEXAGON_ID</th>
+<th style="text-align: right;">NUM_BUS_STOPS</th>
+<th style="text-align: right;">WEEKDAY_AM_TRIPS</th>
+<th style="text-align: right;">WEEKDAY_PM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_AM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_PM_TRIPS</th>
+<th style="text-align: left;">geometry</th>
+<th style="text-align: left;">nb</th>
+<th style="text-align: left;">wt</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: right;">384</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">NULL</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.3076317</td>
+<td style="text-align: right;">-0.0444053</td>
+<td style="text-align: right;">0.1047280</td>
+<td style="text-align: right;">1.0878197</td>
+<td style="text-align: right;">0.2766747</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">-2.0441152</td>
+<td style="text-align: right;">5.0601555</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: right;">263</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">89</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+<td style="text-align: left;">4, 5, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.3156718</td>
+<td style="text-align: right;">-0.0318436</td>
+<td style="text-align: right;">0.1738723</td>
+<td style="text-align: right;">0.8334101</td>
+<td style="text-align: right;">0.4046135</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">-1.9392076</td>
+<td style="text-align: right;">4.3376603</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">82</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">185</td>
+<td style="text-align: right;">1812</td>
+<td style="text-align: right;">154</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.2973275</td>
+<td style="text-align: right;">-0.0361015</td>
+<td style="text-align: right;">0.1909185</td>
+<td style="text-align: right;">0.7630963</td>
+<td style="text-align: right;">0.4454060</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">-2.6001436</td>
+<td style="text-align: right;">7.1051552</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">84</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+<td style="text-align: left;">2, 7, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.2948676</td>
+<td style="text-align: right;">0.0362579</td>
+<td style="text-align: right;">0.0368321</td>
+<td style="text-align: right;">1.3475079</td>
+<td style="text-align: right;">0.1778167</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">-0.8826949</td>
+<td style="text-align: right;">0.3960311</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">211</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+<td style="text-align: left;">2, 8, 9, 12</td>
+<td style="text-align: left;">0.25, 0.25, 0.25, 0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.3207318</td>
+<td style="text-align: right;">-0.0373200</td>
+<td style="text-align: right;">0.3308401</td>
+<td style="text-align: right;">0.6224965</td>
+<td style="text-align: right;">0.5336155</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">-3.9906452</td>
+<td style="text-align: right;">17.6247670</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+<td style="text-align: left;">3, 11</td>
+<td style="text-align: left;">0.5, 0.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="tabset-2-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-4-tab">
-
-</div>
-</div>
-</div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>map1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa_weekday_am) <span class="sc">+</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"ii"</span>) <span class="sc">+</span> </span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>)) <span class="sc">+</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"local Moran's I of GDPPC"</span>,</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>map2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa_weekday_am) <span class="sc">+</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="dv">1</span>),</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>, <span class="st">"0.01"</span>, <span class="st">"0.05"</span>, <span class="st">"Not sig"</span>)) <span class="sc">+</span> </span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"p-value of local Moran's I"</span>,</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(map1, map2, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>lisa_weekend_pm <span class="ot">&lt;-</span> wm_q <span class="sc">%&gt;%</span> </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    WEEKEND_PM_TRIPS, nb, wt, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(lisa_weekend_pm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 4%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">ii</th>
+<th style="text-align: right;">eii</th>
+<th style="text-align: right;">var_ii</th>
+<th style="text-align: right;">z_ii</th>
+<th style="text-align: right;">p_ii</th>
+<th style="text-align: right;">p_ii_sim</th>
+<th style="text-align: right;">p_folded_sim</th>
+<th style="text-align: right;">skewness</th>
+<th style="text-align: right;">kurtosis</th>
+<th style="text-align: left;">mean</th>
+<th style="text-align: left;">median</th>
+<th style="text-align: left;">pysal</th>
+<th style="text-align: right;">HEXAGON_ID</th>
+<th style="text-align: right;">NUM_BUS_STOPS</th>
+<th style="text-align: right;">WEEKDAY_AM_TRIPS</th>
+<th style="text-align: right;">WEEKDAY_PM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_AM_TRIPS</th>
+<th style="text-align: right;">WEEKEND_PM_TRIPS</th>
+<th style="text-align: left;">geometry</th>
+<th style="text-align: left;">nb</th>
+<th style="text-align: left;">wt</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: right;">384</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">NULL</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.2117808</td>
+<td style="text-align: right;">0.0452422</td>
+<td style="text-align: right;">0.0467796</td>
+<td style="text-align: right;">0.7699928</td>
+<td style="text-align: right;">0.4413042</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">-4.632708</td>
+<td style="text-align: right;">27.674860</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: right;">263</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">89</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+<td style="text-align: left;">4, 5, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.2170098</td>
+<td style="text-align: right;">-0.0049863</td>
+<td style="text-align: right;">0.2376471</td>
+<td style="text-align: right;">0.4553855</td>
+<td style="text-align: right;">0.6488320</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">-5.211629</td>
+<td style="text-align: right;">31.608515</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">82</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">185</td>
+<td style="text-align: right;">1812</td>
+<td style="text-align: right;">154</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.2000335</td>
+<td style="text-align: right;">-0.0008545</td>
+<td style="text-align: right;">0.1140243</td>
+<td style="text-align: right;">0.5949154</td>
+<td style="text-align: right;">0.5519000</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">-4.955942</td>
+<td style="text-align: right;">27.868140</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">84</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+<td style="text-align: left;">2, 7, 8</td>
+<td style="text-align: left;">0.3333333, 0.3333333, 0.3333333</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.2030793</td>
+<td style="text-align: right;">0.0057779</td>
+<td style="text-align: right;">0.0599308</td>
+<td style="text-align: right;">0.8059444</td>
+<td style="text-align: right;">0.4202749</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">-3.479865</td>
+<td style="text-align: right;">16.733130</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">211</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+<td style="text-align: left;">2, 8, 9, 12</td>
+<td style="text-align: left;">0.25, 0.25, 0.25, 0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.2234404</td>
+<td style="text-align: right;">-0.0120145</td>
+<td style="text-align: right;">0.0809842</td>
+<td style="text-align: right;">0.8273850</td>
+<td style="text-align: right;">0.4080189</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">-2.703362</td>
+<td style="text-align: right;">9.281363</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: left;">Low-Low</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+<td style="text-align: left;">3, 11</td>
+<td style="text-align: left;">0.5, 0.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="plotting-local-morans-i-and-p-value" class="level1">
+<h1>Plotting local Moran’s I and p-value</h1>
+<p>Next we will plot the local Moran’s I values and p-values to gain insights.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Weekday morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">Weekday evening</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Weekend morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-4" role="tab" aria-controls="tabset-3-4" aria-selected="false">Weekend evening</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>ii_map <span class="ot">&lt;-</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekday_am) <span class="sc">+</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_fill</span>(<span class="st">"ii"</span>) <span class="sc">+</span> </span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"local Moran's I of WEEKDAY_AM_TRIPS"</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>p_ii_sim_map <span class="ot">&lt;-</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekday_am) <span class="sc">+</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="dv">1</span>),</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>, <span class="st">"0.01"</span>, <span class="st">"0.05"</span>, <span class="st">"Not sig"</span>),</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>          ) <span class="sc">+</span> </span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"p-value of local Moran's I"</span>,</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(ii_map, p_ii_sim_map, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p>Most of the map is covered by dark reds, corresponding to <strong>insignificant values</strong>. However, we can see the biggest cluster of <strong>lighter hexagons on the West part</strong>. Some lighter clusters were also seen in the map.</p>
+<p>This peak time also has the <strong>widest range</strong> <strong>of ii</strong> values (<strong>-5 to 25</strong>), indicating that values are farthest from each other.</p>
+<p>Plotting the LISA map later would reveal where the clusters are located based on <code>WEEKDAY_AM_TRIPS</code>.</p>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa_weekday_am  <span class="sc">%&gt;%</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>)<span class="sc">+</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>ii_map <span class="ot">&lt;-</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekday_pm) <span class="sc">+</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_fill</span>(<span class="st">"ii"</span>) <span class="sc">+</span> </span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"local Moran's I of WEEKDAY_PM_TRIPS"</span>,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>p_ii_sim_map <span class="ot">&lt;-</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekday_pm) <span class="sc">+</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="dv">1</span>),</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>, <span class="st">"0.01"</span>, <span class="st">"0.05"</span>, <span class="st">"Not sig"</span>),</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>          ) <span class="sc">+</span> </span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"p-value of local Moran's I"</span>,</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(ii_map, p_ii_sim_map, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p>Similar to the <strong>weekday evening</strong> maps, most of the map is covered by dark reds, corresponding to <strong>insignificant values</strong>. However, there appears to be much more dark red hexagons compared to weekday morning.</p>
+<p>The global Moran’s I value is <strong>0.06418</strong> is closer to 0 than weekday morning’s value of <strong>0.23237</strong>, indicating the <strong>clustering is weaker</strong> for weekday evening. This peak time also has the <strong>narrowest range</strong> <strong>of ii</strong> values (<strong>-4 to 6</strong>), indicating that values are closest to each other. This is consistent with our observation.</p>
+<p>Plotting the LISA map later would reveal if there are indeed fewer clusters based on <code>WEEKDAY_PM_TRIPS</code> than <code>WEEKDAY_AM_TRIPS</code>.</p>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>ii_map <span class="ot">&lt;-</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekend_am) <span class="sc">+</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_fill</span>(<span class="st">"ii"</span>) <span class="sc">+</span> </span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"local Moran's I of WEEKEND_AM_TRIPS"</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>p_ii_sim_map <span class="ot">&lt;-</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekend_am) <span class="sc">+</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="dv">1</span>),</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>, <span class="st">"0.01"</span>, <span class="st">"0.05"</span>, <span class="st">"Not sig"</span>),</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>          ) <span class="sc">+</span> </span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"p-value of local Moran's I"</span>,</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(ii_map, p_ii_sim_map, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The <code>p_ii_sim</code> map looks very similar to the <strong>weekend evening</strong> map. It appears that the weekend peak patterns are similar throughout the day. This seems to support our earlier hypothesis that the bus commuter traffic more distributed throughout the day on weekends as people have more control of their schedule as there is no work or school.</p>
+</div>
+<div id="tabset-3-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-4-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>ii_map <span class="ot">&lt;-</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekend_pm) <span class="sc">+</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_fill</span>(<span class="st">"ii"</span>) <span class="sc">+</span> </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"local Moran's I of WEEKEND_PM_TRIPS"</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>p_ii_sim_map <span class="ot">&lt;-</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_weekend_pm) <span class="sc">+</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="dv">1</span>),</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>, <span class="st">"0.01"</span>, <span class="st">"0.05"</span>, <span class="st">"Not sig"</span>),</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>          ) <span class="sc">+</span> </span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"p-value of local Moran's I"</span>,</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(ii_map, p_ii_sim_map, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The <code>p_ii_sim</code> map looks very similar to the <strong>weekend morning</strong> map. It appears that the weekend peak patterns are similar throughout the day. This seems to support our earlier hypothesis that the bus commuter traffic more distributed throughout the day on weekends as people have more control of their schedule as there is no work or school.</p>
+</div>
+</div>
+</div>
+<p>Observations from this part:</p>
+<ul>
+<li><p>Indication of clusters at the West side</p></li>
+<li><p>Highest indication of clustering for <strong>weekday morning</strong> peak times, consistent with its highest global Moran’s I value</p></li>
+<li><p>Similarity in clusters between weekend morning and evening peak times</p></li>
+</ul>
+</section>
+<section id="plotting-lisa-maps" class="level1">
+<h1>Plotting LISA maps</h1>
+<p>We can finally plot the LISA Maps to reveal where the clusters and outliers are.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true">Weekday morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false">Weekday evening</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false">Weekend morning</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-4" role="tab" aria-controls="tabset-4-4" aria-selected="false">Weekend evening</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa_weekday_am  <span class="sc">%&gt;%</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>)<span class="sc">+</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"LISA for Weekday 6 - 9AM"</span>,</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Bigger <strong>high-high</strong> clusters around bus interchanges. There is high demand for buses in these areas in the morning, possibly being around residential areas.</p>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa_weekday_pm  <span class="sc">%&gt;%</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>)<span class="sc">+</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"LISA for Weekday 5 - 8PM"</span>,</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Clusters are sparser compared to <strong>weekday morning</strong>, supporting our previous hypothesis that people going home from work or school are spread out throughout the night. This is because of after work activities (hanging out with friends, gym, shopping, etc.)</p>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa_weekend_am  <span class="sc">%&gt;%</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>)<span class="sc">+</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"LISA for Weekend 11AM - 2PM"</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>There are some <strong>high-high</strong> cells observed around the Central and South area, seemingly around the Clarke Quay, Mt. Faber and Sentosa areas.</p>
+<p>Aside from this, there are singular <strong>high-high</strong> cells observed sparsely.</p>
+<p>This could be because these are popular places for recreation that people go to unwind during weekends and holidays.</p>
+</div>
+<div id="tabset-4-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-4-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa_weekend_pm  <span class="sc">%&gt;%</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sg_honeycomb) <span class="sc">+</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span><span class="st">"white"</span>)<span class="sc">+</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"LISA for Weekend 4 - 7PM"</span>,</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1C_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>There are some <strong>high-high</strong> cells observed around the Central and South area, seemingly around the Clarke Quay and Bugis areas.</p>
+<p>Aside from this, there are singular <strong>high-high</strong> cells observed sparsely.</p>
+<p>This could be because these are popular places for late-afternoon and night activities during weekends, i.e.&nbsp;there are a lot of bars and restaurants around Clarke Quay and Bugis.</p>
+</div>
+</div>
+</div>
+<section id="general-observations" class="level2">
+<h2 class="anchored" data-anchor-id="general-observations">General observations</h2>
+<ul>
+<li><p><strong>Low-low</strong> clusters in the West part (Jurong area), indicating <strong>low demand for buses</strong>.</p>
+<ul>
+<li><p>Are alternative modes of transport (MRT, taxi, car, etc) more popular in this area?</p></li>
+<li><p>Is this an area with sparse population?</p></li>
+</ul></li>
+<li><p><strong>High-high</strong> clusters seem to correspond to bus interchanges.</p>
+<ul>
+<li><p><em>Eyeballed the map based on bus interchanges from</em> <a href="https://www.google.com/maps/search/singapore+bus+interchange/@1.3385457,103.6866741,14.49z?entry=ttu">Google Maps</a></p></li>
+<li><p>Multiple bus lines start at interchanges so people are expected to ride here, especially as they are close to residential areas</p></li>
+</ul></li>
+<li><p><strong>Woodlands Checkpoint</strong> is in a <strong>high-high</strong> cell</p>
+<ul>
+<li>People crossing the border into Singapore tap in here. Workers that reside in Johor Bahru utilize the bus stop here.</li>
+</ul></li>
+<li><p><strong>Low-high</strong> cells observed around <strong>high-high</strong> cells</p>
+<ul>
+<li>Indication under-utilized stops as people prefer to ride buses in nearby bus stops</li>
+</ul></li>
+</ul>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

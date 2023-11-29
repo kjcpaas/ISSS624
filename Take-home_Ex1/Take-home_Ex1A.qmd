@@ -476,7 +476,7 @@ The columns we are interested in are:
 These are data with finite values with these corresponding number of values:
 
 | Column Name                          | Number of Values | Description                                        |
-|--------------------------------------|------------------|----------------------------------------------------|
+|-----------------------|-----------------|--------------------------------|
 | `ORIGIN_PT_CODE`                     | 5156             | Corresponding to number of rows in `busstop_cells` |
 | `DAY_TYPE`                           | 2                | `Weekday`, `Weekdays/Holidays`                     |
 | `TIME_PER_HOUR`                      | 24               | corresponding to hours per day                     |
@@ -849,9 +849,10 @@ The steps we have applied so far were applied to the **October 2023** bus commut
 
 From this point, we will be running the code chunks from [Aggregating bus trips started every hour within hexagons] to [Extracting peak hour data].
 
-## August 2023
-
 ```{r}
+#| code-fold: true
+#| code-summary: "Show code for **August 2023**"
+
 # Aggregate on bus stop level
 odbus202308 <- read_csv("data/aspatial/origin_destination_bus_202308.csv")
 odbus202308$ORIGIN_PT_CODE <- as.factor(odbus202308$ORIGIN_PT_CODE)
@@ -968,9 +969,10 @@ rm(weekend_pm)
 write_rds(bus_peaks_hc202308, "data/rds/bus_peaks_hc202308.rds")
 ```
 
-## September 2023
-
 ```{r}
+#| code-fold: true
+#| code-summary: "Show code for **September 2023**"
+
 # Aggregate on bus stop level
 odbus202309 <- read_csv("data/aspatial/origin_destination_bus_202309.csv")
 odbus202309$ORIGIN_PT_CODE <- as.factor(odbus202309$ORIGIN_PT_CODE)

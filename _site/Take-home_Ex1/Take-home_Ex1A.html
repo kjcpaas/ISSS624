@@ -258,11 +258,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#weekendholiday-morning-peak-11am---2pm" id="toc-weekendholiday-morning-peak-11am---2pm" class="nav-link" data-scroll-target="#weekendholiday-morning-peak-11am---2pm">Weekend/holiday morning peak (11am - 2pm)</a></li>
   <li><a href="#weekendholiday-evening-peak-4---7pm" id="toc-weekendholiday-evening-peak-4---7pm" class="nav-link" data-scroll-target="#weekendholiday-evening-peak-4---7pm">Weekend/holiday evening peak (4 - 7pm)</a></li>
   </ul></li>
-  <li><a href="#applying-data-wrangling-to-the-rest-of-odbus-data-set" id="toc-applying-data-wrangling-to-the-rest-of-odbus-data-set" class="nav-link" data-scroll-target="#applying-data-wrangling-to-the-rest-of-odbus-data-set">Applying data wrangling to the rest of <code>odbus</code> data set</a>
-  <ul class="collapse">
-  <li><a href="#august-2023" id="toc-august-2023" class="nav-link" data-scroll-target="#august-2023">August 2023</a></li>
-  <li><a href="#september-2023" id="toc-september-2023" class="nav-link" data-scroll-target="#september-2023">September 2023</a></li>
-  </ul></li>
+  <li><a href="#applying-data-wrangling-to-the-rest-of-odbus-data-set" id="toc-applying-data-wrangling-to-the-rest-of-odbus-data-set" class="nav-link" data-scroll-target="#applying-data-wrangling-to-the-rest-of-odbus-data-set">Applying data wrangling to the rest of <code>odbus</code> data set</a></li>
   <li><a href="#recap" id="toc-recap" class="nav-link" data-scroll-target="#recap">Recap</a></li>
   </ul>
 </nav>
@@ -296,7 +292,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">November 29, 2023</p>
+      <p class="date-modified">November 30, 2023</p>
     </div>
   </div>
     
@@ -1173,9 +1169,9 @@ $ TOTAL_TRIPS         &lt;dbl&gt; 3, 5, 3, 5, 4, 1, 24, 2, 1, 7, 3, 2, 5, 1, 1, 
 <p>These are data with finite values with these corresponding number of values:</p>
 <table class="table">
 <colgroup>
-<col style="width: 35%">
-<col style="width: 16%">
-<col style="width: 48%">
+<col style="width: 31%">
+<col style="width: 23%">
+<col style="width: 44%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2592,9 +2588,9 @@ This only works if you have previously ran the code chunks above this and have t
 </div>
 <p>The steps we have applied so far were applied to the <strong>October 2023</strong> bus commuter data. We will run through the same steps to do data wrangling for the <em>September 2023</em> and <em>August 2023</em> data sets as well.</p>
 <p>From this point, we will be running the code chunks from <a href="#aggregating-bus-trips-started-every-hour-within-hexagons">Aggregating bus trips started every hour within hexagons</a> to <a href="#extracting-peak-hour-data">Extracting peak hour data</a>.</p>
-<section id="august-2023" class="level2">
-<h2 class="anchored" data-anchor-id="august-2023">August 2023</h2>
 <div class="cell">
+<details>
+<summary>Show code for <strong>August 2023</strong></summary>
 <div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Aggregate on bus stop level</span></span>
 <span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>odbus202308 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/origin_destination_bus_202308.csv"</span>)</span>
 <span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>odbus202308<span class="sc">$</span>ORIGIN_PT_CODE <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(odbus202308<span class="sc">$</span>ORIGIN_PT_CODE)</span>
@@ -2709,11 +2705,11 @@ This only works if you have previously ran the code chunks above this and have t
 <span id="cb71-112"><a href="#cb71-112" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(weekend_pm)</span>
 <span id="cb71-113"><a href="#cb71-113" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb71-114"><a href="#cb71-114" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(bus_peaks_hc202308, <span class="st">"data/rds/bus_peaks_hc202308.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
-</section>
-<section id="september-2023" class="level2">
-<h2 class="anchored" data-anchor-id="september-2023">September 2023</h2>
 <div class="cell">
+<details>
+<summary>Show code for <strong>September 2023</strong></summary>
 <div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Aggregate on bus stop level</span></span>
 <span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>odbus202309 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/origin_destination_bus_202309.csv"</span>)</span>
 <span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>odbus202309<span class="sc">$</span>ORIGIN_PT_CODE <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(odbus202309<span class="sc">$</span>ORIGIN_PT_CODE)</span>
@@ -2828,8 +2824,8 @@ This only works if you have previously ran the code chunks above this and have t
 <span id="cb72-112"><a href="#cb72-112" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(weekend_pm)</span>
 <span id="cb72-113"><a href="#cb72-113" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb72-114"><a href="#cb72-114" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(bus_peaks_hc202309, <span class="st">"data/rds/bus_peaks_hc202309.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
-</section>
 </section>
 <section id="recap" class="level1">
 <h1>Recap</h1>
