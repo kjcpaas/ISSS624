@@ -21,7 +21,7 @@ In doing these study, we will be looking at bus trips started during the hours b
 | Peak hour period             | Bus tap on time |
 |------------------------------|-----------------|
 | Weekday morning peak         | 6am to 9am      |
-| Weekday afternoon peak       | 5pm to 8pm      |
+| Weekday evening peak         | 5pm to 8pm      |
 | Weekend/holiday morning peak | 11am to 2pm     |
 | Weekend/holiday evening peak | 4pm to 7pm      |
 
@@ -121,6 +121,8 @@ Using data sets prepared in [Preparing the data sets], we will proceed with thes
 -   Cleaning
 
 -   Saving data as `rds` file
+
+As the wrangling process is expected to have a lot of intermediate steps, **Save points** and **Checkpoints** will be available along the way so we can save and load processed data and won't have to restart all over again.
 
 # Generating a honeycomb grid from `mpsz` data
 
@@ -474,7 +476,7 @@ The columns we are interested in are:
 These are data with finite values with these corresponding number of values:
 
 | Column Name                          | Number of Values | Description                                        |
-|-----------------------|------------------|-------------------------------|
+|-----------------------|-------------------|-------------------------------|
 | `ORIGIN_PT_CODE`                     | 5156             | Corresponding to number of rows in `busstop_cells` |
 | `DAY_TYPE`                           | 2                | `Weekday`, `Weekdays/Holidays`                     |
 | `TIME_PER_HOUR`                      | 24               | corresponding to hours per day                     |
@@ -719,7 +721,7 @@ rm(weekday_am)
 
 We can proceed to applying the same for the other peak times. *I won't go into detail of each step*.
 
-## Weekday afternoon peak (5 - 8pm)
+## Weekday evening peak (5 - 8pm)
 
 ```{r}
 weekday_pm <-
@@ -1107,4 +1109,4 @@ Take-home_Ex1/data/rds
 └── sg_honeycomb_with_num_busstops.rds
 ```
 
-We will be using these data files in the next part, [Visualization and Analysis](/Take-home_Ex1/Take-home_Ex1B.qmd).
+We will be using these data files in the next part, [Geovisualization and Analysis](/Take-home_Ex1/Take-home_Ex1B.qmd).

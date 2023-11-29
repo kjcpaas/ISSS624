@@ -21,23 +21,13 @@ In doing these study, we will be looking at bus trips started during the hours b
 | Peak hour period             | Bus tap on time |
 |------------------------------|-----------------|
 | Weekday morning peak         | 6am to 9am      |
-| Weekday afternoon peak       | 5pm to 8pm      |
+| Weekday evening peak         | 5pm to 8pm      |
 | Weekend/holiday morning peak | 11am to 2pm     |
 | Weekend/holiday evening peak | 4pm to 7pm      |
 
 More details about the study can be found [here](https://isss624-ay2023-24nov.netlify.app/take-home_ex01).
 
 In this part of the study, we will do thematic mapping on the bus commuter traffic data generated from [Data Wrangling](/Take-home_Ex1/Take-home_Ex1A.qmd).
-
-# Methodology
-
-For the geovisualization and analysis, I want to answer the following questions.
-
--   How does bus commuter traffic differ from month to month within the same hour of the day?
-
--   How does bus commuter traffic differ through out the week?
-
-To answer these questions, I will generate groups of plots to compare and contrast them, look for patterns, and answer the questions above.
 
 # Setup
 
@@ -76,87 +66,471 @@ bus_peaks_hc202308 <- read_rds("data/rds/bus_peaks_hc202308.rds")
 
 -   `sg_honeycomb` - contains the honeycomb grid that covers Singapore boundaries
 
--   `bus_peaks202310` - bus commuter data for peak times for **October 2023**
+-   `bus_peaks202310` - bus commuter traffic data for peak times for **October 2023**
 
--   `bus_peaks202309` - bus commuter data for peak times for **September 2023**
+-   `bus_peaks202309` - bus commuter traffic data for peak times for **September 2023**
 
--   `bus_peaks202308` - bus commuter data for peak times for **August 2023**
+-   `bus_peaks202308` - bus commuter traffic data for peak times for **August 2023**
 
-# Initial peek
+# Methodology
 
-First, we will quickly visualize the data using `bus_peaks202310` to get initial insights and directions on the next step in our analysis.
+For the geovisualization and analysis, I want to answer the following questions.
 
-## Single plot
+-   How do weekday peaks compare to weekend and holiday peaks?
+
+-   How do morning peaks compare to evening peaks?
+
+-   How do bus peak commuter traffic differ month to month?
+
+To answer these questions, I will generate groups of plots to compare and contrast them, look for patterns, and answer the questions above.
+
+There are also potential issues we will encounter along the way that may lead to misleading geovisualizations. We have to take a closer look at the data to identify potential causes of this.
+
+Consider the data distribution of `*_TRIPS` columns in `bus_peaks_hc202310`.
 
 ```{r}
-tm_shape(bus_peaks_hc202310)+
-  tm_fill("WEEKDAY_AM_TRIPS", 
-          style = "quantile",
-          palette = "YlOrRd",
-          title = "Bus trips on Weekdays 6 - 9am (September 2023)")
+kable(summary(bus_peaks_hc202310[,3:6] %>% st_drop_geometry()))
 ```
 
-From this simple plot, I know that the data wrangling went well as the plot generated as expected.
+Some things that stand out here are:
 
--   The colored hexagons correspond to the hexagons with bus stops.
+-   Large number of observations with `NA` (**2612 of 4131**)
 
--   Trip data is plotted to the map with expected values
+-   Large gap in values between weekday and weekend/holidays trips
 
-## Multiple plots
+## Large number of `NA`'s
 
-Now, let's try plotting the maps for the different peak times for September.
+When doing the data wrangling for [Weekday morning peak (6 - 9am)](/Take-home_Ex1/Take-home_Ex1A.html#weekday-morning-peak-6---9am), we set `NA` on `*_TRIPS` columns for **hexagons without** **bus stops**.
+
+This was done to fix the huge skew when setting 0's on hexagons without bus stops. By setting `NA`, we are able distinguish hexagons without bus commuters due to just not riding the bus from hexagons without bus stops altogether.
+
+How this will affect our analysis is currently unclear. If these hexagons become problematic, we can remove them by filtering, i.e. using the code chunk below. *This is not executable as this is just a demonstration.*
+
+```         
+bus_peaks_hc202310 % filter(NUM_BUS_STOPS > 0)
+```
+
+## Large gap in values
+
+The 3rd quartile of `WEEKDAY_PM_TRIPS` is **14,602** while it is **4,312** for `WEEKDEND_PM_TRIPS`. Our analysis focuses on **comparison** so plotting these maps together can be misleading. To demonstrate:
 
 ```{r}
-weekday_am <- tm_shape(bus_peaks_hc202310)+
-  tm_fill("WEEKDAY_AM_TRIPS", 
-          style = "quantile",
-          palette = "YlOrRd",
-          title = "Weekdays 6 - 9am")
+tmap_style("natural")
 
-weekday_pm <- tm_shape(bus_peaks_hc202310)+
-  tm_fill("WEEKDAY_PM_TRIPS", 
-          style = "quantile",
-          palette = "YlOrRd",
-          title = "Weekdays 5 - 8pm")
+tm_shape(bus_peaks_hc202310) +
+  tm_fill(
+    "WEEKDAY_PM_TRIPS", 
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Commuter Trips Weekdays 5 - 8pm (October 2023)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar()
+```
 
-weekend_am <- tm_shape(bus_peaks_hc202310)+
-  tm_fill("WEEKEND_AM_TRIPS", 
-          style = "quantile",
-          palette = "YlOrRd",
-          title = "Weekdays and Holidays 11am - 2pm")
+```{r}
+tm_shape(bus_peaks_hc202310) +
+  tm_fill(
+    "WEEKEND_PM_TRIPS", 
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Commuter Trips Weekends/Holidays 4 - 7pm (October 2023)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  ) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar()
+```
 
-weekend_pm <- tm_shape(bus_peaks_hc202310)+
-  tm_fill("WEEKEND_PM_TRIPS", 
-          style = "quantile",
-          palette = "YlOrRd",
-          title = "Weekdays and Holidays 4 - 7pm")
+On first look, they may appear similar to the audience as there are the same distribution of reds from the same part.
 
-tmap_arrange(
-  weekday_am,
-  weekday_pm,
-  weekend_am,
-  weekend_pm
+However, the red on the **weekday** map has a different value to **weekend** map (17,518 vs 5,345).
+
+To provide a better comparison, it might be better to determine the breaks from the quantiles of the combined data of the 2 columns. `tm_fill(style = "quantile")` generates 5 categories so we will use `quantile()` instead of `summary()` which only generates quartiles (0.25, 0.50. 0.75) that result into 4 categories.
+
+```{r}
+quantile(
+  c(
+    bus_peaks_hc202310$WEEKDAY_PM_TRIPS,
+    bus_peaks_hc202310$WEEKDAY_PM_TRIPS
+  ),
+  na.rm = TRUE,
+  probs = c(0, 0.2, 0.4, 0.6, 0.8, 1)
 )
 ```
 
-Doing analysis on this data is
+Remapping using the breaks generated from these quantiles:
 
-# Bus commuter traffic (by peak times within a week)
+```{r}
+tm_shape(bus_peaks_hc202310) +
+  tm_fill(
+    "WEEKEND_PM_TRIPS", 
+    palette = "YlOrRd",
+    title = "# of trips",
+    breaks = c(0, 1394, 4353, 8951, 17582, 462160)
+  ) +
+  tm_layout(
+    main.title = "Bus Commuter Trips Weekends/Holidays 4 - 7pm (October 2023)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  ) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar()
+```
 
-## October 2023
+With this, it can be better seen that weekend peaks are less busy compared to weekday peaks as each color mean the same across 2 maps, and there are less reds on this map.
+
+## Utility functions
+
+### Map generator
+
+To make it easier to generate maps, we will use the following utility function so we don't need to repeat the same thing all over again.
+
+```{r}
+plot_bus_commuter_traffic <- function(source, colname, breaks, title) {
+  tm_shape(source) +
+  tm_fill(
+    colname, 
+    palette = "YlOrRd",
+    title = "# of trips",
+    breaks = breaks
+  ) +
+  tm_layout(
+    main.title = title,
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.show = FALSE # We will use a common legend
+  ) 
+}
+```
+
+### Quantile generator
+
+We will also create a function to calculate the break points from quantiles:
+
+```{r}
+get_map_quantiles <- function(df) {
+  quantile(
+   df,
+   na.rm = TRUE,
+   probs = c(0, 0.2, 0.4, 0.6, 0.8, 1)
+  )
+}
+```
+
+### Generate common legend
+
+As we have common breaks for all maps, we also need to create a common legend for display.
+
+```{r}
+generate_common_legend <- function(source, breaks, position = c("right", "bottom")) {
+  tm_shape(source) +
+    tm_fill(
+      "WEEKDAY_AM_TRIPS", # we can use any column here
+      palette = "YlOrRd",
+      title = "# of trips",
+      breaks = breaks
+    ) +
+    tm_layout(
+      legend.only = TRUE,
+      legend.position = position,
+      frame = FALSE
+    )
+}
+```
+
+# Weekday morning vs Weekend/holiday morning
+
+## Determining break points
+
+We will use the method described in [Large gap in values] to more reliably compare the different values.
+
+::: panel-tabset
+## August 2023
+
+```{r}
+get_map_quantiles(
+  c(
+    bus_peaks_hc202308$WEEKDAY_AM_TRIPS,
+    bus_peaks_hc202308$WEEKEND_AM_TRIPS
+  )
+)
+```
 
 ## September 2023
 
+```{r}
+get_map_quantiles(
+  c(
+    bus_peaks_hc202309$WEEKDAY_AM_TRIPS,
+    bus_peaks_hc202309$WEEKEND_AM_TRIPS
+  )
+)
+```
+
+## October 2023
+
+```{r}
+get_map_quantiles(
+  c(
+    bus_peaks_hc202310$WEEKDAY_AM_TRIPS,
+    bus_peaks_hc202310$WEEKEND_AM_TRIPS
+  )
+)
+```
+:::
+
+## Plotting Map
+
+::: panel-tabset
 ## August 2023
 
-# Bus commuter traffic on peak times(month to month)
+```{r}
+tmap_arrange(
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202308,
+    colname = "WEEKDAY_AM_TRIPS",
+    title = "Bus Trips on Weekdays 6 - 9AM (August 2023)",
+    breaks = c(0, 284, 1543, 4660, 12791, 347820)
+  ),
+    generate_common_legend(
+    source = bus_peaks_hc202308,
+    breaks = c(0, 284, 1543, 4660, 12791, 347820),
+    position = c("right", "center")
+  ),
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202308,
+    colname = "WEEKEND_AM_TRIPS",
+    title = "Bus Trips on Weekends/Holidays 11 - 2PM (August 2023)",
+    breaks = c(0, 284, 1543, 4660, 12791, 347820)
+  ),
+  ncol = 2,
+  widths = c(3, 1)
+)
+```
 
-## Weekday Morning (6 - 9am)
+In **August 2023**, weekday morning peak hours **is busier** than weekend/holiday morning peak hours. This is indicated by higher number of red hexagons.
 
-## Weekday Afternoon (5 - 8pm)
+## September 2023
 
-## Weekend/Holiday Morning (11am - 2pm)
+```{r}
+tmap_arrange(
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202309,
+    colname = "WEEKDAY_AM_TRIPS",
+    title = "Bus Trips on Weekdays 6 - 9AM (September 2023)",
+    breaks = c(0, 293, 1566, 4707, 11976, 308362)
+  ),
+    generate_common_legend(
+    source = bus_peaks_hc202309,
+    breaks = c(0, 293, 1566, 4707, 11976, 308362),
+    position = c("right", "center")
+  ),
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202309,
+    colname = "WEEKEND_AM_TRIPS",
+    title = "Bus Trips on Weekends/Holidays 11 - 2PM (September 2023)",
+    breaks = c(0, 293, 1566, 4707, 11976, 308362)
+  ),
+  ncol = 2,
+  widths = c(3, 1)
+)
+```
 
-## Weekend/Holiday Morning (4 - 7pm)
+In **September 2023**, weekday morning peak hours **is busier** than weekend/holiday morning peak hours. This is indicated by higher number of red hexagons.
+
+## October 2023
+
+```{r}
+tmap_arrange(
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202310,
+    colname = "WEEKDAY_AM_TRIPS",
+    title = "Bus Trips on Weekdays 6 - 9AM (October 2023)",
+    breaks = c(0, 284, 1540, 4653, 12560, 336087)
+  ),
+    generate_common_legend(
+    source = bus_peaks_hc202310,
+    breaks = c(0, 284, 1540, 4653, 12560, 336087),
+    position = c("right", "center")
+  ),
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202310,
+    colname = "WEEKEND_AM_TRIPS",
+    title = "Bus Trips on Weekends/Holidays 11 - 2PM (October 2023)",
+    breaks = c(0, 284, 1540, 4653, 12560, 336087)
+  ),
+  ncol = 2,
+  widths = c(3, 1)
+)
+```
+
+In **October 2023**, weekday morning peak hours **is busier** than weekend/holiday morning peak hours. This is indicated by higher number of red hexagons.
+:::
+
+::: callout-note
+The patterns observed by visually analyzing the maps lead to the same conclusion: **More people ride the bus on weekday mornings compared to weekend/holiday mornings**. This is can be explained by the people going to school or office during the weekdays.
+
+Moreover, the darker areas in the 2 maps are similar, indicating that the same areas that are relatively busier on weekdays are also relatively busier on weekends as well. This can indicate that more people stay at home on weekends but those who do go out still take buses from the same place - **their home**.
+
+However, we need to do a deeper spatial analysis like LISA or EHSA to have more detailed insights on spatial patterns as we can only get an overview of patterns from visual inspection.
+:::
+
+# Weekday evening vs Weekend/holiday evening
+
+## Determining break points
+
+We will use the method described in [Large gap in values] to more reliably compare the different values.
+
+::: panel-tabset
+## August 2023
+
+```{r}
+get_map_quantiles(
+  c(
+    bus_peaks_hc202308$WEEKDAY_PM_TRIPS,
+    bus_peaks_hc202308$WEEKEND_PM_TRIPS
+  )
+)
+```
+
+## September 2023
+
+```{r}
+get_map_quantiles(
+  c(
+    bus_peaks_hc202309$WEEKDAY_PM_TRIPS,
+    bus_peaks_hc202309$WEEKEND_PM_TRIPS
+  )
+)
+```
+
+## October 2023
+
+```{r}
+get_map_quantiles(
+  c(
+    bus_peaks_hc202310$WEEKDAY_PM_TRIPS,
+    bus_peaks_hc202310$WEEKEND_PM_TRIPS
+  )
+)
+```
+:::
+
+## Plotting Map
+
+::: panel-tabset
+## August 2023
+
+```{r}
+tmap_arrange(
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202308,
+    colname = "WEEKDAY_PM_TRIPS",
+    title = "Bus Trips on Weekdays 5 - 8PM (August 2023)",
+    breaks = c(0, 592, 2065, 4811, 11796, 464466)
+  ),
+    generate_common_legend(
+    source = bus_peaks_hc202308,
+    breaks = c(0, 592, 2065, 4811, 11796, 464466),
+    position = c("right", "center")
+  ),
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202308,
+    colname = "WEEKEND_PM_TRIPS",
+    title = "Bus Trips on Weekends/Holidays 4 - 7PM (August 2023)",
+    breaks = c(0, 592, 2065, 4811, 11796, 464466)
+  ),
+  ncol = 2,
+  widths = c(3, 1)
+)
+```
+
+In **August 2023**, weekday evening peak hours **is busier** than weekend/holiday evening peak hours. This is indicated by higher number of red hexagons.
+
+## September 2023
+
+```{r}
+tmap_arrange(
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202309,
+    colname = "WEEKDAY_PM_TRIPS",
+    title = "Bus Trips on Weekdays 5 - 8PM (September 2023)",
+    breaks = c(0, 617, 2093, 4781, 10867, 406214)
+  ),
+    generate_common_legend(
+    source = bus_peaks_hc202309,
+    breaks = c(0, 617, 2093, 4781, 10867, 406214),
+    position = c("right", "center")
+  ),
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202309,
+    colname = "WEEKEND_PM_TRIPS",
+    title = "Bus Trips on Weekends/Holidays 4 - 7PM (September 2023)",
+    breaks = c(0, 617, 2093, 4781, 10867, 406214)
+  ),
+  ncol = 2,
+  widths = c(3, 1)
+)
+```
+
+In **September 2023**, weekday morning peak hours **is busier** than weekend/holiday evening peak hours. This is indicated by higher number of red hexagons.
+
+## October 2023
+
+```{r}
+tmap_arrange(
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202310,
+    colname = "WEEKDAY_PM_TRIPS",
+    title = "Bus Trips on Weekdays 5 - 8PM (October 2023)",
+    breaks = c(0, 587, 2023, 4780, 11419, 462160)
+  ),
+    generate_common_legend(
+    source = bus_peaks_hc202310,
+    breaks = c(0, 587, 2023, 4780, 11419, 462160),
+    position = c("right", "center")
+  ),
+  plot_bus_commuter_traffic(
+    source = bus_peaks_hc202310,
+    colname = "WEEKEND_PM_TRIPS",
+    title = "Bus Trips on Weekends/Holidays 4 - 7PM (October 2023)",
+    breaks = c(0, 587, 2023, 4780, 11419, 462160)
+  ),
+  ncol = 2,
+  widths = c(3, 1)
+)
+```
+
+In **October 2023**, weekday morning peak hours **is busier** than weekend/holiday evening peak hours. This is indicated by higher number of red hexagons.
+:::
+
+::: callout-note
+The patterns observed by visually analyzing the maps lead to the same conclusion: **More people ride the bus on weekday evenings compared to weekend/holiday evenings**. This is can be explained by the people going home from school or office during the weekdays.
+
+Moreover, the darker areas in the 2 maps are similar, indicating that the same areas that are relatively busier on weekdays are also relatively busier on weekends as well. This is contrary to my expectations as I expect people to not commute from their office or school during the weekends. This is why I expected that some areas for recreation will be busier during the weekends or holidays, while business districts will be less busy.
+
+However, we need to do a deeper spatial analysis like LISA or EHSA to have more detailed insights on spatial patterns as we can only get an overview of patterns from visual inspection.
+:::
 
 # Conclusion

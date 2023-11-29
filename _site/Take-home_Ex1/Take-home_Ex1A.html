@@ -246,7 +246,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#extracting-peak-hour-data" id="toc-extracting-peak-hour-data" class="nav-link" data-scroll-target="#extracting-peak-hour-data">Extracting peak hour data</a>
   <ul class="collapse">
   <li><a href="#weekday-morning-peak-6---9am" id="toc-weekday-morning-peak-6---9am" class="nav-link" data-scroll-target="#weekday-morning-peak-6---9am">Weekday morning peak (6 - 9am)</a></li>
-  <li><a href="#weekday-afternoon-peak-5---8pm" id="toc-weekday-afternoon-peak-5---8pm" class="nav-link" data-scroll-target="#weekday-afternoon-peak-5---8pm">Weekday afternoon peak (5 - 8pm)</a></li>
+  <li><a href="#weekday-evening-peak-5---8pm" id="toc-weekday-evening-peak-5---8pm" class="nav-link" data-scroll-target="#weekday-evening-peak-5---8pm">Weekday evening peak (5 - 8pm)</a></li>
   <li><a href="#weekendholiday-morning-peak-11am---2pm" id="toc-weekendholiday-morning-peak-11am---2pm" class="nav-link" data-scroll-target="#weekendholiday-morning-peak-11am---2pm">Weekend/holiday morning peak (11am - 2pm)</a></li>
   <li><a href="#weekendholiday-evening-peak-4---7pm" id="toc-weekendholiday-evening-peak-4---7pm" class="nav-link" data-scroll-target="#weekendholiday-evening-peak-4---7pm">Weekend/holiday evening peak (4 - 7pm)</a></li>
   </ul></li>
@@ -315,7 +315,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>6am to 9am</td>
 </tr>
 <tr class="even">
-<td>Weekday afternoon peak</td>
+<td>Weekday evening peak</td>
 <td>5pm to 8pm</td>
 </tr>
 <tr class="odd">
@@ -414,6 +414,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>Cleaning</p></li>
 <li><p>Saving data as <code>rds</code> file</p></li>
 </ul>
+<p>As the wrangling process is expected to have a lot of intermediate steps, <strong>Save points</strong> and <strong>Checkpoints</strong> will be available along the way so we can save and load processed data and won’t have to restart all over again.</p>
 </section>
 <section id="generating-a-honeycomb-grid-from-mpsz-data" class="level1">
 <h1>Generating a honeycomb grid from <code>mpsz</code> data</h1>
@@ -1165,8 +1166,8 @@ $ TOTAL_TRIPS         &lt;dbl&gt; 3, 5, 3, 5, 4, 1, 24, 2, 1, 7, 3, 2, 5, 1, 1, 
 <table class="table">
 <colgroup>
 <col style="width: 31%">
-<col style="width: 25%">
-<col style="width: 43%">
+<col style="width: 26%">
+<col style="width: 42%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2057,8 +2058,8 @@ Caution
 </div>
 <p>We can proceed to applying the same for the other peak times. <em>I won’t go into detail of each step</em>.</p>
 </section>
-<section id="weekday-afternoon-peak-5---8pm" class="level2">
-<h2 class="anchored" data-anchor-id="weekday-afternoon-peak-5---8pm">Weekday afternoon peak (5 - 8pm)</h2>
+<section id="weekday-evening-peak-5---8pm" class="level2">
+<h2 class="anchored" data-anchor-id="weekday-evening-peak-5---8pm">Weekday evening peak (5 - 8pm)</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>weekday_pm <span class="ot">&lt;-</span></span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  hourly_from_hex202310 <span class="sc">%&gt;%</span></span>
@@ -2839,7 +2840,7 @@ This only works if you have previously ran the code chunks above this and have t
 <span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> hourly_from_hex202310.rds</span>
 <span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> sg_honeycomb.rds</span>
 <span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a><span class="ex">└──</span> sg_honeycomb_with_num_busstops.rds</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>We will be using these data files in the next part, <a href="../Take-home_Ex1/Take-home_Ex1B.html">Visualization and Analysis</a>.</p>
+<p>We will be using these data files in the next part, <a href="../Take-home_Ex1/Take-home_Ex1B.html">Geovisualization and Analysis</a>.</p>
 
 
 </section>

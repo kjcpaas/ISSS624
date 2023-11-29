@@ -205,29 +205,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#methodology" id="toc-methodology" class="nav-link" data-scroll-target="#methodology">Methodology</a></li>
   <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
   <ul class="collapse">
   <li><a href="#setting-up-the-r-environment" id="toc-setting-up-the-r-environment" class="nav-link" data-scroll-target="#setting-up-the-r-environment">Setting Up the R Environment</a></li>
   <li><a href="#loading-the-data" id="toc-loading-the-data" class="nav-link" data-scroll-target="#loading-the-data">Loading the data</a></li>
   </ul></li>
-  <li><a href="#initial-peek" id="toc-initial-peek" class="nav-link" data-scroll-target="#initial-peek">Initial peek</a>
+  <li><a href="#methodology" id="toc-methodology" class="nav-link" data-scroll-target="#methodology">Methodology</a>
   <ul class="collapse">
-  <li><a href="#single-plot" id="toc-single-plot" class="nav-link" data-scroll-target="#single-plot">Single plot</a></li>
-  <li><a href="#multiple-plots" id="toc-multiple-plots" class="nav-link" data-scroll-target="#multiple-plots">Multiple plots</a></li>
+  <li><a href="#large-number-of-nas" id="toc-large-number-of-nas" class="nav-link" data-scroll-target="#large-number-of-nas">Large number of <code>NA</code>’s</a></li>
+  <li><a href="#large-gap-in-values" id="toc-large-gap-in-values" class="nav-link" data-scroll-target="#large-gap-in-values">Large gap in values</a></li>
+  <li><a href="#utility-functions" id="toc-utility-functions" class="nav-link" data-scroll-target="#utility-functions">Utility functions</a>
+  <ul class="collapse">
+  <li><a href="#map-generator" id="toc-map-generator" class="nav-link" data-scroll-target="#map-generator">Map generator</a></li>
+  <li><a href="#quantile-generator" id="toc-quantile-generator" class="nav-link" data-scroll-target="#quantile-generator">Quantile generator</a></li>
+  <li><a href="#generate-common-legend" id="toc-generate-common-legend" class="nav-link" data-scroll-target="#generate-common-legend">Generate common legend</a></li>
   </ul></li>
-  <li><a href="#bus-commuter-traffic-by-peak-times-within-a-week" id="toc-bus-commuter-traffic-by-peak-times-within-a-week" class="nav-link" data-scroll-target="#bus-commuter-traffic-by-peak-times-within-a-week">Bus commuter traffic (by peak times within a week)</a>
-  <ul class="collapse">
-  <li><a href="#october-2023" id="toc-october-2023" class="nav-link" data-scroll-target="#october-2023">October 2023</a></li>
-  <li><a href="#september-2023" id="toc-september-2023" class="nav-link" data-scroll-target="#september-2023">September 2023</a></li>
-  <li><a href="#august-2023" id="toc-august-2023" class="nav-link" data-scroll-target="#august-2023">August 2023</a></li>
   </ul></li>
-  <li><a href="#bus-commuter-traffic-on-peak-timesmonth-to-month" id="toc-bus-commuter-traffic-on-peak-timesmonth-to-month" class="nav-link" data-scroll-target="#bus-commuter-traffic-on-peak-timesmonth-to-month">Bus commuter traffic on peak times(month to month)</a>
+  <li><a href="#weekday-morning-vs-weekendholiday-morning" id="toc-weekday-morning-vs-weekendholiday-morning" class="nav-link" data-scroll-target="#weekday-morning-vs-weekendholiday-morning">Weekday morning vs Weekend/holiday morning</a>
   <ul class="collapse">
-  <li><a href="#weekday-morning-6---9am" id="toc-weekday-morning-6---9am" class="nav-link" data-scroll-target="#weekday-morning-6---9am">Weekday Morning (6 - 9am)</a></li>
-  <li><a href="#weekday-afternoon-5---8pm" id="toc-weekday-afternoon-5---8pm" class="nav-link" data-scroll-target="#weekday-afternoon-5---8pm">Weekday Afternoon (5 - 8pm)</a></li>
-  <li><a href="#weekendholiday-morning-11am---2pm" id="toc-weekendholiday-morning-11am---2pm" class="nav-link" data-scroll-target="#weekendholiday-morning-11am---2pm">Weekend/Holiday Morning (11am - 2pm)</a></li>
-  <li><a href="#weekendholiday-morning-4---7pm" id="toc-weekendholiday-morning-4---7pm" class="nav-link" data-scroll-target="#weekendholiday-morning-4---7pm">Weekend/Holiday Morning (4 - 7pm)</a></li>
+  <li><a href="#determining-break-points" id="toc-determining-break-points" class="nav-link" data-scroll-target="#determining-break-points">Determining break points</a></li>
+  <li><a href="#plotting-map" id="toc-plotting-map" class="nav-link" data-scroll-target="#plotting-map">Plotting Map</a></li>
+  </ul></li>
+  <li><a href="#weekday-evening-vs-weekendholiday-evening" id="toc-weekday-evening-vs-weekendholiday-evening" class="nav-link" data-scroll-target="#weekday-evening-vs-weekendholiday-evening">Weekday evening vs Weekend/holiday evening</a>
+  <ul class="collapse">
+  <li><a href="#determining-break-points-1" id="toc-determining-break-points-1" class="nav-link" data-scroll-target="#determining-break-points-1">Determining break points</a></li>
+  <li><a href="#plotting-map-1" id="toc-plotting-map-1" class="nav-link" data-scroll-target="#plotting-map-1">Plotting Map</a></li>
   </ul></li>
   <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
   </ul>
@@ -289,7 +291,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>6am to 9am</td>
 </tr>
 <tr class="even">
-<td>Weekday afternoon peak</td>
+<td>Weekday evening peak</td>
 <td>5pm to 8pm</td>
 </tr>
 <tr class="odd">
@@ -304,15 +306,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <p>More details about the study can be found <a href="https://isss624-ay2023-24nov.netlify.app/take-home_ex01">here</a>.</p>
 <p>In this part of the study, we will do thematic mapping on the bus commuter traffic data generated from <a href="../Take-home_Ex1/Take-home_Ex1A.html">Data Wrangling</a>.</p>
-</section>
-<section id="methodology" class="level1">
-<h1>Methodology</h1>
-<p>For the geovisualization and analysis, I want to answer the following questions.</p>
-<ul>
-<li><p>How does bus commuter traffic differ from month to month within the same hour of the day?</p></li>
-<li><p>How does bus commuter traffic differ through out the week?</p></li>
-</ul>
-<p>To answer these questions, I will generate groups of plots to compare and contrast them, look for patterns, and answer the questions above.</p>
 </section>
 <section id="setup" class="level1">
 <h1>Setup</h1>
@@ -354,99 +347,587 @@ Important
 </div>
 <ul>
 <li><p><code>sg_honeycomb</code> - contains the honeycomb grid that covers Singapore boundaries</p></li>
-<li><p><code>bus_peaks202310</code> - bus commuter data for peak times for <strong>October 2023</strong></p></li>
-<li><p><code>bus_peaks202309</code> - bus commuter data for peak times for <strong>September 2023</strong></p></li>
-<li><p><code>bus_peaks202308</code> - bus commuter data for peak times for <strong>August 2023</strong></p></li>
+<li><p><code>bus_peaks202310</code> - bus commuter traffic data for peak times for <strong>October 2023</strong></p></li>
+<li><p><code>bus_peaks202309</code> - bus commuter traffic data for peak times for <strong>September 2023</strong></p></li>
+<li><p><code>bus_peaks202308</code> - bus commuter traffic data for peak times for <strong>August 2023</strong></p></li>
 </ul>
 </section>
 </section>
-<section id="initial-peek" class="level1">
-<h1>Initial peek</h1>
-<p>First, we will quickly visualize the data using <code>bus_peaks202310</code> to get initial insights and directions on the next step in our analysis.</p>
-<section id="single-plot" class="level2">
-<h2 class="anchored" data-anchor-id="single-plot">Single plot</h2>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(bus_peaks_hc202310)<span class="sc">+</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"WEEKDAY_AM_TRIPS"</span>, </span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Bus trips on Weekdays 6 - 9am (September 2023)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>From this simple plot, I know that the data wrangling went well as the plot generated as expected.</p>
+<section id="methodology" class="level1">
+<h1>Methodology</h1>
+<p>For the geovisualization and analysis, I want to answer the following questions.</p>
 <ul>
-<li><p>The colored hexagons correspond to the hexagons with bus stops.</p></li>
-<li><p>Trip data is plotted to the map with expected values</p></li>
+<li><p>How do weekday peaks compare to weekend and holiday peaks?</p></li>
+<li><p>How do morning peaks compare to evening peaks?</p></li>
+<li><p>How do bus peak commuter traffic differ month to month?</p></li>
 </ul>
-</section>
-<section id="multiple-plots" class="level2">
-<h2 class="anchored" data-anchor-id="multiple-plots">Multiple plots</h2>
-<p>Now, let’s try plotting the maps for the different peak times for September.</p>
+<p>To answer these questions, I will generate groups of plots to compare and contrast them, look for patterns, and answer the questions above.</p>
+<p>There are also potential issues we will encounter along the way that may lead to misleading geovisualizations. We have to take a closer look at the data to identify potential causes of this.</p>
+<p>Consider the data distribution of <code>*_TRIPS</code> columns in <code>bus_peaks_hc202310</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>weekday_am <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(bus_peaks_hc202310)<span class="sc">+</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"WEEKDAY_AM_TRIPS"</span>, </span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Weekdays 6 - 9am"</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>weekday_pm <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(bus_peaks_hc202310)<span class="sc">+</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"WEEKDAY_PM_TRIPS"</span>, </span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Weekdays 5 - 8pm"</span>)</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>weekend_am <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(bus_peaks_hc202310)<span class="sc">+</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"WEEKEND_AM_TRIPS"</span>, </span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Weekdays and Holidays 11am - 2pm"</span>)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>weekend_pm <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(bus_peaks_hc202310)<span class="sc">+</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"WEEKEND_PM_TRIPS"</span>, </span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>          <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>          <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Weekdays and Holidays 4 - 7pm"</span>)</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  weekday_am,</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  weekday_pm,</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  weekend_am,</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  weekend_pm</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">summary</span>(bus_peaks_hc202310[,<span class="dv">3</span><span class="sc">:</span><span class="dv">6</span>] <span class="sc">%&gt;%</span> <span class="fu">st_drop_geometry</span>()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">WEEKDAY_AM_TRIPS</th>
+<th style="text-align: left;">WEEKDAY_PM_TRIPS</th>
+<th style="text-align: left;">WEEKEND_AM_TRIPS</th>
+<th style="text-align: left;">WEEKEND_PM_TRIPS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Min. : 0</td>
+<td style="text-align: left;">Min. : 0</td>
+<td style="text-align: left;">Min. : 0</td>
+<td style="text-align: left;">Min. : 0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">1st Qu.: 745</td>
+<td style="text-align: left;">1st Qu.: 1970</td>
+<td style="text-align: left;">1st Qu.: 321</td>
+<td style="text-align: left;">1st Qu.: 432</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Median : 5993</td>
+<td style="text-align: left;">Median : 6259</td>
+<td style="text-align: left;">Median : 1686</td>
+<td style="text-align: left;">Median : 1686</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Mean : 13804</td>
+<td style="text-align: left;">Mean : 13702</td>
+<td style="text-align: left;">Mean : 3835</td>
+<td style="text-align: left;">Mean : 3852</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">3rd Qu.: 17931</td>
+<td style="text-align: left;">3rd Qu.: 14602</td>
+<td style="text-align: left;">3rd Qu.: 4954</td>
+<td style="text-align: left;">3rd Qu.: 4314</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Max. :336087</td>
+<td style="text-align: left;">Max. :462160</td>
+<td style="text-align: left;">Max. :84888</td>
+<td style="text-align: left;">Max. :111171</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">NA’s :2612</td>
+<td style="text-align: left;">NA’s :2612</td>
+<td style="text-align: left;">NA’s :2612</td>
+<td style="text-align: left;">NA’s :2612</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Some things that stand out here are:</p>
+<ul>
+<li><p>Large number of observations with <code>NA</code> (<strong>2612 of 4131</strong>)</p></li>
+<li><p>Large gap in values between weekday and weekend/holidays trips</p></li>
+</ul>
+<section id="large-number-of-nas" class="level2">
+<h2 class="anchored" data-anchor-id="large-number-of-nas">Large number of <code>NA</code>’s</h2>
+<p>When doing the data wrangling for <a href="../Take-home_Ex1/Take-home_Ex1A.html#weekday-morning-peak-6---9am">Weekday morning peak (6 - 9am)</a>, we set <code>NA</code> on <code>*_TRIPS</code> columns for <strong>hexagons without</strong> <strong>bus stops</strong>.</p>
+<p>This was done to fix the huge skew when setting 0’s on hexagons without bus stops. By setting <code>NA</code>, we are able distinguish hexagons without bus commuters due to just not riding the bus from hexagons without bus stops altogether.</p>
+<p>How this will affect our analysis is currently unclear. If these hexagons become problematic, we can remove them by filtering, i.e.&nbsp;using the code chunk below. <em>This is not executable as this is just a demonstration.</em></p>
+<pre><code>bus_peaks_hc202310 % filter(NUM_BUS_STOPS &gt; 0)</code></pre>
+</section>
+<section id="large-gap-in-values" class="level2">
+<h2 class="anchored" data-anchor-id="large-gap-in-values">Large gap in values</h2>
+<p>The 3rd quartile of <code>WEEKDAY_PM_TRIPS</code> is <strong>14,602</strong> while it is <strong>4,312</strong> for <code>WEEKDEND_PM_TRIPS</code>. Our analysis focuses on <strong>comparison</strong> so plotting these maps together can be misleading. To demonstrate:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_style</span>(<span class="st">"natural"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(bus_peaks_hc202310) <span class="sc">+</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"WEEKDAY_PM_TRIPS"</span>, </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Commuter Trips Weekdays 5 - 8pm (October 2023)"</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>Doing analysis on this data is</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(bus_peaks_hc202310) <span class="sc">+</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"WEEKEND_PM_TRIPS"</span>, </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Commuter Trips Weekends/Holidays 4 - 7pm (October 2023)"</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>On first look, they may appear similar to the audience as there are the same distribution of reds from the same part.</p>
+<p>However, the red on the <strong>weekday</strong> map has a different value to <strong>weekend</strong> map (17,518 vs 5,345).</p>
+<p>To provide a better comparison, it might be better to determine the breaks from the quantiles of the combined data of the 2 columns. <code>tm_fill(style = "quantile")</code> generates 5 categories so we will use <code>quantile()</code> instead of <code>summary()</code> which only generates quartiles (0.25, 0.50. 0.75) that result into 4 categories.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202310<span class="sc">$</span>WEEKDAY_PM_TRIPS,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202310<span class="sc">$</span>WEEKDAY_PM_TRIPS</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">na.rm =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>, <span class="dv">1</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      20%      40%      60%      80%     100% 
+     0.0   1394.0   4353.0   8951.0  17581.6 462160.0 </code></pre>
+</div>
+</div>
+<p>Remapping using the breaks generated from these quantiles:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(bus_peaks_hc202310) <span class="sc">+</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"WEEKEND_PM_TRIPS"</span>, </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1394</span>, <span class="dv">4353</span>, <span class="dv">8951</span>, <span class="dv">17582</span>, <span class="dv">462160</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Commuter Trips Weekends/Holidays 4 - 7pm (October 2023)"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>With this, it can be better seen that weekend peaks are less busy compared to weekday peaks as each color mean the same across 2 maps, and there are less reds on this map.</p>
+</section>
+<section id="utility-functions" class="level2">
+<h2 class="anchored" data-anchor-id="utility-functions">Utility functions</h2>
+<section id="map-generator" class="level3">
+<h3 class="anchored" data-anchor-id="map-generator">Map generator</h3>
+<p>To make it easier to generate maps, we will use the following utility function so we don’t need to repeat the same thing all over again.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>plot_bus_commuter_traffic <span class="ot">&lt;-</span> <span class="cf">function</span>(source, colname, breaks, title) {</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(source) <span class="sc">+</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    colname, </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> breaks</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> title,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.show =</span> <span class="cn">FALSE</span> <span class="co"># We will use a common legend</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="quantile-generator" class="level3">
+<h3 class="anchored" data-anchor-id="quantile-generator">Quantile generator</h3>
+<p>We will also create a function to calculate the break points from quantiles:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>get_map_quantiles <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">quantile</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>   df,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">na.rm =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>   <span class="at">probs =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>, <span class="dv">1</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="generate-common-legend" class="level3">
+<h3 class="anchored" data-anchor-id="generate-common-legend">Generate common legend</h3>
+<p>As we have common breaks for all maps, we also need to create a common legend for display.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>generate_common_legend <span class="ot">&lt;-</span> <span class="cf">function</span>(source, breaks, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)) {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(source) <span class="sc">+</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_fill</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">"WEEKDAY_AM_TRIPS"</span>, <span class="co"># we can use any column here</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">title =</span> <span class="st">"# of trips"</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">breaks =</span> breaks</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_layout</span>(</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">legend.only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">legend.position =</span> position,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">frame =</span> <span class="cn">FALSE</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 </section>
-<section id="bus-commuter-traffic-by-peak-times-within-a-week" class="level1">
-<h1>Bus commuter traffic (by peak times within a week)</h1>
-<section id="october-2023" class="level2">
-<h2 class="anchored" data-anchor-id="october-2023">October 2023</h2>
 </section>
-<section id="september-2023" class="level2">
-<h2 class="anchored" data-anchor-id="september-2023">September 2023</h2>
+<section id="weekday-morning-vs-weekendholiday-morning" class="level1">
+<h1>Weekday morning vs Weekend/holiday morning</h1>
+<section id="determining-break-points" class="level2">
+<h2 class="anchored" data-anchor-id="determining-break-points">Determining break points</h2>
+<p>We will use the method described in <a href="#large-gap-in-values">Large gap in values</a> to more reliably compare the different values.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">August 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">September 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">October 2023</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_map_quantiles</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202308<span class="sc">$</span>WEEKDAY_AM_TRIPS,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202308<span class="sc">$</span>WEEKEND_AM_TRIPS</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      20%      40%      60%      80%     100% 
+     0.0    284.0   1542.6   4660.6  12791.4 347820.0 </code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_map_quantiles</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202309<span class="sc">$</span>WEEKDAY_AM_TRIPS,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202309<span class="sc">$</span>WEEKEND_AM_TRIPS</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      20%      40%      60%      80%     100% 
+     0.0    293.8   1565.8   4706.8  11976.0 308362.0 </code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_map_quantiles</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202310<span class="sc">$</span>WEEKDAY_AM_TRIPS,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202310<span class="sc">$</span>WEEKEND_AM_TRIPS</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      20%      40%      60%      80%     100% 
+     0.0    284.0   1539.6   4653.4  12560.4 336087.0 </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 </section>
-<section id="august-2023" class="level2">
-<h2 class="anchored" data-anchor-id="august-2023">August 2023</h2>
+<section id="plotting-map" class="level2">
+<h2 class="anchored" data-anchor-id="plotting-map">Plotting Map</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">August 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">September 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">October 2023</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202308,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKDAY_AM_TRIPS"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekdays 6 - 9AM (August 2023)"</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">284</span>, <span class="dv">1543</span>, <span class="dv">4660</span>, <span class="dv">12791</span>, <span class="dv">347820</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">generate_common_legend</span>(</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202308,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">284</span>, <span class="dv">1543</span>, <span class="dv">4660</span>, <span class="dv">12791</span>, <span class="dv">347820</span>),</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202308,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKEND_AM_TRIPS"</span>,</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekends/Holidays 11 - 2PM (August 2023)"</span>,</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">284</span>, <span class="dv">1543</span>, <span class="dv">4660</span>, <span class="dv">12791</span>, <span class="dv">347820</span>)</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>)</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>In <strong>August 2023</strong>, weekday morning peak hours <strong>is busier</strong> than weekend/holiday morning peak hours. This is indicated by higher number of red hexagons.</p>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202309,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKDAY_AM_TRIPS"</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekdays 6 - 9AM (September 2023)"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">293</span>, <span class="dv">1566</span>, <span class="dv">4707</span>, <span class="dv">11976</span>, <span class="dv">308362</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">generate_common_legend</span>(</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202309,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">293</span>, <span class="dv">1566</span>, <span class="dv">4707</span>, <span class="dv">11976</span>, <span class="dv">308362</span>),</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202309,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKEND_AM_TRIPS"</span>,</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekends/Holidays 11 - 2PM (September 2023)"</span>,</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">293</span>, <span class="dv">1566</span>, <span class="dv">4707</span>, <span class="dv">11976</span>, <span class="dv">308362</span>)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>In <strong>September 2023</strong>, weekday morning peak hours <strong>is busier</strong> than weekend/holiday morning peak hours. This is indicated by higher number of red hexagons.</p>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202310,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKDAY_AM_TRIPS"</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekdays 6 - 9AM (October 2023)"</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">284</span>, <span class="dv">1540</span>, <span class="dv">4653</span>, <span class="dv">12560</span>, <span class="dv">336087</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">generate_common_legend</span>(</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202310,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">284</span>, <span class="dv">1540</span>, <span class="dv">4653</span>, <span class="dv">12560</span>, <span class="dv">336087</span>),</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202310,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKEND_AM_TRIPS"</span>,</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekends/Holidays 11 - 2PM (October 2023)"</span>,</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">284</span>, <span class="dv">1540</span>, <span class="dv">4653</span>, <span class="dv">12560</span>, <span class="dv">336087</span>)</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>)</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>In <strong>October 2023</strong>, weekday morning peak hours <strong>is busier</strong> than weekend/holiday morning peak hours. This is indicated by higher number of red hexagons.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The patterns observed by visually analyzing the maps lead to the same conclusion: <strong>More people ride the bus on weekday mornings compared to weekend/holiday mornings</strong>. This is can be explained by the people going to school or office during the weekdays.</p>
+<p>Moreover, the darker areas in the 2 maps are similar, indicating that the same areas that are relatively busier on weekdays are also relatively busier on weekends as well. This can indicate that more people stay at home on weekends but those who do go out still take buses from the same place - <strong>their home</strong>.</p>
+<p>However, we need to do a deeper spatial analysis like LISA or EHSA to have more detailed insights on spatial patterns as we can only get an overview of patterns from visual inspection.</p>
+</div>
+</div>
 </section>
 </section>
-<section id="bus-commuter-traffic-on-peak-timesmonth-to-month" class="level1">
-<h1>Bus commuter traffic on peak times(month to month)</h1>
-<section id="weekday-morning-6---9am" class="level2">
-<h2 class="anchored" data-anchor-id="weekday-morning-6---9am">Weekday Morning (6 - 9am)</h2>
+<section id="weekday-evening-vs-weekendholiday-evening" class="level1">
+<h1>Weekday evening vs Weekend/holiday evening</h1>
+<section id="determining-break-points-1" class="level2">
+<h2 class="anchored" data-anchor-id="determining-break-points-1">Determining break points</h2>
+<p>We will use the method described in <a href="#large-gap-in-values">Large gap in values</a> to more reliably compare the different values.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">August 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">September 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">October 2023</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_map_quantiles</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202308<span class="sc">$</span>WEEKDAY_PM_TRIPS,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202308<span class="sc">$</span>WEEKEND_PM_TRIPS</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      20%      40%      60%      80%     100% 
+     0.0    592.2   2065.4   4810.8  11796.0 464466.0 </code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_map_quantiles</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202309<span class="sc">$</span>WEEKDAY_PM_TRIPS,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202309<span class="sc">$</span>WEEKEND_PM_TRIPS</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      20%      40%      60%      80%     100% 
+     0.0    616.8   2092.6   4781.2  10866.6 406214.0 </code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_map_quantiles</span>(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202310<span class="sc">$</span>WEEKDAY_PM_TRIPS,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    bus_peaks_hc202310<span class="sc">$</span>WEEKEND_PM_TRIPS</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      20%      40%      60%      80%     100% 
+     0.0    587.0   2022.6   4779.6  11419.4 462160.0 </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 </section>
-<section id="weekday-afternoon-5---8pm" class="level2">
-<h2 class="anchored" data-anchor-id="weekday-afternoon-5---8pm">Weekday Afternoon (5 - 8pm)</h2>
-</section>
-<section id="weekendholiday-morning-11am---2pm" class="level2">
-<h2 class="anchored" data-anchor-id="weekendholiday-morning-11am---2pm">Weekend/Holiday Morning (11am - 2pm)</h2>
-</section>
-<section id="weekendholiday-morning-4---7pm" class="level2">
-<h2 class="anchored" data-anchor-id="weekendholiday-morning-4---7pm">Weekend/Holiday Morning (4 - 7pm)</h2>
+<section id="plotting-map-1" class="level2">
+<h2 class="anchored" data-anchor-id="plotting-map-1">Plotting Map</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true">August 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false">September 2023</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false">October 2023</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202308,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKDAY_PM_TRIPS"</span>,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekdays 5 - 8PM (August 2023)"</span>,</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">592</span>, <span class="dv">2065</span>, <span class="dv">4811</span>, <span class="dv">11796</span>, <span class="dv">464466</span>)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">generate_common_legend</span>(</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202308,</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">592</span>, <span class="dv">2065</span>, <span class="dv">4811</span>, <span class="dv">11796</span>, <span class="dv">464466</span>),</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202308,</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKEND_PM_TRIPS"</span>,</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekends/Holidays 4 - 7PM (August 2023)"</span>,</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">592</span>, <span class="dv">2065</span>, <span class="dv">4811</span>, <span class="dv">11796</span>, <span class="dv">464466</span>)</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>)</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>In <strong>August 2023</strong>, weekday evening peak hours <strong>is busier</strong> than weekend/holiday evening peak hours. This is indicated by higher number of red hexagons.</p>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202309,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKDAY_PM_TRIPS"</span>,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekdays 5 - 8PM (September 2023)"</span>,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">617</span>, <span class="dv">2093</span>, <span class="dv">4781</span>, <span class="dv">10867</span>, <span class="dv">406214</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">generate_common_legend</span>(</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202309,</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">617</span>, <span class="dv">2093</span>, <span class="dv">4781</span>, <span class="dv">10867</span>, <span class="dv">406214</span>),</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202309,</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKEND_PM_TRIPS"</span>,</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekends/Holidays 4 - 7PM (September 2023)"</span>,</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">617</span>, <span class="dv">2093</span>, <span class="dv">4781</span>, <span class="dv">10867</span>, <span class="dv">406214</span>)</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>)</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>In <strong>September 2023</strong>, weekday morning peak hours <strong>is busier</strong> than weekend/holiday evening peak hours. This is indicated by higher number of red hexagons.</p>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202310,</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKDAY_PM_TRIPS"</span>,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekdays 5 - 8PM (October 2023)"</span>,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">587</span>, <span class="dv">2023</span>, <span class="dv">4780</span>, <span class="dv">11419</span>, <span class="dv">462160</span>)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">generate_common_legend</span>(</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202310,</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">587</span>, <span class="dv">2023</span>, <span class="dv">4780</span>, <span class="dv">11419</span>, <span class="dv">462160</span>),</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bus_commuter_traffic</span>(</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> bus_peaks_hc202310,</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">colname =</span> <span class="st">"WEEKEND_PM_TRIPS"</span>,</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Bus Trips on Weekends/Holidays 4 - 7PM (October 2023)"</span>,</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">587</span>, <span class="dv">2023</span>, <span class="dv">4780</span>, <span class="dv">11419</span>, <span class="dv">462160</span>)</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>)</span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>In <strong>October 2023</strong>, weekday morning peak hours <strong>is busier</strong> than weekend/holiday evening peak hours. This is indicated by higher number of red hexagons.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The patterns observed by visually analyzing the maps lead to the same conclusion: <strong>More people ride the bus on weekday evenings compared to weekend/holiday evenings</strong>. This is can be explained by the people going home from school or office during the weekdays.</p>
+<p>Moreover, the darker areas in the 2 maps are similar, indicating that the same areas that are relatively busier on weekdays are also relatively busier on weekends as well. This is contrary to my expectations as I expect people to not commute from their office or school during the weekends. This is why I expected that some areas for recreation will be busier during the weekends or holidays, while business districts will be less busy.</p>
+<p>However, we need to do a deeper spatial analysis like LISA or EHSA to have more detailed insights on spatial patterns as we can only get an overview of patterns from visual inspection.</p>
+</div>
+</div>
 </section>
 </section>
 <section id="conclusion" class="level1">
