@@ -52,3 +52,217 @@ We will load the following R packages needed for this study.
 ```{r}
 pacman::p_load(sf, sfdep, tmap, tidyverse, knitr)
 ```
+
+## Loading the data
+
+::: callout-important
+Before running this part, please run all the code chunks in [Data Wrangling](/Take-home_Ex1/Take-home_Ex1A.qmd) as it generates the data needed for this document.
+:::
+
+Use `read_rds()` to load the `rds` data needed for geovisualization and analysis.
+
+```{r}
+sg_honeycomb <- read_rds("data/rds/sg_honeycomb_with_num_busstops.rds")
+bus_peaks_hc <- read_rds("data/rds/bus_peaks_hc202310.rds") %>%
+  filter(NUM_BUS_STOPS > 0)
+```
+
+-   `sg_honeycomb` - contains the honeycomb grid that covers Singapore boundaries
+-   `bus_peaks_hc` - bus commuter traffic data for peak times for **October 2023**
+
+::: callout-important
+As mentioned in [Geovisualization and Analysis](/Take-home_Ex1/Take-home_Ex1B.html#conclusion), we are only focusing on **October 2023** data as we observed the same patterns in the August and September.
+:::
+
+# Methodology
+
+Local Indicator of Spatial Association (LISA) detects spatial clusters present in our geospatial data and also helps identify spatial outliers.
+
+We will use this analysis method to identify which areas have the highest bus commuters and which ones have the least.
+
+To perform a LISA Analysis, we will do the following:
+
+-   Deriving contiguity weights using Queen's method
+
+-   Computing global Moran's I
+
+-   Computing local Moran's I
+
+-   Visualizing local Moran's I and p-value
+
+-   Visualizing LISA Map
+
+-   Interpreting the results
+
+We will do this analysis for the all the peak hours.
+
+::: callout-important
+For all analysis in this study, we will set the significance level, or $\alpha$ value to **0.05**.
+:::
+
+# Deriving contiguity weights using Queens' method
+
+Before getting Moran's I, we need to get the contiguity weights first. We will use the Queen's method.
+
+::: callout-note
+As our cells are hexagons, they touch the neighbors via edges, not single points. Hence, both Rook and Queen's method will return the same results.
+:::
+
+We will use `st_contiguity()` and `st_contiguity()` to get the contiguity weights. We will set `allow_zero = TRUE` as we have *island hexagons* in our data set.
+
+```{r}
+wm_q <-
+  bus_peaks_hc %>%
+  mutate(
+    nb = st_contiguity(geometry),
+    wt = st_weights(nb,
+                    style = "W",
+                    allow_zero = TRUE)
+  )
+glimpse(wm_q)
+```
+
+# Calculating global Moran's I
+
+To check for signs of clustering, we will first calculate the global Moran's I value.
+
+-   When $I > 0$, observations are similar (sign of clustering)
+
+-   When $I < 0$, observations are dissimilar (low indication of clustering)
+
+-   If $p < \alpha$ (**0.05**)**,** reject the **Null hypothesis**: the observed pattern happened by chance.
+
+We will do this for all peak times.
+
+Before running the permutation test, we must set the seed first:
+
+```{r}
+set.seed(1234)
+```
+
+To perform the permutation test, we will use `global_moran_perm()`.
+
+::: panel-tabset
+## Weekday morning
+
+```{r}
+global_moran_perm(
+  wm_q$WEEKDAY_AM_TRIPS,
+  wm_q$nb,
+  wm_q$wt,
+  nsim = 99,
+  zero.policy = TRUE
+)
+```
+
+## Weekday evening
+
+```{r}
+global_moran_perm(
+  wm_q$WEEKDAY_PM_TRIPS,
+  wm_q$nb,
+  wm_q$wt,
+  nsim = 99,
+  zero.policy = TRUE
+)
+```
+
+## Weekend morning
+
+```{r}
+global_moran_perm(
+  wm_q$WEEKEND_AM_TRIPS,
+  wm_q$nb,
+  wm_q$wt,
+  nsim = 99,
+  zero.policy = TRUE
+)
+```
+
+## Weekend evening
+
+```{r}
+global_moran_perm(
+  wm_q$WEEKEND_PM_TRIPS,
+  wm_q$nb,
+  wm_q$wt,
+  nsim = 99,
+  zero.policy = TRUE
+)
+```
+:::
+
+# Calculating local Moran's I
+
+Now that we have identified signs of clustering, we will identify where those clusters are
+
+We will do this for all peak times.
+
+Before running the permutation test, we must set the seed first:
+
+```{r}
+set.seed(1234)
+```
+
+To perform the permutation test, we will use `global_moran_perm()`.
+
+::: panel-tabset
+## Weekday morning
+
+```{r}
+lisa_weekday_am <- wm_q %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99, zero.policy = TRUE),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+## Weekday evening
+
+```{r}
+
+```
+
+## Weekend morning
+
+```{r}
+
+```
+
+## Weekend evening
+
+```{r}
+
+```
+:::
+
+```{r}
+tmap_mode("plot")
+map1 <- tm_shape(lisa_weekday_am) +
+  tm_fill("ii") + 
+  tm_borders(alpha = 0.5) +
+  tm_view(set.zoom.limits = c(6,8)) +
+  tm_layout(main.title = "local Moran's I of GDPPC",
+            main.title.size = 0.8)
+
+map2 <- tm_shape(lisa_weekday_am) +
+  tm_fill("p_ii_sim",
+          breaks = c(0, 0.001, 0.01, 0.05, 1),
+              labels = c("0.001", "0.01", "0.05", "Not sig")) + 
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "p-value of local Moran's I",
+            main.title.size = 0.8)
+
+tmap_arrange(map1, map2, ncol = 2)
+```
+
+```{r}
+lisa_sig <- lisa_weekday_am  %>%
+  filter(p_ii_sim < 0.05)
+tmap_mode("plot")
+tm_shape(sg_honeycomb) +
+  tm_fill(col="white")+
+tm_shape(lisa_sig) +
+  tm_fill("mean") + 
+  tm_borders(alpha = 0.4)
+```
