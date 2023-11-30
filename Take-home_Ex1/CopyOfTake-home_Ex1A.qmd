@@ -1,0 +1,1112 @@
+---
+title: "Take Home Exercise 1A: Data Wrangling"
+author: "Kristine Joy Paas"
+date: "24 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: false
+  warning: false
+---
+
+# Overview
+
+The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.
+
+The main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).
+
+In doing these study, we will be looking at bus trips started during the hours below.
+
+| Peak hour period             | Bus tap on time |
+|------------------------------|-----------------|
+| Weekday morning peak         | 6am to 9am      |
+| Weekday evening peak         | 5pm to 8pm      |
+| Weekend/holiday morning peak | 11am to 2pm     |
+| Weekend/holiday evening peak | 4pm to 7pm      |
+
+More details about the study can be found [here](https://isss624-ay2023-24nov.netlify.app/take-home_ex01).
+
+In this part of the study, we will do **data wrangling** on the data sets so that they are transformed into a form that can be used for geovisualization and spatial analysis.
+
+# Setup
+
+## Preparing the data sets
+
+### Geospatial
+
+These data sets are in `shp` format.
+
+-   Master Plan 2019 Subzone Boundary (Web), originally from [data.gov.sg](https://data.gov.sg/) but used the one provided on [E-learn](https://elearn.smu.edu.sg/d2l/home/357628).
+
+-   Bus Stop Locations, available publicly from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html)
+
+### Aspatial
+
+These data sets are in `csv` format.
+
+-   Passenger Volume By Origin Destination Bus Stops from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API (need to [request for access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html))
+
+    -   August 2023
+
+    -   September 2023
+
+    -   October 2023 - we will focus on this as the **main data set**
+
+## Preparing the `data/` directory
+
+Before starting our analysis, we have to organize the data sets in a directory.
+
+-   Geospatial data will be located under `data/geospatial`
+
+-   Aspatial data will be located under `data/aspatial`
+
+-   `data/rds` to be created to store data that we can reuse and to make our code reproduceable.
+
+Finally, we are left with the following file structure:
+
+``` bash
+Take-home_Ex1
+├── Take-home_Ex1.qmd
+└── data
+    ├── aspatial
+    │   ├── origin_destination_bus_202308.csv
+    │   ├── origin_destination_bus_202309.csv
+    │   └── origin_destination_bus_202310.csv
+    ├── geospatial
+    │   ├── BusStop.cpg
+    │   ├── BusStop.dbf
+    │   ├── BusStop.lyr
+    │   ├── BusStop.prj
+    │   ├── BusStop.sbn
+    │   ├── BusStop.sbx
+    │   ├── BusStop.shp
+    │   ├── BusStop.shp.xml
+    │   ├── BusStop.shx
+    │   ├── MPSZ-2019.cpg
+    │   ├── MPSZ-2019.dbf
+    │   ├── MPSZ-2019.prj
+    │   ├── MPSZ-2019.qmd
+    │   ├── MPSZ-2019.shp
+    │   └── MPSZ-2019.shx
+    └── rds
+```
+
+## Setting Up the R Environment
+
+After preparing the data sets, we can finally proceed to load the R packages needed for this study.
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html): for thematic mapping
+
+-   [**sf**](https://cran.r-project.org/web/packages/sf/index.html): for geospatial data handling
+
+-   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
+
+-   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
+
+```{r}
+pacman::p_load(sf, tmap, tidyverse, knitr)
+```
+
+# Methodology
+
+After setting up the data sets and the R environment, we can finally proceed with data wrangling.
+
+Using data sets prepared in [Preparing the data sets], we will proceed with these general steps:
+
+-   Importing data
+
+-   Processing (filtering, joining)
+
+-   Cleaning
+
+-   Saving data as `rds` file
+
+As the wrangling process is expected to have a lot of intermediate steps, **Save points** and **Checkpoints** will be available along the way so we can save and load processed data and won't have to restart all over again.
+
+# Generating a honeycomb grid from `mpsz` data
+
+As per the specifications of this study, we must use a honeycomb grid, a tesselation of hexagons to replace the `mpsz` data set.
+
+## Why hexagons?
+
+Some benefits of using a hexagons are:
+
+-   A hexagon is the polygon with the most number of sides that can tessellate (or tile). Hence it is the most "circular" of the polygons that can be tessellated.
+
+-   Distances of the centroid from one hexagon to the next are consistent all around the hexagon, making it easy to find neighbors.
+
+More information about hexagons in the context of spatial analysis can be found in <https://desktop.arcgis.com/en/arcmap/latest/tools/spatial-statistics-toolbox/h-whyhexagons.htm>
+
+::: callout-tip
+As in the map in \[Singapore boundary data\], the subzones have different shapes and sizes. The analysis will benefit from using a consistently-shaped regions because our analysis requires a lot of neighbor calculations.
+:::
+
+## Importing Singapore boundary data
+
+We will use the **Master Plan 2019 Subzone Boundary (Web)** data set that has been used in class. This is a `shp` file, that we will import by using \`st_read()
+
+```{r}
+mpsz <- st_read(dsn = "data/geospatial",
+                    layer = "MPSZ-2019")
+```
+
+::: callout-important
+This data frame using the global GPS standard projection, [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We need to convert this to [**SVY21**](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) that is more appropriate for Singapore 🇸🇬 context, and for consistency with the bus stop data.
+:::
+
+```{r}
+mpsz <- mpsz %>% st_transform(crs=3414)
+head(mpsz)
+```
+
+Now that the data frame has the correct projection, let's do a quick plot to visually check if we have the boundaries that we need.
+
+```{r}
+tmap_style("natural")
+tm_shape(mpsz) +
+  tm_fill("lightgreen", title = "Singapore Boundary") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Map of Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+## Generating hexagons
+
+For this study, we will create hexagons with [apothem](https://www.merriam-webster.com/dictionary/apothem) of **250m.** This is the distance of the line segment from the **center** to the **midpoint of the** **edge**.
+
+::: callout-tip
+The edge length is **288.675**m.
+
+$$
+250m/cos(30) = 288.675m
+$$
+:::
+
+Following the steps on <https://urbandatapalette.com/post/2021-08-tessellation-sf/>, we will use [st_make_grid()](https://search.r-project.org/CRAN/refmans/sf/html/st_make_grid.html) to generate the hexagons for analysis.
+
+We need to provide a value for `cellsize` in the function, which is defined as *"for hexagonal cells the distance between opposite edges"*.
+
+This is equivalent to $2 \times L_{apothem} = 2 \times 250m$, which is **500m**.
+
+```{r}
+sg_honeycomb <- st_make_grid(mpsz,
+                       cellsize = 500,
+                       what = "polygon",
+                       square = FALSE) %>%
+  st_sf()
+```
+
+::: callout-important
+We have to use `st_sf()` to convert the result to a data frame that can be used for the succeeding steps.
+:::
+
+Let's check if the honeycomb grid fits with Singapore.
+
+```{r}
+tm_shape(sg_honeycomb) +
+  tm_fill(col = "white", title = "Hexagons") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Singapore with honeycomb grid",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5)
+```
+
+::: callout-note
+The grid has been generated correctly because:
+
+-   It covers exactly the whole country of Singapore.
+
+-   Looking at the scale, there are 10 hexagons within a 5 km length. This means each hexagon has an apothem of 250m, as expected.
+:::
+
+## Fitting grid exactly to the region
+
+The grid above has hexagons outside of Singapore bounds. We need to filter the grid such that we are left with only the hexagons that intersect with Singapore boundary.
+
+We will use `st_intersects()` and `filter()` to filter out the hexagons that intersect Singapore.
+
+```{r}
+sg_honeycomb$n_collisions = lengths(st_intersects(sg_honeycomb, mpsz))
+sg_honeycomb <- filter(sg_honeycomb, n_collisions > 0)
+```
+
+Let's generate a map again if the cleaning generated our expected result.
+
+```{r}
+tm_shape(sg_honeycomb) +
+  tm_fill(col = "white", title = "Hexagons") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Singapore with honeycomb grid",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha =0.2) +
+  tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5)
+```
+
+::: callout-important
+There are some tiny islands outside of the Singapore mainland. Although they have no bus stops, we will keep them in the data frame for now as other hexagons also do not have bus stops in them (as they have no red dots inside).
+:::
+
+## Adding an ID for each cell
+
+Now that we have perfectly fitting hexagon grid, we will assign a `HEXAGON_ID` for each hexagon to make each cell identifiable for further analysis.
+
+We will also remove `n_collisions` column as we do not need it anymore.
+
+```{r}
+sg_honeycomb = sg_honeycomb %>%
+  mutate(HEXAGON_ID = row_number()) %>%
+  select(, -n_collisions)
+head(sg_honeycomb)
+```
+
+Now that we have the assigned an ID to each hexagon, we have the desired form of the grid.
+
+::: callout-tip
+## Save point
+
+Let's save the honeycomb grid as an `rds` file so we can reuse it later.
+
+```{r}
+write_rds(sg_honeycomb, "data/rds/sg_honeycomb.rds")
+```
+:::
+
+::: callout-caution
+From this point forward, we will be using `sg_honeycomb` to do the analysis. Hence, we can already remove `mpsz` from the environment.
+
+By removing this, we are left with data in our environment that are relevant to the next part of the study.
+
+```{r}
+rm(mpsz)
+```
+:::
+
+# Getting the hexagon cells corresponding to each bus stop
+
+::: callout-tip
+## Checkpoint
+
+If you want to restart from this point, run the following code chunk to load the relevant data.\
+\
+This only works if you have previously ran the code chunks above this and have the needed `rds` files saved.
+
+```{r}
+sg_honeycomb = read_rds("data/rds/sg_honeycomb.rds")
+```
+:::
+
+The spatial analysis of this study must be done on a hexagon level. Hence, we must aggregate the commuter data of the possibly multiple bus stops within a hexagon.
+
+With that said, the goal of this part is to generate a mapping of each bus stop to the `HEXAGON_ID` of the hexagon that contains it.
+
+## Importing the BusStop data set
+
+The `BusStop` data set is a in `shp` format. We can import it by using `st_read()` from the `sf` package.
+
+```{r}
+busstops <- st_read(dsn = "data/geospatial",
+                    layer = "BusStop")
+```
+
+```{r}
+st_crs(busstops)
+```
+
+The EPSG value is **9001**, which correspond to [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We have to fix the projection by transforming to [**SVY21**](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem)with EPSG value of **3414**.
+
+```{r}
+busstops <- st_transform(busstops, crs = 3414)
+```
+
+Next, let's take a look at the available columns to identify which columns we can use for analysis. We will decide this later after looking at other data sets.
+
+```{r}
+kable(head(busstops))
+```
+
+::: callout-note
+From this initial look in the data, we will only retain **`BUS_STOP_N`** and **`LOC_DESC`** as they seem to be the most relevant to the analysis.
+:::
+
+Let's do a quick plot to see a visual glimpse of the data.
+
+```{r}
+tmap_style("natural")
+tm_shape(sg_honeycomb) +
+  tm_fill("lightgreen", title = "Singapore Honeycomb Grid") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Bus Stop Locations in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha =0.2) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.001, title = "Bus Stops")
+```
+
+Overlaying the bus stop locations helps us visualize which hexagons contain the bus stops. Some observations are:
+
+-   Some hexagons have no bus stops, especially **islands outside the mainland**
+
+-   Some hexagons have multiple bus stops. These are most likely from areas with high commuter traffic (e.g. residential, business districts)
+
+We need to formalize this connections in the data layer.
+
+::: callout-important
+Some bus stops on the North are outside of the border. These are the bus stops that for bus routes (e.g. CWx, SJE) the cross the border to **Johor Bahru** in Malaysia 🇲🇾
+:::
+
+## Mapping bus stop locations to honeycomb cells
+
+Next, we have to figure out which hexagons contains each point corresponding to bus stop locations.
+
+This can be done using `st_intersection()`. We will also drop the geometry here using `st_drop_geometry()` and make the data spatial as the resulting mapping will be used as the **connector** to join the aspatial bus commuter data with the hexagons.
+
+```{r}
+busstop_cells <- st_intersection(busstops, sg_honeycomb) %>%
+  st_drop_geometry() %>%
+  select(c(BUS_STOP_N, LOC_DESC, HEXAGON_ID)) %>%
+  rename(BUS_STOP_ID = BUS_STOP_N) %>%
+  rename(BUS_STOP_NAME = LOC_DESC)
+kable(head(busstop_cells))
+```
+
+::: callout-note
+Notice that `busstop_cells` has **5165** rows while `busstops` has **5161**. The five missing bus stops correspond to those outside of Singapore border noticed in \[##Importing the BusStop data set\].
+:::
+
+::: callout-tip
+## Save point
+
+Now that we have the mapping table, let's save this as an `rds` file so we can reuse it later.
+
+```{r}
+write_rds(busstop_cells, "data/rds/busstop_cells.rds")
+```
+:::
+
+# Counting bus stops inside hexagons
+
+::: callout-note
+There are a lot of hexagons with no bus stops so we can potentially get **heavily skewed data** because the number on trips in those hexagons will always be `0`.
+:::
+
+To help in analysis, we will at the number of bus stops in each hexagon. This can help in purposes like filtering hexagons with bus stops. This can be done with the combination of `lengths()` and `st_intersects()` as demonstrated in [Fitting grid exactly to the region].
+
+```{r}
+sg_honeycomb$NUM_BUS_STOPS <- lengths(st_intersects(sg_honeycomb, busstops))
+kable(sg_honeycomb[121:130,])
+```
+
+::: callout-tip
+## Save point
+
+Let's save the updated `sg_honeycomb` for reuse later.
+
+```{r}
+write_rds(sg_honeycomb, "data/rds/sg_honeycomb_with_num_busstops.rds")
+```
+:::
+
+::: callout-caution
+From this point forward, we do not need the raw `busstops` data frame anymore so we can remove it from the environment.
+
+```{r}
+rm(busstops)
+```
+:::
+
+# Aggregating bus trips started every hour within hexagons
+
+Next we will process the aspatial data set to have the hourly bus trips started for each hexagon. We will aggregate the hourly data, not just the peaks so we can reuse it for **Emerging Hot Spot Analysis** later on.
+
+## Importing bus commuter data
+
+We will use the **Passenger Volume By Origin Destination Bus Stops** data set to provide data about bus commuter volumes.
+
+These files are in `csv` file format so we will use `read_csv` to import them.
+
+::: callout-important
+We aim to analyze data for 3 months. However, we will focus on the **October 2023** for now to simplify the steps.
+:::
+
+```{r}
+odbus202310 <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
+glimpse(odbus202310)
+```
+
+## Converting relevant columns to `factor` data type
+
+The columns we are interested in are:
+
+-   `ORIGIN_PT_CODE`
+
+-   `DAY_TYPE`
+
+-   `TIME_PER_HOUR` (will not be converted to factor so we can do arithmetic operations)
+
+These are data with finite values with these corresponding number of values:
+
+| Column Name                          | Number of Values | Description                                        |
+|-----------------------|-----------------|--------------------------------|
+| `ORIGIN_PT_CODE`                     | 5156             | Corresponding to number of rows in `busstop_cells` |
+| `DAY_TYPE`                           | 2                | `Weekday`, `Weekdays/Holidays`                     |
+| `TIME_PER_HOUR`                      | 24               | corresponding to hours per day                     |
+| Number of hexagons \**for reference* | 4131             |                                                    |
+
+::: callout-note
+When we are done with this processing, we expect at most **247,488** rows in the data frame after \[##Aggregating trips by origin bus stop, hour of day, day type\].
+
+$$
+5156 \times 2 \times 24 = 247,488
+$$
+
+On the other hand, after aggregating on a hexagon level, we expect at most **198,288** rows in the final output.
+
+$$
+4131 \times 2 \times 24 = 198,288
+$$
+:::
+
+```{r}
+odbus202310$ORIGIN_PT_CODE <- as.factor(odbus202310$ORIGIN_PT_CODE)
+odbus202310$DAY_TYPE <- as.factor(odbus202310$DAY_TYPE)
+```
+
+## Aggregating trips by origin bus stop, day type, hour of day
+
+To do this aggregation, we need to:
+
+-   Group data by `ORIGIN_PT_CODE`, `DAY_TYPE`, and `TIME_PER_HOUR`
+
+-   Aggregate the `TOTAL_TRIPS` by getting the sum of said value for each group
+
+-   Rename `ORIGIN_PT_CODE` to `BUS_STOP_ID` to have the same column name as `busstop_cells`.
+
+-   Rename `TIME_PER_HOUR` to `HOUR_OF_DAY` to be more descriptive of its purpose.
+
+This can be achieved by using `group_by()`, `summarise()`, and `rename()`.
+
+```{r}
+hourly_from_bs202310 <-
+  odbus202310 %>%
+  group_by(
+    ORIGIN_PT_CODE,
+    DAY_TYPE,
+    TIME_PER_HOUR) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  rename(BUS_STOP_ID = ORIGIN_PT_CODE) %>%
+  rename(HOUR_OF_DAY = TIME_PER_HOUR)
+kable(hourly_from_bs202310[15:50,])
+```
+
+::: callout-tip
+## Save point
+
+We will save `hourly_from_bs202310` as this processed data will be useful later on.
+
+```{r}
+write_rds(hourly_from_bs202310, "data/rds/hourly_from_bs202310.rds")
+```
+:::
+
+::: callout-caution
+We also do not need `odbus202310` anymore so we can remove it from the environment.
+
+```{r}
+rm(odbus202310)
+```
+:::
+
+# Aggregating by hexagons
+
+::: callout-tip
+## Checkpoint
+
+If you want to restart from this point, run the following code chunk to load the relevant data.\
+\
+This only works if you have previously ran the code chunks above this and have the needed `rds` files saved.
+
+```{r}
+busstop_cells = read_rds("data/rds/busstop_cells.rds")
+hourly_from_bs202310 = read_rds("data/rds/hourly_from_bs202310.rds")
+```
+:::
+
+## Joining aspatial data
+
+As the goal of this study is to analyze data based on the hexagons, we need to do further processing on `hourly_from_bs202310` to aggregate the data based on hexagons.
+
+To do that, we will first do a `left_join()` of `busstop_cells` to `hourly_from_bs202310`. This will add **information on which cell the bus stops belong to**. We will also apply `unique()` to the resulting data set get rid of duplicate information.
+
+```{r}
+hourly_from_hex202310 <-
+  left_join(
+    hourly_from_bs202310,
+    busstop_cells
+  )
+glimpse(hourly_from_hex202310)
+```
+
+This is a strange result as `hourly_from_hex202310` has more number of rows than `hourly_from_bs202310` (191176 vs 190551). The most plausible explanation is that there are columns with `NA`.
+
+```{r}
+hourly_from_hex202310[
+  rowSums(is.na(hourly_from_hex202310)) > 0,
+  ] %>%
+  head()
+```
+
+There are rows without `HEXAGON_ID`. This means that there are bus stops in `hourly_from_hex202310` that are not in `busstop_cells`. As these missing bus stops do not have spatial data, we can remove these rows as we **cannot** do spatial analysis without it.
+
+```{r}
+hourly_from_hex202310 <-
+  hourly_from_hex202310 %>%
+  filter(!is.na(HEXAGON_ID))
+glimpse(hourly_from_hex202310)
+```
+
+::: callout-note
+We could have also used `inner_join` instead of `left_join`. However, we did not have enough information to expect that there are bus stops without spatial data.
+:::
+
+## Aggregating trips by hexagon_id, , day type, hour of day
+
+Following the same method as in [Aggregating trips by origin bus stop, day type, hour of day], we will aggregate the data by `HEXAGON_ID`, `DAY_TYPE`, and `TIME_PER_HOUR`.
+
+```{r}
+hourly_from_hex202310 <-
+  hourly_from_hex202310 %>%
+  group_by(
+    HEXAGON_ID,
+    DAY_TYPE,
+    HOUR_OF_DAY) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(hourly_from_hex202310, n = 30))
+```
+
+::: callout-tip
+## Save point
+
+We will save `hourly_from_hex202310` as this processed data will be useful later on.
+
+```{r}
+write_rds(hourly_from_hex202310, "data/rds/hourly_from_hex202310.rds")
+```
+:::
+
+As we do not need `hourly_from_bs202310` anymore, we can also remove it from the environment.
+
+```{r}
+rm(hourly_from_bs202310)
+```
+
+# Extracting peak hour data
+
+::: callout-tip
+## Checkpoint
+
+If you want to restart from this point, run the following code chunk to load the relevant data.\
+\
+This only works if you have previously ran the code chunks above this and have the needed `rds` files saved.
+
+```{r}
+sg_honeycomb = read_rds("data/rds/sg_honeycomb_with_num_busstops.rds")
+hourly_from_hex202310 = read_rds("data/rds/hourly_from_hex202310.rds")
+```
+:::
+
+We have to do the study on the following times:
+
+| Peak hour period             | Bus tap on time |
+|------------------------------|-----------------|
+| Weekday morning peak         | 6am to 9am      |
+| Weekday afternoon peak       | 5pm to 8pm      |
+| Weekend/holiday morning peak | 11am to 2pm     |
+| Weekend/holiday evening peak | 4pm to 7pm      |
+
+: The general steps to achieving this are:
+
+-   Filter `hourly_from_hex202310` by `HOUR_OF_DAY` based on range above, and `DAY_TYPE`
+
+-   Grouping values by `HEXAGON_ID`
+
+-   Aggregating the groups by getting total trips
+
+We will also collect these data on a data frame with the honeycomb geometry.
+
+```{r}
+bus_peaks_hc202310 <- sg_honeycomb
+```
+
+## Weekday morning peak (6 - 9am)
+
+Following the methodology above, we will first filter and aggregate trip data by `BUS_STOP_ID`
+
+```{r}
+weekday_am <-
+  hourly_from_hex202310 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(HOUR_OF_DAY >= 6 &
+           HOUR_OF_DAY < 9) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+glimpse(weekday_am)
+```
+
+Next storing them in a column in `bus_peaks_hc202310` via `left_join()`. We will also rename `TRIPS` to `WEEKDAY_AM_TRIPS` for better identification.
+
+```{r}
+bus_peaks_hc202310 <-
+  left_join(bus_peaks_hc202310, weekday_am) %>%
+  rename(WEEKDAY_AM_TRIPS = TRIPS)
+glimpse(bus_peaks_hc202310)
+```
+
+We can see that `WEEKDAY_AM_TRIPS` is `NA` for some rows. We will set these to `0` for consistency with the data type `dbl`.
+
+```{r}
+bus_peaks_hc202310$WEEKDAY_AM_TRIPS[is.na(bus_peaks_hc202310$WEEKDAY_AM_TRIPS)] <- 0
+summary(bus_peaks_hc202310$WEEKDAY_AM_TRIPS)
+```
+
+The **median** of `WEEKDAY_AM_TRIPS` is 0. This is problematic as this heavily skews the data. Let's revert the `NA` values for **hexagons without bus stops** as counting the bus trips started in those areas does not make sense anyway.
+
+```{r}
+bus_peaks_hc202310$WEEKDAY_AM_TRIPS[bus_peaks_hc202310$NUM_BUS_STOPS == 0] <- NA
+summary(bus_peaks_hc202310$WEEKDAY_AM_TRIPS)
+```
+
+The data distribution is much less skewed now. Let's have a peek at the data again.
+
+```{r}
+kable(bus_peaks_hc202310[121:130,])
+```
+
+::: callout-caution
+Now that we have the correct data, we can remove `weekday_am` as the data it has is already in `bus_peaks_hc202310`.
+
+```{r}
+rm(weekday_am)
+```
+:::
+
+We can proceed to applying the same for the other peak times. *I won't go into detail of each step*.
+
+## Weekday evening peak (5 - 8pm)
+
+```{r}
+weekday_pm <-
+  hourly_from_hex202310 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(HOUR_OF_DAY >= 17 &
+           HOUR_OF_DAY < 20) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+glimpse(weekday_pm)
+```
+
+```{r}
+bus_peaks_hc202310 <-
+  left_join(bus_peaks_hc202310, weekday_pm) %>%
+  rename(WEEKDAY_PM_TRIPS = TRIPS)
+
+bus_peaks_hc202310$WEEKDAY_PM_TRIPS[
+  bus_peaks_hc202310$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202310$WEEKDAY_PM_TRIPS)
+  ] <- 0
+kable(bus_peaks_hc202310[121:130,])
+```
+
+::: callout-caution
+Now that we have the correct data, we can remove `weekday_pm` as the data it has is already in `bus_peaks_hc202310`.
+
+```{r}
+rm(weekday_pm)
+```
+:::
+
+## Weekend/holiday morning peak (11am - 2pm)
+
+```{r}
+weekend_am <-
+  hourly_from_hex202310 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(HOUR_OF_DAY >= 11 &
+           HOUR_OF_DAY < 14) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+glimpse(weekend_am)
+```
+
+```{r}
+bus_peaks_hc202310 <-
+  left_join(bus_peaks_hc202310, weekend_am) %>%
+  rename(WEEKEND_AM_TRIPS = TRIPS)
+
+bus_peaks_hc202310$WEEKEND_AM_TRIPS[
+  bus_peaks_hc202310$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202310$WEEKEND_AM_TRIPS)
+  ] <- 0
+kable(bus_peaks_hc202310[121:130,])
+```
+
+::: callout-caution
+Now that we have the correct data, we can remove `weekday_pm` as the data it has is already in `bus_peaks_hc202310`.
+
+```{r}
+rm(weekend_am)
+```
+:::
+
+## Weekend/holiday evening peak (4 - 7pm)
+
+```{r}
+weekend_pm <-
+  hourly_from_hex202310 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(HOUR_OF_DAY >= 16 &
+           HOUR_OF_DAY < 19) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+glimpse(weekend_pm)
+```
+
+```{r}
+bus_peaks_hc202310 <-
+  left_join(bus_peaks_hc202310, weekend_pm) %>%
+  rename(WEEKEND_PM_TRIPS = TRIPS)
+
+bus_peaks_hc202310$WEEKEND_PM_TRIPS[
+  bus_peaks_hc202310$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202310$WEEKEND_PM_TRIPS)
+  ] <- 0
+kable(bus_peaks_hc202310[121:130,])
+```
+
+::: callout-caution
+Now that we have the correct data, we can remove `weekday_pm` as the data it has is already in `bus_peaks_hc202310`.
+
+```{r}
+rm(weekend_pm)
+```
+:::
+
+::: callout-tip
+## Save point
+
+We will save `bus_peaks_hc202310` as this contains data we need for spatial analysis.
+
+```{r}
+write_rds(bus_peaks_hc202310, "data/rds/bus_peaks_hc202310.rds")
+```
+:::
+
+# Applying data wrangling to the rest of `odbus` data set
+
+::: callout-tip
+## Checkpoint
+
+If you want to restart from this point, run the following code chunk to load the relevant data.\
+\
+This only works if you have previously ran the code chunks above this and have the needed `rds` files saved.
+
+```{r}
+busstop_cells = read_rds("data/rds/busstop_cells.rds")
+sg_honeycomb = read_rds("data/rds/sg_honeycomb_with_num_busstops.rds")
+```
+:::
+
+The steps we have applied so far were applied to the **October 2023** bus commuter data. We will run through the same steps to do data wrangling for the *September 2023* and *August 2023* data sets as well.
+
+From this point, we will be running the code chunks from [Aggregating bus trips started every hour within hexagons] to [Extracting peak hour data].
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code for **August 2023**"
+
+# Aggregate on bus stop level
+odbus202308 <- read_csv("data/aspatial/origin_destination_bus_202308.csv")
+odbus202308$ORIGIN_PT_CODE <- as.factor(odbus202308$ORIGIN_PT_CODE)
+odbus202308$DAY_TYPE <- as.factor(odbus202308$DAY_TYPE)
+
+hourly_from_bs202308 <-
+  odbus202308 %>%
+  group_by(
+    ORIGIN_PT_CODE,
+    DAY_TYPE,
+    TIME_PER_HOUR) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  rename(BUS_STOP_ID = ORIGIN_PT_CODE) %>%
+  rename(HOUR_OF_DAY = TIME_PER_HOUR)
+
+write_rds(hourly_from_bs202308, "data/rds/hourly_from_bs202308.rds")
+rm(odbus202308)
+
+# Aggregate hexagon level
+
+hourly_from_hex202308 <-
+  left_join(
+    hourly_from_bs202308,
+    busstop_cells
+  )
+
+hourly_from_hex202308 <-
+  hourly_from_hex202308 %>%
+  group_by(
+    HEXAGON_ID,
+    DAY_TYPE,
+    HOUR_OF_DAY) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+write_rds(hourly_from_hex202308, "data/rds/hourly_from_hex202308.rds")
+rm(hourly_from_bs202308)
+
+# Extract peak bus hour commuter traffic
+
+bus_peaks_hc202308 <- sg_honeycomb
+
+weekday_am <-
+  hourly_from_hex202308 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(HOUR_OF_DAY >= 6 &
+           HOUR_OF_DAY < 9) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202308 <-
+  left_join(bus_peaks_hc202308, weekday_am) %>%
+  rename(WEEKDAY_AM_TRIPS = TRIPS)
+
+bus_peaks_hc202308$WEEKDAY_AM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKDAY_AM_TRIPS)
+  ] <- 0
+rm(weekday_am)
+
+weekday_pm <-
+  hourly_from_hex202308 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(HOUR_OF_DAY >= 17 &
+           HOUR_OF_DAY < 20) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202308 <-
+  left_join(bus_peaks_hc202308, weekday_pm) %>%
+  rename(WEEKDAY_PM_TRIPS = TRIPS)
+
+bus_peaks_hc202308$WEEKDAY_PM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKDAY_PM_TRIPS)
+  ] <- 0
+rm(weekday_pm)
+
+weekend_am <-
+  hourly_from_hex202308 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(HOUR_OF_DAY >= 11 &
+           HOUR_OF_DAY < 14) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202308 <-
+  left_join(bus_peaks_hc202308, weekend_am) %>%
+  rename(WEEKEND_AM_TRIPS = TRIPS)
+
+bus_peaks_hc202308$WEEKEND_AM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKEND_AM_TRIPS)
+  ] <- 0
+rm(weekend_am)
+
+weekend_pm <-
+  hourly_from_hex202308 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(HOUR_OF_DAY >= 16 &
+           HOUR_OF_DAY < 19) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202308 <-
+  left_join(bus_peaks_hc202308, weekend_pm) %>%
+  rename(WEEKEND_PM_TRIPS = TRIPS)
+
+bus_peaks_hc202308$WEEKEND_PM_TRIPS[
+  bus_peaks_hc202308$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202308$WEEKEND_PM_TRIPS)
+  ] <- 0
+rm(weekend_pm)
+
+write_rds(bus_peaks_hc202308, "data/rds/bus_peaks_hc202308.rds")
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code for **September 2023**"
+
+# Aggregate on bus stop level
+odbus202309 <- read_csv("data/aspatial/origin_destination_bus_202309.csv")
+odbus202309$ORIGIN_PT_CODE <- as.factor(odbus202309$ORIGIN_PT_CODE)
+odbus202309$DAY_TYPE <- as.factor(odbus202309$DAY_TYPE)
+
+hourly_from_bs202309 <-
+  odbus202309 %>%
+  group_by(
+    ORIGIN_PT_CODE,
+    DAY_TYPE,
+    TIME_PER_HOUR) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  rename(BUS_STOP_ID = ORIGIN_PT_CODE) %>%
+  rename(HOUR_OF_DAY = TIME_PER_HOUR)
+
+write_rds(hourly_from_bs202309, "data/rds/hourly_from_bs202309.rds")
+rm(odbus202309)
+
+# Aggregate hexagon level
+
+hourly_from_hex202309 <-
+  left_join(
+    hourly_from_bs202309,
+    busstop_cells
+  )
+
+hourly_from_hex202309 <-
+  hourly_from_hex202309 %>%
+  group_by(
+    HEXAGON_ID,
+    DAY_TYPE,
+    HOUR_OF_DAY) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+write_rds(hourly_from_hex202309, "data/rds/hourly_from_hex202309.rds")
+rm(hourly_from_bs202309)
+
+# Extract peak bus hour commuter traffic
+
+bus_peaks_hc202309 <- sg_honeycomb
+
+weekday_am <-
+  hourly_from_hex202309 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(HOUR_OF_DAY >= 6 &
+           HOUR_OF_DAY < 9) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202309 <-
+  left_join(bus_peaks_hc202309, weekday_am) %>%
+  rename(WEEKDAY_AM_TRIPS = TRIPS)
+
+bus_peaks_hc202309$WEEKDAY_AM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKDAY_AM_TRIPS)
+  ] <- 0
+rm(weekday_am)
+
+weekday_pm <-
+  hourly_from_hex202309 %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  filter(HOUR_OF_DAY >= 17 &
+           HOUR_OF_DAY < 20) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202309 <-
+  left_join(bus_peaks_hc202309, weekday_pm) %>%
+  rename(WEEKDAY_PM_TRIPS = TRIPS)
+
+bus_peaks_hc202309$WEEKDAY_PM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKDAY_PM_TRIPS)
+  ] <- 0
+rm(weekday_pm)
+
+weekend_am <-
+  hourly_from_hex202309 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(HOUR_OF_DAY >= 11 &
+           HOUR_OF_DAY < 14) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202309 <-
+  left_join(bus_peaks_hc202309, weekend_am) %>%
+  rename(WEEKEND_AM_TRIPS = TRIPS)
+
+bus_peaks_hc202309$WEEKEND_AM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKEND_AM_TRIPS)
+  ] <- 0
+rm(weekend_am)
+
+weekend_pm <-
+  hourly_from_hex202309 %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter(HOUR_OF_DAY >= 16 &
+           HOUR_OF_DAY < 19) %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+
+bus_peaks_hc202309 <-
+  left_join(bus_peaks_hc202309, weekend_pm) %>%
+  rename(WEEKEND_PM_TRIPS = TRIPS)
+
+bus_peaks_hc202309$WEEKEND_PM_TRIPS[
+  bus_peaks_hc202309$NUM_BUS_STOPS > 0 &
+  is.na(bus_peaks_hc202309$WEEKEND_PM_TRIPS)
+  ] <- 0
+rm(weekend_pm)
+
+write_rds(bus_peaks_hc202309, "data/rds/bus_peaks_hc202309.rds")
+```
+
+# Recap
+
+We have done data wrangling and we now have the data we need for further visualization and spatial analysis.
+
+We have the following `rds` files generated in this part of the study.
+
+``` bash
+Take-home_Ex1/data/rds
+├── bus_peaks_hc202308.rds
+├── bus_peaks_hc202309.rds
+├── bus_peaks_hc202310.rds
+├── busstop_cells.rds
+├── hourly_from_bs202308.rds
+├── hourly_from_bs202309.rds
+├── hourly_from_bs202310.rds
+├── hourly_from_hex202308.rds
+├── hourly_from_hex202309.rds
+├── hourly_from_hex202310.rds
+├── sg_honeycomb.rds
+└── sg_honeycomb_with_num_busstops.rds
+```
+
+We will be using these data files in the next part, [Geovisualization and Analysis](/Take-home_Ex1/Take-home_Ex1B.qmd).
