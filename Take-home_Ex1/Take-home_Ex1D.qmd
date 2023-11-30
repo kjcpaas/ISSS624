@@ -49,6 +49,208 @@ We will load the following R packages needed for this study.
 
 -   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
 
+-   **plotly**: for interactive plots
+
 ```{r}
-pacman::p_load(sf, sfdep, tmap, tidyverse, knitr)
+pacman::p_load(sf, sfdep, tmap, tidyverse, plotly, knitr)
+```
+
+## Environment settings
+
+We will also set the default settings on for this document
+
+-   `tmap_style` to **natural**: for displaying the maps with preferred style
+
+-   set **seed** for reproducibility of results
+
+```{r}
+tmap_style("natural")
+set.seed(1234)
+```
+
+## Loading the data
+
+::: callout-important
+Before running this part, please run all the code chunks in [Data Wrangling](/Take-home_Ex1/Take-home_Ex1A.qmd) as it generates the data needed for this document.
+:::
+
+Use `read_rds()` to load the `rds` data needed for geovisualization and analysis.
+
+```{r}
+sg_honeycomb <- read_rds("data/rds/sg_honeycomb_with_num_busstops.rds")
+hourly_from_hex <- read_rds("data/rds/hourly_from_hex202310.rds")
+busstop_hc <- sg_honeycomb %>% filter(NUM_BUS_STOPS > 0)
+```
+
+-   `sg_honeycomb` - contains the honeycomb grid that covers Singapore boundaries
+-   `hourly_from_hex` - hourly bus commuter traffic data for **October 2023**
+
+# Creating space-time cube
+
+## First attempt
+
+```{r}
+weekday_hourly_sf <-
+  hourly_from_hex %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  ungroup() %>%
+  select(c(1, 3, 4))
+```
+
+```{r}
+weekday_st <- spacetime(weekday_hourly_sf, busstop_hc,
+                        .loc_col = "HEXAGON_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(weekday_st)
+```
+
+## Filling the gaps
+
+Attempt was successful because we are missing some **time-location** combinations.
+
+As we have **1519** hexagons and **24** hours in a day, the `sf` must have $1519 \times 24$ or **36456** rows.
+
+```{r}
+full_combo <-
+  expand.grid(
+    HEXAGON_ID = unique(busstop_hc$HEXAGON_ID),
+    HOUR_OF_DAY = 0:23
+  )
+nrow(full_combo)
+```
+
+```{r}
+weekday_hourly_sf <- full_join(weekday_hourly_sf, full_combo)
+weekday_hourly_sf$TRIPS[is.na(weekday_hourly_sf$TRIPS)] <- 0
+weekday_hourly_sf <- weekday_hourly_sf %>% filter(HOUR_OF_DAY >= 6 & HOUR_OF_DAY < 14)
+weekday_hourly_sf <- weekday_hourly_sf %>%
+  left_join(busstop_hc) %>% st_sf()
+```
+
+::: panel-tabset
+## Weekday
+
+```{r}
+weekday_st <- spacetime(weekday_hourly_sf, busstop_hc,
+                        .loc_col = "HEXAGON_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(weekday_st)
+```
+
+## Weekend/Holidays
+:::
+
+# Deriving spatial weights
+
+```{r}
+weekday_nb <-
+  weekday_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(st_contiguity(geometry)),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+```
+
+# Computing local Gi\*
+
+```{r}
+gi_stars <- weekday_nb %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
+```
+
+# Mann-Kendall
+
+```{r}
+weekday_cbg <- gi_stars %>% 
+  ungroup() %>% 
+  filter(HEXAGON_ID == "48") %>%
+  select(HEXAGON_ID, HOUR_OF_DAY, gi_star)
+```
+
+## Plot
+
+```{r}
+p <- ggplot(data = weekday_cbg, 
+       aes(x = HOUR_OF_DAY, 
+           y = gi_star)) +
+  geom_line() +
+  theme_light()
+
+ggplotly(p)
+```
+
+```{r}
+weekday_cbg %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>% 
+  unnest_wider(mk)
+```
+
+# EHSA
+
+```{r}
+ehsa <- gi_stars %>%
+  group_by(HEXAGON_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  unnest_wider(mk)
+```
+
+```{r}
+ehsa %>% 
+  arrange(sl, abs(tau)) %>% head()
+```
+
+These are the emerging hot spots and cold spots
+
+# Emerging Hotspot Analysis
+
+```{r eval = FALSE}
+ehsa2 <- emerging_hotspot_analysis(
+  x = weekday_st, 
+  .var = "TRIPS", 
+  k = 1, 
+  nsim = 99,
+)
+```
+
+```{r}
+#write_rds(ehsa2, "data/rds/weekday_ehsa.rds")
+ehsa2 <- read_rds("data/rds/weekday_ehsa.rds")
+```
+
+## Visualization the distribution of EHSA classes
+
+```{r}
+ggplot(data = ehsa2,
+       aes(x = classification)) +
+  geom_bar()
+```
+
+```{r}
+weekday_hourly_ehsa <- weekday_hourly_sf %>%
+  left_join(ehsa2,
+            by = join_by(HEXAGON_ID == location))
+```
+
+```{r}
+ehsa_sig <- weekday_hourly_ehsa  %>%
+  filter(p_value < 0.05)
+
+tmap_mode("plot")
+tm_shape(sg_honeycomb) +
+  tm_fill(col="white") +
+  tm_borders(alpha = 0.5) +
+tm_shape(ehsa_sig) +
+  tm_fill("classification") + 
+  tm_borders(alpha = 0.4)
 ```

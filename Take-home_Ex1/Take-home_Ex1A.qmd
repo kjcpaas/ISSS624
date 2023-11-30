@@ -476,7 +476,7 @@ The columns we are interested in are:
 These are data with finite values with these corresponding number of values:
 
 | Column Name                          | Number of Values | Description                                        |
-|-----------------------|-----------------|--------------------------------|
+|--------------------------------------|------------------|----------------------------------------------------|
 | `ORIGIN_PT_CODE`                     | 5156             | Corresponding to number of rows in `busstop_cells` |
 | `DAY_TYPE`                           | 2                | `Weekday`, `Weekdays/Holidays`                     |
 | `TIME_PER_HOUR`                      | 24               | corresponding to hours per day                     |
