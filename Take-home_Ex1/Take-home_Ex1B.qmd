@@ -88,11 +88,19 @@ As we want to study the data for peak times, we have to extract and aggregate th
 
 ## Filtering data from the *trips_cube\_\** data
 
-The first thing to do is to filter the data from relevant hours using `filter()`. As the `HOUR_OF_DAY` in data set covers the data from the start to the end of the hour, when we filter the data we take this into consideration. For example, when we want to get 6 to 9am data, we will filter such as:
+The first thing to do is to filter the data from relevant hours using `filter()`.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### How to filter data by *HOUR_OF_DAY*
+
+The `HOUR_OF_DAY` in data set covers the data from the start to the end of the hour in **24-hour format**, i.e. when `HOUR_OF_DAY = 16`, this means bus taps from `4:00 PM` ton`4:59:59PM`.
+
+Hence, if we want to get 6 to 9am data, we will filter by:
 
 ```         
 HOUR_DAY >= 6 & HOUR_OF_DAY < 9
 ```
+:::
 
 ::: panel-tabset
 ### Weekday AM (6 - 9 AM)

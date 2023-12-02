@@ -217,7 +217,15 @@ mpsz <- mpsz %>% st_transform(crs=3414)
 ```
 :::
 
-Now that the data frame has the correct projection, let's do a quick plot to visually check if we have the boundaries that we need.
+::: callout-tip
+### Save point
+
+Let's save this geometry with corrected projection from plotting purposes.
+
+```{r}
+write_rds(mpsz, "data/rds/mpsz.rds")
+```
+:::
 
 ```{r}
 #| code-fold: true
