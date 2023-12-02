@@ -14,4 +14,221 @@ execute:
 
 # Getting Started
 
+-   reshape2 - will handle matrix form better
+
+```{r}
+pacman::p_load(tmap, sf, sp, DT, performance, reshape2, ggpubr, units, tidyverse)
+```
+
+# Computing distance Matrix
+
+Contains distance from the centroid of a region to the centroid of the other region.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+mpsz
+```
+
+## **Converting from sf data.table to SpatialPolygonsDataFrame**
+
+```{r}
+mpsz_sp <- as(mpsz, "Spatial")
+mpsz_sp
+```
+
+Sample operation in mpsz_sp on how to read the data table. (Check after class how this is done because it didn't work. I might have copied wrongly)
+
+```{r eval=FALSE}
+mpsz_sp_selected <- mpsz_sp %>%
+  selected(mpsz@data$SUBZONE)
+```
+
+## Computing the distance matrix
+
+```{r}
+dist <- spDists(mpsz_sp, 
+                longlat = FALSE)
+head(dist, n=c(10, 10))
+```
+
+## **Labelling column and row heanders of a distance matrix**
+
+```{r}
+sz_names <- mpsz$SUBZONE_C
+```
+
+```{r}
+colnames(dist) <- paste0(sz_names)
+rownames(dist) <- paste0(sz_names)
+```
+
+## **Pivoting distance value by SUBZONE_C**
+
+This will generate a list of pair of location1 and location2.
+
+Number of rows should be:
+
+$$
+n_{loc}^2 = 332^2 = 110224
+$$
+
+```{r}
+distPair <- melt(dist) %>%
+  rename(dist = value)
+head(distPair, 10)
+```
+
+```{r}
+nrow(distPair)
+```
+
+# **Updating intra-zonal distances**
+
+First we need to find out the minimum value for **non-zero distances**
+
+```{r}
+distPair %>%
+  filter(dist > 0) %>%
+  summary()
+```
+
+Next, a constant distance value of 50m is added into intra-zones distance.
+
+```{r}
+distPair$dist[distPair$dist == 0] <- 50
+```
+
+```{r}
+summary(distPair)
+```
+
+Rename column names
+
+```{r}
+distPair <- distPair %>%
+  rename(orig = Var1,
+         dest = Var2)
+head(distPair)
+```
+
+```{r}
+write_rds(distPair, "data/rds/distPair.rds") 
+```
+
+# Preparing Flow Data
+
+```{r}
+od_data <- read_rds("data/rds/od_data.rds")
+```
+
+Next, we will compute the total passenger trip between and within planning subzones by using the code chunk below. The output is all *flow_data*.
+
+```{r}
+flow_data <- od_data %>%
+  group_by(ORIGIN_SZ, DESTIN_SZ) %>% 
+  summarize(TRIPS = sum(MORNING_PEAK)) 
+head(flow_data, n = 10)
+```
+
+## **Separating intra-flow from passenger volume df**
+
+```{r}
+flow_data$FlowNoIntra <- ifelse(
+  flow_data$ORIGIN_SZ == flow_data$DESTIN_SZ, 
+  0, flow_data$TRIPS)
+flow_data$offset <- ifelse(
+  flow_data$ORIGIN_SZ == flow_data$DESTIN_SZ, 
+  0.000001, 1)
+```
+
+## **Combining passenger volume data with distance value**
+
+```{r}
+flow_data$ORIGIN_SZ <- as.factor(flow_data$ORIGIN_SZ)
+flow_data$DESTIN_SZ <- as.factor(flow_data$DESTIN_SZ)
+```
+
+```{r}
+flow_data1 <- flow_data %>%
+  left_join (distPair,
+             by = c("ORIGIN_SZ" = "orig",
+                    "DESTIN_SZ" = "dest"))
+```
+
+# **Preparing Origin and Destination Attributes**
+
+## **Importing population data**
+
+```{r}
+pop <- read_csv("data/aspatial/pop.csv")
+```
+
+## **Geospatial data wrangling**
+
+```{r}
+pop <- pop %>%
+  left_join(mpsz,
+            by = c("PA" = "PLN_AREA_N",
+                   "SZ" = "SUBZONE_N")) %>%
+  select(1:6) %>%
+  rename(SZ_NAME = SZ,
+         SZ = SUBZONE_C)
+```
+
+## Preparing origin attribute
+
+```{r}
+flow_data1 <- flow_data1 %>%
+  left_join(pop,
+            by = c(ORIGIN_SZ = "SZ")) %>%
+  rename(ORIGIN_AGE7_12 = AGE7_12,
+         ORIGIN_AGE13_24 = AGE13_24,
+         ORIGIN_AGE25_64 = AGE25_64) %>%
+  select(-c(PA, SZ_NAME))
+```
+
+## Preparing destination attribute
+
+```{r}
+flow_data1 <- flow_data1 %>%
+  left_join(pop,
+            by = c(DESTIN_SZ = "SZ")) %>%
+  rename(DESTIN_AGE7_12 = AGE7_12,
+         DESTIN_AGE13_24 = AGE13_24,
+         DESTIN_AGE25_64 = AGE25_64) %>%
+  select(-c(PA, SZ_NAME))
+```
+
+```{r}
+write_rds(flow_data1, "data/rds/SIM_data.rds")
+```
+
+# **Calibrating Spatial Interaction Models**
+
+## **Importing the modelling data**
+
+```{r}
+SIM_data <- read_rds("data/rds/SIM_data.rds")
+```
+
+## **Visualising the dependent variable**
+
+Dependent variable = `TRIPS`
+
+```{r}
+ggplot(data = SIM_data,
+       aes(x = TRIPS)) +
+  geom_histogram()
+```
+
+This is highly skewed, not resembling "bell curve" distribution.
+
+```{r}
+ggplot(data = SIM_data,
+       aes(x = dist,
+           y = TRIPS)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
 # Reflections
