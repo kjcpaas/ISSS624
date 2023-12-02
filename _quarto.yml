@@ -29,7 +29,7 @@ website:
             href: In-class_Ex2/In-class_Ex2B.qmd
           - text: "2C: EHSA"
             href: In-class_Ex2/In-class_Ex2C.qmd
-          - text: "3: Processing and Visualizing Flow Data"
+          - text: "3: Calibrating Spatial Interactions"
             href: In-class_Ex3/In-class_Ex3.qmd
       - text: Take-home Exercises
         menu:

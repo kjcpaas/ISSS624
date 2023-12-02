@@ -1,5 +1,5 @@
 ---
-title: "In-class Exercise 3: Processing and Visualizing Flow Data"
+title: "In-class Exercise 3: Calibrating Spatial Interaction Models with R"
 author: "Kristine Joy Paas"
 date: "1 December 2023"
 date-modified: "last-modified"
