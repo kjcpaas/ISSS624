@@ -1503,5 +1503,19 @@
     "title": "Hands-on Exercise 3: Processing and Visualizing Flow Data",
     "section": "Visualizing the desire lines",
     "text": "Visualizing the desire lines\nTo visualise the resulting desire lines, the code chunk below is used.\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")\n\n\n\n\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \n  filter(MORNING_PEAK &gt;= 5000) %&gt;%\ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")"
+  },
+  {
+    "objectID": "In-class_Ex3/In-class_Ex3.html",
+    "href": "In-class_Ex3/In-class_Ex3.html",
+    "title": "In-class Exercise 3: Processing and Visualizing Flow Data",
+    "section": "",
+    "text": "Overview\n\n\nGetting Started\n\n\nReflections"
+  },
+  {
+    "objectID": "In-class_Ex3/data/geospatial/MPSZ-2019.html",
+    "href": "In-class_Ex3/data/geospatial/MPSZ-2019.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
   }
 ]
