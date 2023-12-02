@@ -62,6 +62,7 @@ We will also set the default settings on for this document
 -   set **seed** for reproducibility of results
 
 ```{r}
+tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
 ```
@@ -72,20 +73,16 @@ set.seed(1234)
 Before running this part, please run all the code chunks in [Data Wrangling](/Take-home_Ex1/Take-home_Ex1A.qmd) as it generates the data needed for this document.
 :::
 
-Use `read_rds()` to load the `rds` data needed for geovisualization and analysis.
+Use `read_rds()` to load the `rds` data needed for Local Indicator of Spatial Association (LISA) Analysis
 
 ```{r}
-sg_honeycomb <- read_rds("data/rds/sg_honeycomb_with_num_busstops.rds")
-bus_peaks_hc <- read_rds("data/rds/bus_peaks_hc202310.rds") %>%
-  filter(NUM_BUS_STOPS > 0)
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb202310.rds")
+peak_trips_sf <- read_rds("data/rds/peak_trips_sf202310.rds")
 ```
 
--   `sg_honeycomb` - contains the honeycomb grid that covers Singapore boundaries
--   `bus_peaks_hc` - bus commuter traffic data for peak times for **October 2023**
-
-::: callout-important
-As mentioned in [Geovisualization and Analysis](/Take-home_Ex1/Take-home_Ex1B.html#conclusion), we are only focusing on **October 2023** data as we observed the same patterns in the August and September.
-:::
+-   `honeycomb` - contains the geometry of honeycomb grid containing Singapore bus stops
+-   `peak_trips_sf` - contains number of bus trips originating from each hexagon for each peak period
 
 # Methodology
 
@@ -113,29 +110,61 @@ We will do this analysis for the all the peak hours.
 For all analysis in this study, we will set the significance level, or $\alpha$ value to **0.05**.
 :::
 
-# Deriving contiguity weights using Queens' method
+# Computing adaptive distance weights matrix
 
-Before getting Moran's I, we need to get the contiguity weights first. We will use the Queen's method.
+Before getting Moran's I, we need to get the spatial weights first. We will use **adptive distance-based weights** for this, which uses the **k-nearest neighbors**.
 
-::: callout-note
-As our cells are hexagons, they touch the neighbors via edges, not single points. Hence, both Rook and Queen's method will return the same results.
-:::
+::: {.callout-note collapse="true" appearance="simple"}
+## Why not contiguity weights?
 
-We will use `st_contiguity()` and `st_contiguity()` to get the contiguity weights. We will set `allow_zero = TRUE` as we have *island hexagons* in our data set.
+Visualizing the honeycomb grid reveals that there are **hexagon islands**, or **hexagons without contiguity neighbors**.
 
 ```{r}
-wm_q <-
-  bus_peaks_hc %>%
-  mutate(
-    nb = st_contiguity(geometry),
-    wt = st_weights(nb,
-                    style = "W",
-                    allow_zero = TRUE)
-  )
-glimpse(wm_q)
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_fill(col = "white", title = "Hexagons", alpha = 1) +
+  tm_borders(alpha = 0.2) +
+  tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2)
 ```
 
-# Calculating global Moran's I
+Some of these are at the **East side of Singapore**, around **Changi Airport**.
+
+We cannot associate them to another hexagon if we use contiguity neighbors so it will be difficult to do the analysis. With that, we will use distance-based weights to **ensure that all hexagons have neighbors**.
+:::
+
+As we are working with hexagons, which has **6 sides**, it is logical to get the **6 nearest neighbors** and use it for our analysis.
+
+```{r}
+knn6_nb <- peak_trips_sf %>% st_centroid() %>% st_knn(k=6)
+head(knn6_nb, n = 3)
+```
+
+::: {.callout-note appearance="minimal"}
+`st_centroid()` - used to get the centroids of each hexagon, which is required for `st_knn()`
+
+`st_knn()` - used to get the k-nearest neighbors
+:::
+
+```{r}
+wm_knn6 <- peak_trips_sf %>%
+  mutate(
+    nb = knn6_nb,
+    wt = st_weights(nb, style = "W")
+    )
+```
+
+# Calculating Global Moran's I
 
 To check for signs of clustering, we will first calculate the global Moran's I value.
 
@@ -145,299 +174,155 @@ To check for signs of clustering, we will first calculate the global Moran's I v
 
 -   If $p < \alpha$ (**0.05**)**,** the result is significant and **did not happen by chance**
 
-We will do this for all peak times.
+We will do this for all peak periods.
 
-To perform the permutation test, we will use `global_moran_perm()`.
-
-::: panel-tabset
-## Weekday morning
-
-```{r}
-global_moran_perm(
-  wm_q$WEEKDAY_AM_TRIPS,
-  wm_q$nb,
-  wm_q$wt,
-  nsim = 99,
-  zero.policy = TRUE
-)
-```
-
--   $0.23237 > 0$ means there are signs of clustering
-
--   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
-
-**Conclusion:** There are signs of geospatial clusters in the data.
-
-## Weekday evening
-
-```{r}
-global_moran_perm(
-  wm_q$WEEKDAY_PM_TRIPS,
-  wm_q$nb,
-  wm_q$wt,
-  nsim = 99,
-  zero.policy = TRUE
-)
-```
-
--   $0.06418 > 0$ means there are signs of clustering
-
--   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
-
-**Conclusion:** There are signs of geospatial clusters in the data.
-
-## Weekend morning
-
-```{r}
-global_moran_perm(
-  wm_q$WEEKEND_AM_TRIPS,
-  wm_q$nb,
-  wm_q$wt,
-  nsim = 99,
-  zero.policy = TRUE
-)
-```
-
--   $0.17209 > 0$ means there are signs of clustering
-
--   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
-
-**Conclusion:** There are signs of geospatial clusters in the data.
-
-## 
-
-## Weekend evening
-
-```{r}
-global_moran_perm(
-  wm_q$WEEKEND_PM_TRIPS,
-  wm_q$nb,
-  wm_q$wt,
-  nsim = 99,
-  zero.policy = TRUE
-)
-```
-
--   $0.11845 > 0$ means there are signs of clustering
-
--   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
-
-**Conclusion:** There are signs of geospatial clusters in the data.
-:::
-
-# Calculating local Moran's I
-
-Now that we have identified signs of clustering, we will identify where those clusters are.
-
-We will do this for all peak times as clusters where detected for all
-
-Before running the permutation test, we must set the seed first:
-
-```{r}
-set.seed(1234)
-```
-
-To perform the permutation test, we will use `global_moran_perm()`. We need to set `zero.policy = TRUE` as there are island hexagons in our data.
+To perform the permutation test, we will use `global_moran_perm()` to perform Monte-Carlo simulations.
 
 ::: panel-tabset
 ## Weekday morning
 
 ```{r}
-lisa_weekday_am <- wm_q %>% 
-  mutate(local_moran = local_moran(
-    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99, zero.policy = TRUE),
-         .before = 1) %>%
-  unnest(local_moran)
-kable(head(lisa_weekday_am))
+global_moran_perm(
+  wm_knn6$WEEKDAY_AM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
 ```
+
+-   $0.21487 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
 
 ## Weekday evening
 
 ```{r}
-lisa_weekday_pm <- wm_q %>% 
-  mutate(local_moran = local_moran(
-    WEEKDAY_PM_TRIPS, nb, wt, nsim = 99, zero.policy = TRUE),
-         .before = 1) %>%
-  unnest(local_moran)
-kable(head(lisa_weekday_pm))
+global_moran_perm(
+  wm_knn6$WEEKDAY_PM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
 ```
+
+-   $0.057327 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
 
 ## Weekend morning
 
 ```{r}
-lisa_weekend_am <- wm_q %>% 
-  mutate(local_moran = local_moran(
-    WEEKEND_AM_TRIPS, nb, wt, nsim = 99, zero.policy = TRUE),
-         .before = 1) %>%
-  unnest(local_moran)
-kable(head(lisa_weekend_am))
+global_moran_perm(
+  wm_knn6$WEEKEND_AM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
 ```
+
+-   $0.15955 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
 
 ## Weekend evening
 
 ```{r}
-lisa_weekend_pm <- wm_q %>% 
-  mutate(local_moran = local_moran(
-    WEEKEND_PM_TRIPS, nb, wt, nsim = 99, zero.policy = TRUE),
-         .before = 1) %>%
-  unnest(local_moran)
-kable(head(lisa_weekend_pm))
+global_moran_perm(
+  wm_knn6$WEEKEND_PM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
 ```
+
+-   $0.10265 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
 :::
 
-# Plotting local Moran's I and p-value
+::: {.callout-tip appearance="simple"}
+## Insights
 
-Next we will plot the local Moran's I values and p-values to gain insights.
+In all peak periods, $I > 0$ and $p < \alpha$ (**0.05**) so **there are signs of geospatial clustering** in the data.
+:::
+
+# Calculating Local Moran's I
+
+As we have verified the existence of clusters, we can now proceed to looking for those clusters.
 
 ::: panel-tabset
 ## Weekday morning
 
 ```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-ii_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekday_am) +
-    tm_fill("ii") + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "local Moran's I of WEEKDAY_AM_TRIPS",
-            main.title.size = 0.8)
-
-p_ii_sim_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekday_am) +
-  tm_fill("p_ii_sim",
-          breaks = c(0, 0.001, 0.01, 0.05, 1),
-          labels = c("0.001", "0.01", "0.05", "Not sig"),
-          palette = "YlOrRd"
-          ) + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "p-value of local Moran's I",
-            main.title.size = 0.8)
-
-tmap_arrange(ii_map, p_ii_sim_map, ncol = 2)
+lmi_wkdy_am <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
 ```
-
-Most of the map is covered by dark reds, corresponding to **insignificant values**. However, we can see the biggest cluster of **lighter hexagons on the West part**. Some lighter clusters were also seen in the map.
-
-This peak time also has the **widest range** **of ii** values (**-5 to 25**), indicating that values are farthest from each other.
-
-Plotting the LISA map later would reveal where the clusters are located based on `WEEKDAY_AM_TRIPS`.
 
 ## Weekday evening
 
 ```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-ii_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekday_pm) +
-    tm_fill("ii") + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "local Moran's I of WEEKDAY_PM_TRIPS",
-            main.title.size = 0.8)
-
-p_ii_sim_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekday_pm) +
-  tm_fill("p_ii_sim",
-          breaks = c(0, 0.001, 0.01, 0.05, 1),
-          labels = c("0.001", "0.01", "0.05", "Not sig"),
-          palette = "YlOrRd"
-          ) + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "p-value of local Moran's I",
-            main.title.size = 0.8)
-
-tmap_arrange(ii_map, p_ii_sim_map, ncol = 2)
+lmi_wkdy_pm <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_PM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
 ```
-
-Similar to the **weekday evening** maps, most of the map is covered by dark reds, corresponding to **insignificant values**. However, there appears to be much more dark red hexagons compared to weekday morning.
-
-The global Moran's I value is **0.06418** is closer to 0 than weekday morning's value of **0.23237**, indicating the **clustering is weaker** for weekday evening. This peak time also has the **narrowest range** **of ii** values (**-4 to 6**), indicating that values are closest to each other. This is consistent with our observation.
-
-Plotting the LISA map later would reveal if there are indeed fewer clusters based on `WEEKDAY_PM_TRIPS` than `WEEKDAY_AM_TRIPS`.
 
 ## Weekend morning
 
 ```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-ii_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekend_am) +
-    tm_fill("ii") + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "local Moran's I of WEEKEND_AM_TRIPS",
-            main.title.size = 0.8)
-
-p_ii_sim_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekend_am) +
-  tm_fill("p_ii_sim",
-          breaks = c(0, 0.001, 0.01, 0.05, 1),
-          labels = c("0.001", "0.01", "0.05", "Not sig"),
-          palette = "YlOrRd"
-          ) + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "p-value of local Moran's I",
-            main.title.size = 0.8)
-
-tmap_arrange(ii_map, p_ii_sim_map, ncol = 2)
+lmi_wknd_am <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
 ```
-
-The `p_ii_sim` map looks very similar to the **weekend evening** map. It appears that the weekend peak patterns are similar throughout the day. This seems to support our earlier hypothesis that the bus commuter traffic more distributed throughout the day on weekends as people have more control of their schedule as there is no work or school.
 
 ## Weekend evening
 
 ```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-ii_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekend_pm) +
-    tm_fill("ii") + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "local Moran's I of WEEKEND_PM_TRIPS",
-            main.title.size = 0.8)
-
-p_ii_sim_map <-
-  tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_shape(lisa_weekend_pm) +
-  tm_fill("p_ii_sim",
-          breaks = c(0, 0.001, 0.01, 0.05, 1),
-          labels = c("0.001", "0.01", "0.05", "Not sig"),
-          palette = "YlOrRd"
-          ) + 
-  tm_borders(alpha = 0.5) +
-  tm_layout(main.title = "p-value of local Moran's I",
-            main.title.size = 0.8)
-
-tmap_arrange(ii_map, p_ii_sim_map, ncol = 2)
+lmi_wknd_pm <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
 ```
-
-The `p_ii_sim` map looks very similar to the **weekend morning** map. It appears that the weekend peak patterns are similar throughout the day. This seems to support our earlier hypothesis that the bus commuter traffic more distributed throughout the day on weekends as people have more control of their schedule as there is no work or school.
 :::
 
-Observations from this part:
+# Plotting Local Moran's I and p-value
 
--   Indication of clusters at the West side
+::: {.callout-note collapse="true" appearance="simple"}
+## Function for plotting *ii* and *p_ii_sim* maps side by side
 
--   Highest indication of clustering for **weekday morning** peak times, consistent with its highest global Moran's I value
+We will create a function to plot the local Moran's I and p-values side by side. This will allow for easy comparison of the 2 maps.
 
--   Similarity in clusters between weekend morning and evening peak times
-
-# Plotting LISA maps
-
-We can finally plot the LISA Maps to reveal where the clusters and outliers are.
+```{r}
+plot_lmi_pv <- function(lmi) {
+  tmap_arrange(
+    tm_shape(mpsz) +
+      tm_fill(col="green") +
+      tm_borders(alpha = 0.5) +
+      tm_shape(lmi) +
+      tm_polygons("ii") + 
+      tm_borders(alpha = 0.5),
+    tm_shape(mpsz) +
+      tm_fill(col="green") +
+      tm_borders(alpha = 0.5) +
+      tm_shape(lmi) +
+      tm_polygons("p_ii_sim",
+              breaks = c(0, 0.001, 0.01, 0.05, 1),
+              labels = c("0.001", "0.01", "0.05", "Not sig"),
+              palette = "YlOrRd"
+              ) + 
+      tm_borders(alpha = 0.5),
+    ncol = 2
+  )
+}
+```
+:::
 
 ::: panel-tabset
 ## Weekday morning
@@ -445,116 +330,159 @@ We can finally plot the LISA Maps to reveal where the clusters and outliers are.
 ```{r}
 #| code-fold: true
 #| code-summary: "**Show the code**"
-lisa_sig <- lisa_weekday_am  %>%
-  filter(p_ii_sim < 0.05)
-
-tm_shape(sg_honeycomb) +
-  tm_fill(col="white")+
-  tm_shape(lisa_sig) +
-  tm_fill("mean") + 
-  tm_borders(alpha = 0.4) +
-  tm_layout(
-    main.title = "LISA for Weekday 6 - 9AM",
-    main.title.position = "center",
-    main.title.size = 1
-  )
+plot_lmi_pv(lmi_wkdy_am)
 ```
-
-Bigger **high-high** clusters around bus interchanges. There is high demand for buses in these areas in the morning, possibly being around residential areas.
 
 ## Weekday evening
 
 ```{r}
 #| code-fold: true
 #| code-summary: "**Show the code**"
-lisa_sig <- lisa_weekday_pm  %>%
-  filter(p_ii_sim < 0.05)
-
-tm_shape(sg_honeycomb) +
-  tm_fill(col="white")+
-  tm_shape(lisa_sig) +
-  tm_fill("mean") + 
-  tm_borders(alpha = 0.4) +
-  tm_layout(
-    main.title = "LISA for Weekday 5 - 8PM",
-    main.title.position = "center",
-    main.title.size = 1
-  )
+plot_lmi_pv(lmi_wkdy_pm)
 ```
-
-Clusters are sparser compared to **weekday morning**, supporting our previous hypothesis that people going home from work or school are spread out throughout the night. This is because of after work activities (hanging out with friends, gym, shopping, etc.)
 
 ## Weekend morning
 
 ```{r}
 #| code-fold: true
 #| code-summary: "**Show the code**"
-lisa_sig <- lisa_weekend_am  %>%
-  filter(p_ii_sim < 0.05)
-
-tm_shape(sg_honeycomb) +
-  tm_fill(col="white")+
-  tm_shape(lisa_sig) +
-  tm_fill("mean") + 
-  tm_borders(alpha = 0.4) +
-  tm_layout(
-    main.title = "LISA for Weekend 11AM - 2PM",
-    main.title.position = "center",
-    main.title.size = 1
-  )
+plot_lmi_pv(lmi_wkdy_pm)
 ```
-
-There are some **high-high** cells observed around the Central and South area, seemingly around the Clarke Quay, Mt. Faber and Sentosa areas.
-
-Aside from this, there are singular **high-high** cells observed sparsely.
-
-This could be because these are popular places for recreation that people go to unwind during weekends and holidays.
 
 ## Weekend evening
 
 ```{r}
 #| code-fold: true
 #| code-summary: "**Show the code**"
-lisa_sig <- lisa_weekend_pm  %>%
-  filter(p_ii_sim < 0.05)
+plot_lmi_pv(lmi_wkdy_pm)
+```
+:::
 
-tm_shape(sg_honeycomb) +
+::: {.callout-tip appearance="simple"}
+## Insights
+
+Big part of the maps show that most of the hexagons' p-values resulted into **insignificant values**. This means that those areas in red **do not have clusters**.
+
+Visually, they all look similar. However, we can see the clusters and outliers more clearly once we plot the LISA maps.
+:::
+
+# Plotting LISA Maps
+
+We will plot the Local Indicator of Spatial Association (LISA) maps to pinpoint where the clusters and outliers are.
+
+To do that, we will only include those hexagons for which the results are significant, or `p_ii_sim` is less than our $\alpha$ of **0.05**.
+
+::: panel-tabset
+## Weekday morning
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
+tm_shape(mpsz) +
   tm_fill(col="white")+
-  tm_shape(lisa_sig) +
-  tm_fill("mean") + 
-  tm_borders(alpha = 0.4) +
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wkdy_am %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
   tm_layout(
-    main.title = "LISA for Weekend 4 - 7PM",
+    main.title = "LISA for Weekday 6 - 9 AM",
     main.title.position = "center",
     main.title.size = 1
   )
 ```
 
-There are some **high-high** cells observed around the Central and South area, seemingly around the Clarke Quay and Bugis areas.
+::: {.callout-tip appearance="simple"}
+### Insights
 
-Aside from this, there are singular **high-high** cells observed sparsely.
+High-high areas can be observed at the **Causeway** bus stops. This can be attributed to **workers living in Johor Bahru commuting to Singapore for work** causing this bus stops to be busy in the mornings**.** Larger **high-high clusters** during this peak period. Most of them seem to correspond to **bus interchanges**.
 
-This could be because these are popular places for late-afternoon and night activities during weekends, i.e. there are a lot of bars and restaurants around Clarke Quay and Bugis.
+Some high-low bus stops are can also be observed at the **West**. This could be key transfer points in these areas for people going to work or school.
 :::
 
-## General observations
+## Weekday evening
 
--   **Low-low** clusters in the West part (Jurong area), indicating **low demand for buses**.
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
 
-    -   Are alternative modes of transport (MRT, taxi, car, etc) more popular in this area?
+tm_shape(mpsz) +
+  tm_fill(col="white")+
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wkdy_pm %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
+  tm_layout(
+    main.title = "LISA for Weekday 5 - 8 PM",
+    main.title.position = "center",
+    main.title.size = 1
+  )
+```
 
-    -   Is this an area with sparse population?
+::: {.callout-tip appearance="simple"}
+### Insights
 
--   **High-high** clusters seem to correspond to bus interchanges.
+Compared to weekday mornings, there are **smaller clusters in the Central** part of Singapore. This could indicate that traffic is more distributed in this area and people riding buses are **more spread out**.
 
-    -   *Eyeballed the map based on bus interchanges from* [Google Maps](https://www.google.com/maps/search/singapore+bus+interchange/@1.3385457,103.6866741,14.49z?entry=ttu)
+One surprising observation is that the **Causeway bus stops** are not in a cluster during this peak period. It could indicate either lower traffic or more spread out traffic. One reason could be there are less people coming into the country during this time period.
+:::
 
-    -   Multiple bus lines start at interchanges so people are expected to ride here, especially as they are close to residential areas
+## Weekend morning
 
--   **Woodlands Checkpoint** is in a **high-high** cell
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
 
-    -   People crossing the border into Singapore tap in here. Workers that reside in Johor Bahru utilize the bus stop here.
+tm_shape(mpsz) +
+  tm_fill(col="white")+
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wknd_am %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
+  tm_layout(
+    main.title = "LISA for Weekend/Holiday 11 AM - 2 PM",
+    main.title.position = "center",
+    main.title.size = 1
+  )
+```
 
--   **Low-high** cells observed around **high-high** cells
+::: {.callout-tip appearance="simple"}
+### Insights
 
-    -   Indication under-utilized stops as people prefer to ride buses in nearby bus stops
+The clusters here coincide the most with **weekday morning** clusters. This could indicate that people are riding the bus from the same place, like their home.
+
+Some notable differences are there is no cluster on the **Causeway bus stops** (less workers coming in to Singapore), and a **high-low outlier** in the **Southern** part. It is in close proximity to **NUS Hospital and Kent Ridge Park**. so perhaps people go for their morning run or visit the hospital.
+:::
+
+## Weekend evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col="white")+
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wknd_pm %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
+  tm_layout(
+    main.title = "LISA for Weekend/Holiday 4- 7 PM",
+    main.title.position = "center",
+    main.title.size = 1
+  )
+```
+
+::: {.callout-tip appearance="simple"}
+The **high-low** outlier in the South part of Singapore that is present in **weekend morning** is also present here. This is a potential recreation area or a destination for weekend errands/
+
+Another key feature is the **triangle of high-low outliers** **in the West** (around Tuas and Jurong area). This pattern is also present in **weekday morning,** and **weekend morning** peak hours. These strongly supports the idea that these bus stops could be key transfer bus stops in this area.
+
+In addition, **high-high clusters of 3 or more hexagons** are present in the same areas but are not present in the **weekday evening** peak hours. This can indicate similar behavior of people commuting from their homes.
+
+Lastly, the **Causeway bus stops** are in a **high-high cluster** again, same as in **weekday morning**. This can indicate people coming back to Singapore after a short trip to Malaysia over the weekend.
+:::
+:::
+
+::: {.callout-tip appearance="simple"}
+## Insights
+
+There are low-low clusters in the **West and Northwest** parts of the country. This is consistent with the previous observations that these areas have less traffic. In addition, other low-low clusters were also observed at the edges of Singapore like in the East and South. This could suggest that people in these areas **use alternative modes of transportation** like the MRT.
+
+Another key observation is that the **low-high clusters** are in close proximity to the **high-high clusters**. On the other hand, **high-low** clusters are usually on their own. This could indicate that the bus stops in the low-high cluster are **under-utilized** because people prefer to use the bus stops in the nearby **high-high areas** there are **less bus routes** passing through these stops.
+:::

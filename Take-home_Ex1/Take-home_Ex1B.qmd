@@ -207,7 +207,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -236,7 +235,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -265,7 +263,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -294,7 +291,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -385,7 +381,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -418,7 +413,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -451,7 +445,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -484,7 +477,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -543,7 +535,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -572,7 +563,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -624,7 +614,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -653,7 +642,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -701,7 +689,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -730,7 +717,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -773,7 +759,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -802,7 +787,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -863,7 +847,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
@@ -892,7 +875,6 @@ tm_shape(mpsz) +
     main.title.size = 1,
     legend.height = 0.35, 
     legend.width = 0.25,
-    legend.outside = FALSE,
     legend.position = c("right", "bottom")
   )+
   tm_compass(type="8star", size = 2) +
