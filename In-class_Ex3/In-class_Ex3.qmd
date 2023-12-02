@@ -94,6 +94,22 @@ distPair %>%
 
 Next, a constant distance value of 50m is added into intra-zones distance.
 
+::: callout-important
+## Why 50?
+
+*Need to ask this on Piazza since I do not fully understand why this has to be specifically 50 m.*
+
+Min dist is **173.8 ,**
+
+I understand intra-zone data **must be less than this**.
+
+However why 50 specifically?
+
+173.8m is shortest distance centroid to centroid so centroid to edge is **86.9 m** (assuming equal edge to edge data)
+
+*Is 50 m just an arbitrary value less than this?*
+:::
+
 ```{r}
 distPair$dist[distPair$dist == 0] <- 50
 ```
@@ -231,4 +247,297 @@ ggplot(data = SIM_data,
   geom_smooth(method = lm)
 ```
 
+Plotting `log` axis resembles linear relationship more
+
+```{r}
+ggplot(data = SIM_data,
+       aes(x = log(dist),
+           y = log(TRIPS))) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+## **Checking for variables with zero values**
+
+Poisson regression uses `log` of values and since `log(0)` is `undefined`, we must ensure that there are no zeroes in `SIM_data`
+
+```{r}
+summary(SIM_data)
+```
+
+The print report above reveals that variables `ORIGIN_AGE7_12`, `ORIGIN_AGE13_24`, `ORIGIN_AGE25_64`,`DESTIN_AGE7_12`, `DESTIN_AGE13_24`, `DESTIN_AGE25_64` consist of 0 values.
+
+In view of this, code chunk below will be used to replace zero values to **0.99**.
+
+```{r}
+SIM_data$ORIGIN_AGE7_12[SIM_data$ORIGIN_AGE7_12 == 0] <- 0.99
+SIM_data$ORIGIN_AGE13_24[SIM_data$ORIGIN_AGE13_24 == 0] <- 0.99
+SIM_data$ORIGIN_AGE25_64[SIM_data$ORIGIN_AGE25_64 == 0] <- 0.99
+SIM_data$DESTIN_AGE7_12[SIM_data$DESTIN_AGE7_12 == 0] <- 0.99
+SIM_data$DESTIN_AGE13_23[SIM_data$DESTIN_AGE13_24 == 0] <- 0.99
+SIM_data$DESTIN_AGE25_64[SIM_data$DESTIN_AGE25_64 == 0] <- 0.99
+```
+
+Verify the values
+
+```{r}
+summary(SIM_data)
+```
+
+## **Unconstrained Spatial Interaction Model**
+
+The general formula of Unconstrained Spatial Interaction Model
+
+$$
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha lnW_j + \beta ln d_{ij})
+$$
+
+Calibrate model
+
+```{r}
+uncSIM <- glm(formula = TRIPS ~ 
+                log(ORIGIN_AGE25_64) + 
+                log(DESTIN_AGE25_64) +
+                log(dist),
+              family = poisson(link = "log"),
+              data = SIM_data,
+              na.action = na.exclude)
+uncSIM
+```
+
+## **R-squared function**
+
+*Read on this since I do not fully understand what this is for. i know we uses function since this is a model*
+
+```{r}
+CalcRSquared <- function(observed,estimated){
+  r <- cor(observed,estimated)
+  R2 <- r^2
+  R2
+}
+```
+
+```{r}
+CalcRSquared(uncSIM$data$TRIPS, uncSIM$fitted.values)
+```
+
+```{r}
+r2_mcfadden(uncSIM)
+```
+
+## **Origin (Production) constrained SIM**
+
+The general formula of Origin Constrained Spatial Interaction Model
+
+$$
+\lambda_{ij} = exp(k + \mu_i + \alpha lnW_j + \beta ln d_{ij})
+$$
+
+*Code below takes a while to run so be **patient***
+
+```{r}
+#| eval: false
+# Set eval = true when need to recompute
+orcSIM <- glm(formula = TRIPS ~ 
+                 ORIGIN_SZ +
+                 log(DESTIN_AGE25_64) +
+                 log(dist),
+              family = poisson(link = "log"),
+              data = SIM_data,
+              na.action = na.exclude)
+write_rds(orcSIM, "data/rds/orcSIM.rds")
+```
+
+```{r}
+orcSIM <- read_rds("data/rds/orcSIM.rds")
+summary(orcSIM)
+```
+
+```{r}
+CalcRSquared(orcSIM$data$TRIPS, orcSIM$fitted.values)
+```
+
+## **Destination constrained**
+
+The general formula of Destination Constrained Spatial Interaction Model
+
+$$
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha_j + \beta ln d_{ij})
+$$
+
+*This takes a while to run so be **patient***
+
+```{r}
+#| eval: false
+# Set eval = true when need to recompute
+decSIM <- glm(formula = TRIPS ~ 
+                DESTIN_SZ + 
+                log(ORIGIN_AGE25_64) + 
+                log(dist),
+              family = poisson(link = "log"),
+              data = SIM_data,
+              na.action = na.exclude)
+write_rds(decSIM, "data/rds/decSIM.rds") # This is 52 MB file
+```
+
+```{r}
+decSIM <-read_rds("data/rds/decSIM.rds")
+summary(decSIM)
+```
+
+```{r}
+CalcRSquared(decSIM$data$TRIPS, decSIM$fitted.values)
+```
+
+## **Doubly constrained**
+
+The general formula of Doubly Constrained Spatial Interaction Model
+
+$$
+\lambda_{ij} = exp(k + \mu_i + \alpha_j + \beta ln d_{ij})
+$$
+
+*This code chunk takes a while to run (longer than previous ones) so be **extrapatient*****.** I'll save thre results so no need to rerun it when I rered
+
+```{r}
+#| eval: false
+# Set eval: true when we need to recompute
+dbcSIM <- glm(formula = TRIPS ~ 
+                ORIGIN_SZ + 
+                DESTIN_SZ + 
+                log(dist),
+              family = poisson(link = "log"),
+              data = SIM_data,
+              na.action = na.exclude)
+# Save so we do not recompute again when rendering
+write_rds(dbcSIM, "data/rds/dbcSIM.rds") # 82MB file
+```
+
+```{r}
+dbcSIM <- read_rds("data/rds/dbcSIM.rds")
+summary(dbcSIM)
+```
+
+```{r}
+CalcRSquared(dbcSIM$data$TRIPS, dbcSIM$fitted.values)
+```
+
+## **Model comparison**
+
+Compare performance.
+
+```{r}
+model_list <- list(unconstrained=uncSIM,
+                   originConstrained=orcSIM,
+                   destinationConstrained=decSIM,
+                   doublyConstrained=dbcSIM)
+```
+
+```{r}
+compare_performance(model_list,
+                    metrics = "RMSE")
+```
+
+Best model has the **smallest RMSE** so it is **doubleConstrained**
+
+## **Visualising fitted**
+
+Unconstrained
+
+```{r}
+df <- as.data.frame(uncSIM$fitted.values) %>%
+  round(digits = 0)
+```
+
+```{r}
+SIM_data <- SIM_data %>%
+  cbind(df) %>%
+  rename(uncTRIPS = "uncSIM$fitted.values")
+```
+
+Origin constrained
+
+```{r}
+df <- as.data.frame(orcSIM$fitted.values) %>%
+  round(digits = 0)
+```
+
+```{r}
+SIM_data <- SIM_data %>%
+  cbind(df) %>%
+  rename(orcTRIPS = "orcSIM$fitted.values")
+```
+
+Destination constrained
+
+```{r}
+df <- as.data.frame(decSIM$fitted.values) %>%
+  round(digits = 0)
+```
+
+```{r}
+SIM_data <- SIM_data %>%
+  cbind(df) %>%
+  rename(decTRIPS = "decSIM$fitted.values")
+```
+
+Doubly constrained
+
+```{r}
+df <- as.data.frame(dbcSIM$fitted.values) %>%
+  round(digits = 0)
+```
+
+```{r}
+SIM_data <- SIM_data %>%
+  cbind(df) %>%
+  rename(dbcTRIPS = "dbcSIM$fitted.values")
+```
+
+Generating plots
+
+```{r}
+unc_p <- ggplot(data = SIM_data,
+                aes(x = uncTRIPS,
+                    y = TRIPS)) +
+  geom_point() +
+  geom_smooth(method = lm)
+
+orc_p <- ggplot(data = SIM_data,
+                aes(x = orcTRIPS,
+                    y = TRIPS)) +
+  geom_point() +
+  geom_smooth(method = lm)
+
+dec_p <- ggplot(data = SIM_data,
+                aes(x = decTRIPS,
+                    y = TRIPS)) +
+  geom_point() +
+  geom_smooth(method = lm)
+
+dbc_p <- ggplot(data = SIM_data,
+                aes(x = dbcTRIPS,
+                    y = TRIPS)) +
+  geom_point() +
+  geom_smooth(method = lm)
+
+ggarrange(unc_p, orc_p, dec_p, dbc_p,
+          ncol = 2,
+          nrow = 2)
+```
+
+Double constrained looks less scattered and more fitted to the line, consistent with RMSE results
+
 # Reflections
+
+-   To be honest I was quite distracted in class earlier as I was revising my Take home ex 1, and my notes are not so coherent. I will revise after I finish my Take Home Ex 1
+
+-   However, I find this lesson interesting as we finally get to learn some flow analysis. I had some questions I wanted to answer during Take Home Exercise that I discovered couldn't be provided by EHSA and LISA e.g.
+
+    -   Were people really coming from home on mornings whether it is weekday or weekend, or
+
+    -   Is the flow of people coming home in the evenings during weekdays more scattered through the rest of the day compare to traffic of people going out of their houses in the morning?
+
+        -   My hypothesis is that in the morning, people go straight to office/school but in the evening people do some recreational activities before going home
+
+-   Lastly, I was a Math major in my undergrad so this activity reminded me why I fell in love with Math in the first place. I want to explore about the models more and I would've enjoyed the class if we had more time. I know that DT students in MITB have a reputations of do not like technical classes like this but I am enjoying and learning a lot so far although it requires a lot of effort. I guess my Math training prepared me for the persistence required for rigorous learning like this.

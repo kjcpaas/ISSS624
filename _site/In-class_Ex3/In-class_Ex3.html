@@ -248,6 +248,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#importing-the-modelling-data" id="toc-importing-the-modelling-data" class="nav-link" data-scroll-target="#importing-the-modelling-data"><strong>Importing the modelling data</strong></a></li>
   <li><a href="#visualising-the-dependent-variable" id="toc-visualising-the-dependent-variable" class="nav-link" data-scroll-target="#visualising-the-dependent-variable"><strong>Visualising the dependent variable</strong></a></li>
+  <li><a href="#checking-for-variables-with-zero-values" id="toc-checking-for-variables-with-zero-values" class="nav-link" data-scroll-target="#checking-for-variables-with-zero-values"><strong>Checking for variables with zero values</strong></a></li>
+  <li><a href="#unconstrained-spatial-interaction-model" id="toc-unconstrained-spatial-interaction-model" class="nav-link" data-scroll-target="#unconstrained-spatial-interaction-model"><strong>Unconstrained Spatial Interaction Model</strong></a></li>
+  <li><a href="#r-squared-function" id="toc-r-squared-function" class="nav-link" data-scroll-target="#r-squared-function"><strong>R-squared function</strong></a></li>
+  <li><a href="#origin-production-constrained-sim" id="toc-origin-production-constrained-sim" class="nav-link" data-scroll-target="#origin-production-constrained-sim"><strong>Origin (Production) constrained SIM</strong></a></li>
+  <li><a href="#destination-constrained" id="toc-destination-constrained" class="nav-link" data-scroll-target="#destination-constrained"><strong>Destination constrained</strong></a></li>
+  <li><a href="#doubly-constrained" id="toc-doubly-constrained" class="nav-link" data-scroll-target="#doubly-constrained"><strong>Doubly constrained</strong></a></li>
+  <li><a href="#model-comparison" id="toc-model-comparison" class="nav-link" data-scroll-target="#model-comparison"><strong>Model comparison</strong></a></li>
+  <li><a href="#visualising-fitted" id="toc-visualising-fitted" class="nav-link" data-scroll-target="#visualising-fitted"><strong>Visualising fitted</strong></a></li>
   </ul></li>
   <li><a href="#reflections" id="toc-reflections" class="nav-link" data-scroll-target="#reflections">Reflections</a></li>
   </ul>
@@ -456,6 +464,24 @@ n_{loc}^2 = 332^2 = 110224
 </div>
 </div>
 <p>Next, a constant distance value of 50m is added into intra-zones distance.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Why 50?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><em>Need to ask this on Piazza since I do not fully understand why this has to be specifically 50 m.</em></p>
+<p>Min dist is <strong>173.8 ,</strong></p>
+<p>I understand intra-zone data <strong>must be less than this</strong>.</p>
+<p>However why 50 specifically?</p>
+<p>173.8m is shortest distance centroid to centroid so centroid to edge is <strong>86.9 m</strong> (assuming equal edge to edge data)</p>
+<p><em>Is 50 m just an arbitrary value less than this?</em></p>
+</div>
+</div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>distPair<span class="sc">$</span>dist[distPair<span class="sc">$</span>dist <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">50</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -623,10 +649,1663 @@ n_{loc}^2 = 332^2 = 110224
 <p><img src="In-class_Ex3_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p>Plotting <code>log</code> axis resembles linear relationship more</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> SIM_data,</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">log</span>(dist),</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="fu">log</span>(TRIPS))) <span class="sc">+</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="In-class_Ex3_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="checking-for-variables-with-zero-values" class="level2">
+<h2 class="anchored" data-anchor-id="checking-for-variables-with-zero-values"><strong>Checking for variables with zero values</strong></h2>
+<p>Poisson regression uses <code>log</code> of values and since <code>log(0)</code> is <code>undefined</code>, we must ensure that there are no zeroes in <code>SIM_data</code></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  ORIGIN_SZ          DESTIN_SZ             TRIPS           FlowNoIntra    
+ Length:21079       Length:21079       Min.   :     1.0   Min.   :     0  
+ Class :character   Class :character   1st Qu.:    18.0   1st Qu.:    16  
+ Mode  :character   Mode  :character   Median :    91.0   Median :    84  
+                                       Mean   :  1199.6   Mean   :  1001  
+                                       3rd Qu.:   467.5   3rd Qu.:   431  
+                                       Max.   :341902.0   Max.   :230782  
+     offset              dist       ORIGIN_AGE7_12   ORIGIN_AGE13_24
+ Min.   :0.000001   Min.   :   50   Min.   :   0.0   Min.   :    0  
+ 1st Qu.:1.000000   1st Qu.: 3390   1st Qu.:  30.0   1st Qu.:  100  
+ Median :1.000000   Median : 6186   Median : 510.0   Median : 1120  
+ Mean   :0.986147   Mean   : 7019   Mean   : 883.4   Mean   : 1942  
+ 3rd Qu.:1.000000   3rd Qu.: 9978   3rd Qu.:1360.0   3rd Qu.: 2950  
+ Max.   :1.000000   Max.   :26136   Max.   :6340.0   Max.   :16380  
+ ORIGIN_AGE25_64 DESTIN_AGE7_12   DESTIN_AGE13_24 DESTIN_AGE25_64
+ Min.   :    0   Min.   :   0.0   Min.   :    0   Min.   :    0  
+ 1st Qu.:  730   1st Qu.:  10.0   1st Qu.:   60   1st Qu.:  630  
+ Median : 5640   Median : 510.0   Median : 1100   Median : 5710  
+ Mean   : 9034   Mean   : 852.3   Mean   : 1891   Mean   : 8803  
+ 3rd Qu.:14180   3rd Qu.:1350.0   3rd Qu.: 2920   3rd Qu.:13830  
+ Max.   :74610   Max.   :6340.0   Max.   :16380   Max.   :74610  </code></pre>
+</div>
+</div>
+<p>The print report above reveals that variables <code>ORIGIN_AGE7_12</code>, <code>ORIGIN_AGE13_24</code>, <code>ORIGIN_AGE25_64</code>,<code>DESTIN_AGE7_12</code>, <code>DESTIN_AGE13_24</code>, <code>DESTIN_AGE25_64</code> consist of 0 values.</p>
+<p>In view of this, code chunk below will be used to replace zero values to <strong>0.99</strong>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>SIM_data<span class="sc">$</span>ORIGIN_AGE7_12[SIM_data<span class="sc">$</span>ORIGIN_AGE7_12 <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>SIM_data<span class="sc">$</span>ORIGIN_AGE13_24[SIM_data<span class="sc">$</span>ORIGIN_AGE13_24 <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>SIM_data<span class="sc">$</span>ORIGIN_AGE25_64[SIM_data<span class="sc">$</span>ORIGIN_AGE25_64 <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>SIM_data<span class="sc">$</span>DESTIN_AGE7_12[SIM_data<span class="sc">$</span>DESTIN_AGE7_12 <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>SIM_data<span class="sc">$</span>DESTIN_AGE13_23[SIM_data<span class="sc">$</span>DESTIN_AGE13_24 <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>SIM_data<span class="sc">$</span>DESTIN_AGE25_64[SIM_data<span class="sc">$</span>DESTIN_AGE25_64 <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Verify the values</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  ORIGIN_SZ          DESTIN_SZ             TRIPS           FlowNoIntra    
+ Length:21079       Length:21079       Min.   :     1.0   Min.   :     0  
+ Class :character   Class :character   1st Qu.:    18.0   1st Qu.:    16  
+ Mode  :character   Mode  :character   Median :    91.0   Median :    84  
+                                       Mean   :  1199.6   Mean   :  1001  
+                                       3rd Qu.:   467.5   3rd Qu.:   431  
+                                       Max.   :341902.0   Max.   :230782  
+                                                                          
+     offset              dist       ORIGIN_AGE7_12    ORIGIN_AGE13_24   
+ Min.   :0.000001   Min.   :   50   Min.   :   0.99   Min.   :    0.99  
+ 1st Qu.:1.000000   1st Qu.: 3390   1st Qu.:  30.00   1st Qu.:  100.00  
+ Median :1.000000   Median : 6186   Median : 510.00   Median : 1120.00  
+ Mean   :0.986147   Mean   : 7019   Mean   : 883.65   Mean   : 1942.45  
+ 3rd Qu.:1.000000   3rd Qu.: 9978   3rd Qu.:1360.00   3rd Qu.: 2950.00  
+ Max.   :1.000000   Max.   :26136   Max.   :6340.00   Max.   :16380.00  
+                                                                        
+ ORIGIN_AGE25_64    DESTIN_AGE7_12    DESTIN_AGE13_24 DESTIN_AGE25_64   
+ Min.   :    0.99   Min.   :   0.99   Min.   :    0   Min.   :    0.99  
+ 1st Qu.:  730.00   1st Qu.:  10.00   1st Qu.:   60   1st Qu.:  630.00  
+ Median : 5640.00   Median : 510.00   Median : 1100   Median : 5710.00  
+ Mean   : 9034.46   Mean   : 852.50   Mean   : 1891   Mean   : 8803.25  
+ 3rd Qu.:14180.00   3rd Qu.:1350.00   3rd Qu.: 2920   3rd Qu.:13830.00  
+ Max.   :74610.00   Max.   :6340.00   Max.   :16380   Max.   :74610.00  
+                                                                        
+ DESTIN_AGE13_23
+ Min.   :0.99   
+ 1st Qu.:0.99   
+ Median :0.99   
+ Mean   :0.99   
+ 3rd Qu.:0.99   
+ Max.   :0.99   
+ NA's   :16861  </code></pre>
+</div>
+</div>
+</section>
+<section id="unconstrained-spatial-interaction-model" class="level2">
+<h2 class="anchored" data-anchor-id="unconstrained-spatial-interaction-model"><strong>Unconstrained Spatial Interaction Model</strong></h2>
+<p>The general formula of Unconstrained Spatial Interaction Model</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha lnW_j + \beta ln d_{ij})
+\]</span></p>
+<p>Calibrate model</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>uncSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIGIN_AGE25_64) <span class="sc">+</span> </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DESTIN_AGE25_64) <span class="sc">+</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(dist),</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>uncSIM</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:  glm(formula = TRIPS ~ log(ORIGIN_AGE25_64) + log(DESTIN_AGE25_64) + 
+    log(dist), family = poisson(link = "log"), data = SIM_data, 
+    na.action = na.exclude)
+
+Coefficients:
+         (Intercept)  log(ORIGIN_AGE25_64)  log(DESTIN_AGE25_64)  
+             10.5581                0.2651                0.0266  
+           log(dist)  
+             -0.7261  
+
+Degrees of Freedom: 21078 Total (i.e. Null);  21075 Residual
+Null Deviance:      107900000 
+Residual Deviance: 63930000     AIC: 64070000</code></pre>
+</div>
+</div>
+</section>
+<section id="r-squared-function" class="level2">
+<h2 class="anchored" data-anchor-id="r-squared-function"><strong>R-squared function</strong></h2>
+<p><em>Read on this since I do not fully understand what this is for. i know we uses function since this is a model</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>CalcRSquared <span class="ot">&lt;-</span> <span class="cf">function</span>(observed,estimated){</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  r <span class="ot">&lt;-</span> <span class="fu">cor</span>(observed,estimated)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  R2 <span class="ot">&lt;-</span> r<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  R2</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">CalcRSquared</span>(uncSIM<span class="sc">$</span>data<span class="sc">$</span>TRIPS, uncSIM<span class="sc">$</span>fitted.values)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.1922701</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">r2_mcfadden</span>(uncSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># R2 for Generalized Linear Regression
+       R2: 0.407
+  adj. R2: 0.407</code></pre>
+</div>
+</div>
+</section>
+<section id="origin-production-constrained-sim" class="level2">
+<h2 class="anchored" data-anchor-id="origin-production-constrained-sim"><strong>Origin (Production) constrained SIM</strong></h2>
+<p>The general formula of Origin Constrained Spatial Interaction Model</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu_i + \alpha lnW_j + \beta ln d_{ij})
+\]</span></p>
+<p><em>Code below takes a while to run so be <strong>patient</strong></em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set eval = true when need to recompute</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>orcSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>                 ORIGIN_SZ <span class="sc">+</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">log</span>(DESTIN_AGE25_64) <span class="sc">+</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">log</span>(dist),</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data,</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(orcSIM, <span class="st">"data/rds/orcSIM.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>orcSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/orcSIM.rds"</span>)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(orcSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = TRIPS ~ ORIGIN_SZ + log(DESTIN_AGE25_64) + log(dist), 
+    family = poisson(link = "log"), data = SIM_data, na.action = na.exclude)
+
+Coefficients:
+                       Estimate Std. Error   z value Pr(&gt;|z|)    
+(Intercept)           1.248e+01  3.120e-03  3999.413  &lt; 2e-16 ***
+ORIGIN_SZAMSZ02       1.124e+00  3.634e-03   309.321  &lt; 2e-16 ***
+ORIGIN_SZAMSZ03       6.726e-01  3.722e-03   180.682  &lt; 2e-16 ***
+ORIGIN_SZAMSZ04       3.533e-02  4.204e-03     8.405  &lt; 2e-16 ***
+ORIGIN_SZAMSZ05      -1.606e-01  4.821e-03   -33.312  &lt; 2e-16 ***
+ORIGIN_SZAMSZ06       3.908e-01  4.340e-03    90.039  &lt; 2e-16 ***
+ORIGIN_SZAMSZ07      -1.133e+00  7.309e-03  -154.971  &lt; 2e-16 ***
+ORIGIN_SZAMSZ08      -7.993e-01  6.741e-03  -118.562  &lt; 2e-16 ***
+ORIGIN_SZAMSZ09       2.485e-01  4.508e-03    55.135  &lt; 2e-16 ***
+ORIGIN_SZAMSZ10       5.484e-01  3.921e-03   139.854  &lt; 2e-16 ***
+ORIGIN_SZAMSZ11      -1.453e+00  8.925e-03  -162.850  &lt; 2e-16 ***
+ORIGIN_SZAMSZ12      -1.469e+00  8.845e-03  -166.116  &lt; 2e-16 ***
+ORIGIN_SZBDSZ01       1.085e+00  3.598e-03   301.519  &lt; 2e-16 ***
+ORIGIN_SZBDSZ02       5.465e-01  4.160e-03   131.355  &lt; 2e-16 ***
+ORIGIN_SZBDSZ03       1.103e+00  3.679e-03   299.797  &lt; 2e-16 ***
+ORIGIN_SZBDSZ04       1.776e+00  3.232e-03   549.540  &lt; 2e-16 ***
+ORIGIN_SZBDSZ05       8.316e-01  3.640e-03   228.493  &lt; 2e-16 ***
+ORIGIN_SZBDSZ06       9.994e-01  3.694e-03   270.585  &lt; 2e-16 ***
+ORIGIN_SZBDSZ07      -7.095e-01  6.207e-03  -114.312  &lt; 2e-16 ***
+ORIGIN_SZBDSZ08      -5.959e-01  5.951e-03  -100.134  &lt; 2e-16 ***
+ORIGIN_SZBKSZ01      -2.838e-01  5.258e-03   -53.977  &lt; 2e-16 ***
+ORIGIN_SZBKSZ02       4.914e-01  4.198e-03   117.071  &lt; 2e-16 ***
+ORIGIN_SZBKSZ03       7.302e-01  3.950e-03   184.855  &lt; 2e-16 ***
+ORIGIN_SZBKSZ04      -2.259e-02  4.844e-03    -4.663 3.12e-06 ***
+ORIGIN_SZBKSZ05       4.191e-02  4.545e-03     9.219  &lt; 2e-16 ***
+ORIGIN_SZBKSZ06       1.389e-01  4.806e-03    28.906  &lt; 2e-16 ***
+ORIGIN_SZBKSZ07       8.048e-01  3.640e-03   221.102  &lt; 2e-16 ***
+ORIGIN_SZBKSZ08       1.480e-01  4.298e-03    34.442  &lt; 2e-16 ***
+ORIGIN_SZBKSZ09       1.008e-01  4.534e-03    22.228  &lt; 2e-16 ***
+ORIGIN_SZBLSZ01      -1.258e+00  1.028e-02  -122.405  &lt; 2e-16 ***
+ORIGIN_SZBLSZ02      -1.919e+00  1.449e-02  -132.426  &lt; 2e-16 ***
+ORIGIN_SZBLSZ03      -3.157e+00  3.250e-02   -97.132  &lt; 2e-16 ***
+ORIGIN_SZBLSZ04      -2.050e+00  1.853e-02  -110.667  &lt; 2e-16 ***
+ORIGIN_SZBMSZ01       2.155e-01  3.927e-03    54.869  &lt; 2e-16 ***
+ORIGIN_SZBMSZ02      -1.128e+00  5.638e-03  -200.114  &lt; 2e-16 ***
+ORIGIN_SZBMSZ03      -3.022e-01  4.492e-03   -67.283  &lt; 2e-16 ***
+ORIGIN_SZBMSZ04       8.771e-02  3.988e-03    21.995  &lt; 2e-16 ***
+ORIGIN_SZBMSZ05      -1.210e+00  5.879e-03  -205.758  &lt; 2e-16 ***
+ORIGIN_SZBMSZ06      -1.754e+00  9.449e-03  -185.637  &lt; 2e-16 ***
+ORIGIN_SZBMSZ07      -3.479e-01  4.435e-03   -78.443  &lt; 2e-16 ***
+ORIGIN_SZBMSZ08      -4.323e-01  4.449e-03   -97.181  &lt; 2e-16 ***
+ORIGIN_SZBMSZ09      -1.095e+00  5.780e-03  -189.470  &lt; 2e-16 ***
+ORIGIN_SZBMSZ10      -1.294e+00  6.359e-03  -203.489  &lt; 2e-16 ***
+ORIGIN_SZBMSZ11      -7.901e-01  5.307e-03  -148.894  &lt; 2e-16 ***
+ORIGIN_SZBMSZ12      -1.033e+00  6.920e-03  -149.342  &lt; 2e-16 ***
+ORIGIN_SZBMSZ13      -1.941e-02  4.417e-03    -4.393 1.12e-05 ***
+ORIGIN_SZBMSZ14      -5.485e-01  5.214e-03  -105.187  &lt; 2e-16 ***
+ORIGIN_SZBMSZ15      -2.578e-01  4.742e-03   -54.364  &lt; 2e-16 ***
+ORIGIN_SZBMSZ16      -1.266e+00  6.089e-03  -207.847  &lt; 2e-16 ***
+ORIGIN_SZBMSZ17      -1.631e+00  9.219e-03  -176.921  &lt; 2e-16 ***
+ORIGIN_SZBPSZ01       2.640e-01  4.434e-03    59.536  &lt; 2e-16 ***
+ORIGIN_SZBPSZ02       2.693e-01  4.896e-03    55.003  &lt; 2e-16 ***
+ORIGIN_SZBPSZ03       5.129e-01  4.548e-03   112.761  &lt; 2e-16 ***
+ORIGIN_SZBPSZ04       5.876e-01  4.019e-03   146.223  &lt; 2e-16 ***
+ORIGIN_SZBPSZ05       6.137e-01  3.748e-03   163.747  &lt; 2e-16 ***
+ORIGIN_SZBPSZ06      -1.082e+00  6.867e-03  -157.584  &lt; 2e-16 ***
+ORIGIN_SZBPSZ07      -7.816e-01  6.418e-03  -121.778  &lt; 2e-16 ***
+ORIGIN_SZBSSZ01       3.383e-02  4.305e-03     7.858 3.89e-15 ***
+ORIGIN_SZBSSZ02       4.096e-01  3.892e-03   105.227  &lt; 2e-16 ***
+ORIGIN_SZBSSZ03       3.323e-01  3.854e-03    86.223  &lt; 2e-16 ***
+ORIGIN_SZBTSZ01       1.239e-01  4.223e-03    29.341  &lt; 2e-16 ***
+ORIGIN_SZBTSZ02      -9.493e-01  6.018e-03  -157.744  &lt; 2e-16 ***
+ORIGIN_SZBTSZ03       3.488e-03  4.402e-03     0.792    0.428    
+ORIGIN_SZBTSZ04      -7.666e-01  7.692e-03   -99.671  &lt; 2e-16 ***
+ORIGIN_SZBTSZ05      -1.484e+00  8.412e-03  -176.430  &lt; 2e-16 ***
+ORIGIN_SZBTSZ06      -6.652e-01  5.639e-03  -117.969  &lt; 2e-16 ***
+ORIGIN_SZBTSZ07      -1.954e+00  9.134e-03  -213.896  &lt; 2e-16 ***
+ORIGIN_SZBTSZ08      -1.247e+00  7.314e-03  -170.452  &lt; 2e-16 ***
+ORIGIN_SZCBSZ01      -1.339e+00  3.659e-02   -36.603  &lt; 2e-16 ***
+ORIGIN_SZCCSZ01      -1.665e+00  1.089e-02  -152.810  &lt; 2e-16 ***
+ORIGIN_SZCHSZ01      -1.168e+00  9.436e-03  -123.806  &lt; 2e-16 ***
+ORIGIN_SZCHSZ02      -5.865e-01  6.628e-03   -88.490  &lt; 2e-16 ***
+ORIGIN_SZCHSZ03       6.401e-01  4.593e-03   139.354  &lt; 2e-16 ***
+ORIGIN_SZCKSZ01       4.284e-01  4.044e-03   105.929  &lt; 2e-16 ***
+ORIGIN_SZCKSZ02       8.584e-01  4.103e-03   209.225  &lt; 2e-16 ***
+ORIGIN_SZCKSZ03       9.465e-01  3.690e-03   256.528  &lt; 2e-16 ***
+ORIGIN_SZCKSZ04       1.417e+00  3.747e-03   378.210  &lt; 2e-16 ***
+ORIGIN_SZCKSZ05       1.095e+00  4.321e-03   253.381  &lt; 2e-16 ***
+ORIGIN_SZCKSZ06       1.330e+00  4.139e-03   321.308  &lt; 2e-16 ***
+ORIGIN_SZCLSZ01      -3.466e-01  5.639e-03   -61.467  &lt; 2e-16 ***
+ORIGIN_SZCLSZ02      -1.569e+00  1.047e-02  -149.856  &lt; 2e-16 ***
+ORIGIN_SZCLSZ03      -6.001e-01  5.736e-03  -104.606  &lt; 2e-16 ***
+ORIGIN_SZCLSZ04       9.266e-01  3.584e-03   258.496  &lt; 2e-16 ***
+ORIGIN_SZCLSZ05      -1.782e+00  1.053e-02  -169.192  &lt; 2e-16 ***
+ORIGIN_SZCLSZ06       9.700e-01  3.446e-03   281.495  &lt; 2e-16 ***
+ORIGIN_SZCLSZ07      -8.809e-02  4.361e-03   -20.198  &lt; 2e-16 ***
+ORIGIN_SZCLSZ08       3.162e-01  4.839e-03    65.347  &lt; 2e-16 ***
+ORIGIN_SZCLSZ09      -1.663e+00  1.328e-02  -125.239  &lt; 2e-16 ***
+ORIGIN_SZDTSZ01      -1.671e+00  6.863e-03  -243.421  &lt; 2e-16 ***
+ORIGIN_SZDTSZ02      -1.496e+00  6.219e-03  -240.516  &lt; 2e-16 ***
+ORIGIN_SZDTSZ03      -2.426e+00  1.066e-02  -227.490  &lt; 2e-16 ***
+ORIGIN_SZDTSZ04      -3.813e+00  9.627e-02   -39.611  &lt; 2e-16 ***
+ORIGIN_SZDTSZ05      -2.902e+00  1.927e-02  -150.597  &lt; 2e-16 ***
+ORIGIN_SZDTSZ06      -2.918e+00  1.585e-02  -184.061  &lt; 2e-16 ***
+ORIGIN_SZDTSZ07      -1.949e+00  1.980e-02   -98.450  &lt; 2e-16 ***
+ORIGIN_SZDTSZ08      -2.399e+00  9.864e-03  -243.188  &lt; 2e-16 ***
+ORIGIN_SZDTSZ09      -2.958e+00  1.945e-02  -152.100  &lt; 2e-16 ***
+ORIGIN_SZDTSZ10      -2.237e+00  1.072e-02  -208.693  &lt; 2e-16 ***
+ORIGIN_SZDTSZ11      -2.275e+00  1.017e-02  -223.576  &lt; 2e-16 ***
+ORIGIN_SZDTSZ12      -3.324e+00  2.239e-02  -148.449  &lt; 2e-16 ***
+ORIGIN_SZDTSZ13      -2.317e+00  1.176e-02  -197.030  &lt; 2e-16 ***
+ORIGIN_SZGLSZ01      -1.289e+00  7.039e-03  -183.171  &lt; 2e-16 ***
+ORIGIN_SZGLSZ02       2.806e-01  4.003e-03    70.104  &lt; 2e-16 ***
+ORIGIN_SZGLSZ03       2.891e-01  3.984e-03    72.574  &lt; 2e-16 ***
+ORIGIN_SZGLSZ04       1.031e+00  3.381e-03   304.907  &lt; 2e-16 ***
+ORIGIN_SZGLSZ05       7.491e-01  3.555e-03   210.720  &lt; 2e-16 ***
+ORIGIN_SZHGSZ01       2.854e-01  3.958e-03    72.108  &lt; 2e-16 ***
+ORIGIN_SZHGSZ02       6.359e-01  3.819e-03   166.482  &lt; 2e-16 ***
+ORIGIN_SZHGSZ03       2.954e-01  4.188e-03    70.540  &lt; 2e-16 ***
+ORIGIN_SZHGSZ04       9.978e-01  3.549e-03   281.156  &lt; 2e-16 ***
+ORIGIN_SZHGSZ05       1.304e+00  3.491e-03   373.630  &lt; 2e-16 ***
+ORIGIN_SZHGSZ06       4.524e-02  4.332e-03    10.442  &lt; 2e-16 ***
+ORIGIN_SZHGSZ07       7.382e-01  3.697e-03   199.668  &lt; 2e-16 ***
+ORIGIN_SZHGSZ08       3.001e-01  4.229e-03    70.960  &lt; 2e-16 ***
+ORIGIN_SZHGSZ09      -4.800e-01  5.683e-03   -84.451  &lt; 2e-16 ***
+ORIGIN_SZHGSZ10      -3.684e+00  3.980e-02   -92.580  &lt; 2e-16 ***
+ORIGIN_SZJESZ01       4.732e-01  4.045e-03   117.000  &lt; 2e-16 ***
+ORIGIN_SZJESZ02       3.301e-01  4.063e-03    81.243  &lt; 2e-16 ***
+ORIGIN_SZJESZ03       2.999e-01  4.302e-03    69.703  &lt; 2e-16 ***
+ORIGIN_SZJESZ04      -9.352e-01  7.062e-03  -132.435  &lt; 2e-16 ***
+ORIGIN_SZJESZ05      -2.012e+00  1.135e-02  -177.223  &lt; 2e-16 ***
+ORIGIN_SZJESZ06       3.172e-01  3.990e-03    79.501  &lt; 2e-16 ***
+ORIGIN_SZJESZ07      -1.615e+00  8.865e-03  -182.163  &lt; 2e-16 ***
+ORIGIN_SZJESZ08      -4.563e-01  7.844e-03   -58.178  &lt; 2e-16 ***
+ORIGIN_SZJESZ09       5.375e-01  4.117e-03   130.544  &lt; 2e-16 ***
+ORIGIN_SZJESZ10      -1.892e+00  1.608e-02  -117.633  &lt; 2e-16 ***
+ORIGIN_SZJESZ11      -2.059e+00  1.674e-02  -122.984  &lt; 2e-16 ***
+ORIGIN_SZJWSZ01       3.129e-01  5.248e-03    59.616  &lt; 2e-16 ***
+ORIGIN_SZJWSZ02       9.110e-01  3.743e-03   243.403  &lt; 2e-16 ***
+ORIGIN_SZJWSZ03       1.343e+00  3.477e-03   386.229  &lt; 2e-16 ***
+ORIGIN_SZJWSZ04       1.419e+00  3.532e-03   401.821  &lt; 2e-16 ***
+ORIGIN_SZJWSZ05      -1.303e+00  1.033e-02  -126.106  &lt; 2e-16 ***
+ORIGIN_SZJWSZ06      -8.173e-01  8.371e-03   -97.626  &lt; 2e-16 ***
+ORIGIN_SZJWSZ07      -2.339e+00  1.925e-02  -121.517  &lt; 2e-16 ***
+ORIGIN_SZJWSZ08       2.040e+00  3.392e-03   601.430  &lt; 2e-16 ***
+ORIGIN_SZJWSZ09       1.967e+00  3.221e-03   610.569  &lt; 2e-16 ***
+ORIGIN_SZKLSZ01       2.366e-01  3.879e-03    61.006  &lt; 2e-16 ***
+ORIGIN_SZKLSZ02      -3.671e-01  4.776e-03   -76.858  &lt; 2e-16 ***
+ORIGIN_SZKLSZ03      -3.565e-01  4.801e-03   -74.245  &lt; 2e-16 ***
+ORIGIN_SZKLSZ04      -1.610e+00  6.831e-03  -235.675  &lt; 2e-16 ***
+ORIGIN_SZKLSZ05      -5.115e-01  5.637e-03   -90.732  &lt; 2e-16 ***
+ORIGIN_SZKLSZ06      -5.180e-01  4.509e-03  -114.890  &lt; 2e-16 ***
+ORIGIN_SZKLSZ07      -9.038e-01  5.938e-03  -152.218  &lt; 2e-16 ***
+ORIGIN_SZKLSZ08      -7.426e-01  5.138e-03  -144.513  &lt; 2e-16 ***
+ORIGIN_SZKLSZ09      -1.453e+00  6.449e-03  -225.271  &lt; 2e-16 ***
+ORIGIN_SZLKSZ01      -3.013e+00  2.955e-02  -101.962  &lt; 2e-16 ***
+ORIGIN_SZMDSZ01      -2.316e+00  2.098e-02  -110.417  &lt; 2e-16 ***
+ORIGIN_SZMDSZ02      -9.612e-01  9.228e-03  -104.167  &lt; 2e-16 ***
+ORIGIN_SZMDSZ03      -1.731e+00  1.292e-02  -133.993  &lt; 2e-16 ***
+ORIGIN_SZMPSZ01      -6.389e-01  5.681e-03  -112.460  &lt; 2e-16 ***
+ORIGIN_SZMPSZ02      -3.572e-01  5.156e-03   -69.271  &lt; 2e-16 ***
+ORIGIN_SZMPSZ03       4.831e-01  3.895e-03   124.033  &lt; 2e-16 ***
+ORIGIN_SZMSSZ01      -8.004e+00  3.780e-01   -21.177  &lt; 2e-16 ***
+ORIGIN_SZMUSZ01      -1.113e+00  5.491e-03  -202.702  &lt; 2e-16 ***
+ORIGIN_SZMUSZ02      -3.153e+00  1.465e-02  -215.292  &lt; 2e-16 ***
+ORIGIN_SZMUSZ03      -1.685e+00  6.477e-03  -260.140  &lt; 2e-16 ***
+ORIGIN_SZNTSZ01      -2.378e+00  2.497e-02   -95.235  &lt; 2e-16 ***
+ORIGIN_SZNTSZ02      -2.571e+00  1.308e-02  -196.513  &lt; 2e-16 ***
+ORIGIN_SZNTSZ03      -8.705e-01  5.982e-03  -145.509  &lt; 2e-16 ***
+ORIGIN_SZNTSZ05      -3.166e+00  3.775e-02   -83.876  &lt; 2e-16 ***
+ORIGIN_SZNTSZ06      -3.281e+00  3.721e-02   -88.181  &lt; 2e-16 ***
+ORIGIN_SZNVSZ01       6.852e-01  3.533e-03   193.963  &lt; 2e-16 ***
+ORIGIN_SZNVSZ02      -4.471e-01  4.787e-03   -93.407  &lt; 2e-16 ***
+ORIGIN_SZNVSZ03      -1.068e+00  5.948e-03  -179.622  &lt; 2e-16 ***
+ORIGIN_SZNVSZ04      -1.305e+00  7.131e-03  -183.054  &lt; 2e-16 ***
+ORIGIN_SZNVSZ05      -2.572e+00  1.298e-02  -198.117  &lt; 2e-16 ***
+ORIGIN_SZORSZ01      -3.274e+00  3.142e-02  -104.208  &lt; 2e-16 ***
+ORIGIN_SZORSZ02      -1.142e+00  5.614e-03  -203.502  &lt; 2e-16 ***
+ORIGIN_SZORSZ03      -1.549e+00  6.523e-03  -237.415  &lt; 2e-16 ***
+ORIGIN_SZOTSZ01      -1.726e+00  7.143e-03  -241.695  &lt; 2e-16 ***
+ORIGIN_SZOTSZ02      -1.783e+00  8.149e-03  -218.809  &lt; 2e-16 ***
+ORIGIN_SZOTSZ03      -7.302e-01  5.163e-03  -141.430  &lt; 2e-16 ***
+ORIGIN_SZOTSZ04      -6.910e-01  8.201e-03   -84.265  &lt; 2e-16 ***
+ORIGIN_SZPGSZ01      -7.081e-01  9.319e-03   -75.982  &lt; 2e-16 ***
+ORIGIN_SZPGSZ02      -2.873e-01  5.628e-03   -51.054  &lt; 2e-16 ***
+ORIGIN_SZPGSZ03       1.117e+00  3.622e-03   308.236  &lt; 2e-16 ***
+ORIGIN_SZPGSZ04       1.271e+00  3.600e-03   353.120  &lt; 2e-16 ***
+ORIGIN_SZPGSZ05       4.576e-01  4.567e-03   100.194  &lt; 2e-16 ***
+ORIGIN_SZPLSZ01      -4.863e-01  7.811e-03   -62.260  &lt; 2e-16 ***
+ORIGIN_SZPLSZ02      -1.395e+00  1.127e-02  -123.798  &lt; 2e-16 ***
+ORIGIN_SZPLSZ03      -2.887e+00  3.051e-02   -94.644  &lt; 2e-16 ***
+ORIGIN_SZPLSZ04      -2.973e+00  2.745e-02  -108.318  &lt; 2e-16 ***
+ORIGIN_SZPLSZ05      -2.266e+00  1.769e-02  -128.051  &lt; 2e-16 ***
+ORIGIN_SZPNSZ01       1.587e+00  3.754e-03   422.759  &lt; 2e-16 ***
+ORIGIN_SZPNSZ02      -5.415e-01  9.699e-03   -55.833  &lt; 2e-16 ***
+ORIGIN_SZPNSZ03      -1.775e+00  1.598e-02  -111.097  &lt; 2e-16 ***
+ORIGIN_SZPNSZ04      -2.621e+00  2.515e-02  -104.227  &lt; 2e-16 ***
+ORIGIN_SZPNSZ05      -1.984e+00  1.964e-02  -101.014  &lt; 2e-16 ***
+ORIGIN_SZPRSZ01      -6.841e-01  9.235e-03   -74.076  &lt; 2e-16 ***
+ORIGIN_SZPRSZ02       1.090e+00  3.766e-03   289.455  &lt; 2e-16 ***
+ORIGIN_SZPRSZ03       8.890e-01  3.779e-03   235.217  &lt; 2e-16 ***
+ORIGIN_SZPRSZ04      -1.821e-01  5.928e-03   -30.727  &lt; 2e-16 ***
+ORIGIN_SZPRSZ05       1.350e+00  3.582e-03   377.057  &lt; 2e-16 ***
+ORIGIN_SZPRSZ06      -4.483e-01  6.701e-03   -66.894  &lt; 2e-16 ***
+ORIGIN_SZPRSZ07      -2.476e+00  1.628e-02  -152.098  &lt; 2e-16 ***
+ORIGIN_SZPRSZ08       1.937e-01  4.915e-03    39.400  &lt; 2e-16 ***
+ORIGIN_SZQTSZ01      -3.243e-01  5.274e-03   -61.494  &lt; 2e-16 ***
+ORIGIN_SZQTSZ02      -6.310e-01  4.961e-03  -127.181  &lt; 2e-16 ***
+ORIGIN_SZQTSZ03      -1.513e-01  4.502e-03   -33.614  &lt; 2e-16 ***
+ORIGIN_SZQTSZ04      -1.090e+00  6.159e-03  -176.985  &lt; 2e-16 ***
+ORIGIN_SZQTSZ05      -1.867e-01  4.519e-03   -41.324  &lt; 2e-16 ***
+ORIGIN_SZQTSZ06      -5.264e-01  5.161e-03  -101.989  &lt; 2e-16 ***
+ORIGIN_SZQTSZ07      -1.487e+00  7.659e-03  -194.206  &lt; 2e-16 ***
+ORIGIN_SZQTSZ08      -1.307e-01  4.646e-03   -28.139  &lt; 2e-16 ***
+ORIGIN_SZQTSZ09      -5.076e-01  5.256e-03   -96.577  &lt; 2e-16 ***
+ORIGIN_SZQTSZ10      -3.615e-01  5.173e-03   -69.883  &lt; 2e-16 ***
+ORIGIN_SZQTSZ11      -1.213e+00  7.432e-03  -163.194  &lt; 2e-16 ***
+ORIGIN_SZQTSZ12      -9.643e-01  7.175e-03  -134.403  &lt; 2e-16 ***
+ORIGIN_SZQTSZ13      -6.932e-02  4.733e-03   -14.645  &lt; 2e-16 ***
+ORIGIN_SZQTSZ14      -1.346e+00  7.128e-03  -188.850  &lt; 2e-16 ***
+ORIGIN_SZQTSZ15      -7.666e-01  8.419e-03   -91.047  &lt; 2e-16 ***
+ORIGIN_SZRCSZ01      -5.405e-01  5.128e-03  -105.401  &lt; 2e-16 ***
+ORIGIN_SZRCSZ02      -2.127e+00  1.450e-02  -146.631  &lt; 2e-16 ***
+ORIGIN_SZRCSZ03      -1.370e+00  7.041e-03  -194.615  &lt; 2e-16 ***
+ORIGIN_SZRCSZ04      -2.080e+00  1.048e-02  -198.372  &lt; 2e-16 ***
+ORIGIN_SZRCSZ05      -2.454e+00  1.149e-02  -213.662  &lt; 2e-16 ***
+ORIGIN_SZRCSZ06      -4.617e-01  6.951e-03   -66.421  &lt; 2e-16 ***
+ORIGIN_SZRCSZ08      -2.510e+00  1.503e-02  -167.065  &lt; 2e-16 ***
+ORIGIN_SZRCSZ09      -1.980e+00  1.213e-02  -163.226  &lt; 2e-16 ***
+ORIGIN_SZRCSZ10      -1.726e+00  6.757e-03  -255.384  &lt; 2e-16 ***
+ORIGIN_SZRVSZ01      -2.625e+00  1.192e-02  -220.209  &lt; 2e-16 ***
+ORIGIN_SZRVSZ02      -1.143e+00  6.674e-03  -171.222  &lt; 2e-16 ***
+ORIGIN_SZRVSZ03      -1.888e+00  9.575e-03  -197.130  &lt; 2e-16 ***
+ORIGIN_SZRVSZ04      -1.888e+00  1.406e-02  -134.282  &lt; 2e-16 ***
+ORIGIN_SZRVSZ05      -2.167e+00  1.200e-02  -180.638  &lt; 2e-16 ***
+ORIGIN_SZSBSZ01       7.978e-01  4.424e-03   180.325  &lt; 2e-16 ***
+ORIGIN_SZSBSZ02      -5.494e-01  6.389e-03   -85.992  &lt; 2e-16 ***
+ORIGIN_SZSBSZ03       1.033e+00  3.810e-03   271.140  &lt; 2e-16 ***
+ORIGIN_SZSBSZ04       8.724e-01  4.296e-03   203.078  &lt; 2e-16 ***
+ORIGIN_SZSBSZ05      -9.082e-02  5.473e-03   -16.595  &lt; 2e-16 ***
+ORIGIN_SZSBSZ06      -1.653e+00  1.362e-02  -121.379  &lt; 2e-16 ***
+ORIGIN_SZSBSZ07      -7.726e-01  9.103e-03   -84.868  &lt; 2e-16 ***
+ORIGIN_SZSBSZ08      -9.319e-01  9.273e-03  -100.492  &lt; 2e-16 ***
+ORIGIN_SZSBSZ09      -4.025e-01  6.936e-03   -58.030  &lt; 2e-16 ***
+ORIGIN_SZSESZ02       1.153e+00  3.601e-03   320.082  &lt; 2e-16 ***
+ORIGIN_SZSESZ03       1.313e+00  3.431e-03   382.572  &lt; 2e-16 ***
+ORIGIN_SZSESZ04       1.021e+00  3.918e-03   260.688  &lt; 2e-16 ***
+ORIGIN_SZSESZ05      -9.416e-02  4.788e-03   -19.666  &lt; 2e-16 ***
+ORIGIN_SZSESZ06       9.837e-01  3.757e-03   261.855  &lt; 2e-16 ***
+ORIGIN_SZSESZ07      -2.211e+00  1.414e-02  -156.357  &lt; 2e-16 ***
+ORIGIN_SZSGSZ01      -8.292e-01  6.831e-03  -121.386  &lt; 2e-16 ***
+ORIGIN_SZSGSZ02      -1.056e+00  8.079e-03  -130.724  &lt; 2e-16 ***
+ORIGIN_SZSGSZ03       3.695e-01  4.229e-03    87.373  &lt; 2e-16 ***
+ORIGIN_SZSGSZ04       3.816e-01  3.902e-03    97.792  &lt; 2e-16 ***
+ORIGIN_SZSGSZ05      -1.552e+00  8.113e-03  -191.326  &lt; 2e-16 ***
+ORIGIN_SZSGSZ06       4.913e-01  3.726e-03   131.859  &lt; 2e-16 ***
+ORIGIN_SZSGSZ07      -4.579e-01  4.890e-03   -93.629  &lt; 2e-16 ***
+ORIGIN_SZSKSZ01      -7.297e-02  6.287e-03   -11.606  &lt; 2e-16 ***
+ORIGIN_SZSKSZ02       5.280e-01  4.561e-03   115.770  &lt; 2e-16 ***
+ORIGIN_SZSKSZ03      -4.654e-01  6.207e-03   -74.979  &lt; 2e-16 ***
+ORIGIN_SZSKSZ04      -2.210e+00  2.034e-02  -108.637  &lt; 2e-16 ***
+ORIGIN_SZSKSZ05      -1.204e+00  1.240e-02   -97.096  &lt; 2e-16 ***
+ORIGIN_SZSLSZ01      -2.981e+00  2.395e-02  -124.463  &lt; 2e-16 ***
+ORIGIN_SZSLSZ04      -3.078e-01  5.752e-03   -53.511  &lt; 2e-16 ***
+ORIGIN_SZSRSZ01      -1.549e+00  7.033e-03  -220.279  &lt; 2e-16 ***
+ORIGIN_SZSRSZ02      -1.743e+00  7.087e-03  -245.969  &lt; 2e-16 ***
+ORIGIN_SZSRSZ03      -2.717e+00  1.466e-02  -185.318  &lt; 2e-16 ***
+ORIGIN_SZSVSZ01      -3.635e+00  4.302e-02   -84.502  &lt; 2e-16 ***
+ORIGIN_SZTHSZ01      -1.777e+00  3.731e-02   -47.637  &lt; 2e-16 ***
+ORIGIN_SZTHSZ03      -1.775e+00  1.432e-02  -123.915  &lt; 2e-16 ***
+ORIGIN_SZTHSZ04      -2.848e+00  2.380e-02  -119.643  &lt; 2e-16 ***
+ORIGIN_SZTHSZ06      -2.135e+00  1.412e-02  -151.214  &lt; 2e-16 ***
+ORIGIN_SZTMSZ01       9.896e-01  4.127e-03   239.794  &lt; 2e-16 ***
+ORIGIN_SZTMSZ02       2.245e+00  3.150e-03   712.723  &lt; 2e-16 ***
+ORIGIN_SZTMSZ03       1.537e+00  3.371e-03   455.888  &lt; 2e-16 ***
+ORIGIN_SZTMSZ04       9.674e-01  3.857e-03   250.824  &lt; 2e-16 ***
+ORIGIN_SZTMSZ05      -1.698e-01  5.981e-03   -28.393  &lt; 2e-16 ***
+ORIGIN_SZTNSZ01      -1.139e+00  6.062e-03  -187.873  &lt; 2e-16 ***
+ORIGIN_SZTNSZ02      -1.007e+00  5.702e-03  -176.645  &lt; 2e-16 ***
+ORIGIN_SZTNSZ03      -1.493e+00  7.513e-03  -198.737  &lt; 2e-16 ***
+ORIGIN_SZTNSZ04      -6.752e-01  5.499e-03  -122.794  &lt; 2e-16 ***
+ORIGIN_SZTPSZ01      -6.285e-01  5.089e-03  -123.511  &lt; 2e-16 ***
+ORIGIN_SZTPSZ02       5.057e-01  3.574e-03   141.478  &lt; 2e-16 ***
+ORIGIN_SZTPSZ03      -3.873e-01  5.002e-03   -77.421  &lt; 2e-16 ***
+ORIGIN_SZTPSZ04      -1.657e-01  4.690e-03   -35.332  &lt; 2e-16 ***
+ORIGIN_SZTPSZ05      -1.269e-01  4.886e-03   -25.978  &lt; 2e-16 ***
+ORIGIN_SZTPSZ06       3.002e-01  4.901e-03    61.246  &lt; 2e-16 ***
+ORIGIN_SZTPSZ07      -1.179e-01  5.015e-03   -23.520  &lt; 2e-16 ***
+ORIGIN_SZTPSZ08      -7.176e-01  6.731e-03  -106.604  &lt; 2e-16 ***
+ORIGIN_SZTPSZ09      -3.290e-01  5.129e-03   -64.154  &lt; 2e-16 ***
+ORIGIN_SZTPSZ10      -4.900e-01  5.651e-03   -86.702  &lt; 2e-16 ***
+ORIGIN_SZTPSZ11       3.176e-01  4.184e-03    75.899  &lt; 2e-16 ***
+ORIGIN_SZTPSZ12      -4.276e-01  5.223e-03   -81.858  &lt; 2e-16 ***
+ORIGIN_SZTSSZ01      -3.300e+00  3.679e-02   -89.695  &lt; 2e-16 ***
+ORIGIN_SZTSSZ02       5.044e-01  5.837e-03    86.423  &lt; 2e-16 ***
+ORIGIN_SZTSSZ03       5.370e-01  5.710e-03    94.046  &lt; 2e-16 ***
+ORIGIN_SZTSSZ04       5.531e-01  5.946e-03    93.021  &lt; 2e-16 ***
+ORIGIN_SZTSSZ05      -9.746e-01  1.155e-02   -84.378  &lt; 2e-16 ***
+ORIGIN_SZTSSZ06      -1.041e+00  1.300e-02   -80.057  &lt; 2e-16 ***
+ORIGIN_SZWCSZ01       3.218e-01  5.643e-03    57.033  &lt; 2e-16 ***
+ORIGIN_SZWCSZ02      -2.578e+00  2.362e-02  -109.116  &lt; 2e-16 ***
+ORIGIN_SZWCSZ03      -4.267e+00  1.155e-01   -36.940  &lt; 2e-16 ***
+ORIGIN_SZWDSZ01       1.470e+00  3.430e-03   428.530  &lt; 2e-16 ***
+ORIGIN_SZWDSZ02       1.159e+00  3.876e-03   299.057  &lt; 2e-16 ***
+ORIGIN_SZWDSZ03       2.249e+00  3.332e-03   675.098  &lt; 2e-16 ***
+ORIGIN_SZWDSZ04       1.225e+00  4.061e-03   301.621  &lt; 2e-16 ***
+ORIGIN_SZWDSZ05       6.568e-01  4.076e-03   161.123  &lt; 2e-16 ***
+ORIGIN_SZWDSZ06       1.316e+00  3.781e-03   348.077  &lt; 2e-16 ***
+ORIGIN_SZWDSZ07       9.897e-02  5.807e-03    17.043  &lt; 2e-16 ***
+ORIGIN_SZWDSZ08      -2.550e-01  6.309e-03   -40.414  &lt; 2e-16 ***
+ORIGIN_SZWDSZ09       1.767e+00  3.515e-03   502.735  &lt; 2e-16 ***
+ORIGIN_SZYSSZ01       2.239e-02  4.533e-03     4.940 7.80e-07 ***
+ORIGIN_SZYSSZ02       1.026e+00  4.102e-03   250.200  &lt; 2e-16 ***
+ORIGIN_SZYSSZ03       1.992e+00  3.445e-03   578.233  &lt; 2e-16 ***
+ORIGIN_SZYSSZ04       9.793e-01  3.675e-03   266.488  &lt; 2e-16 ***
+ORIGIN_SZYSSZ05       1.752e-01  4.583e-03    38.230  &lt; 2e-16 ***
+ORIGIN_SZYSSZ06      -8.329e-01  7.646e-03  -108.937  &lt; 2e-16 ***
+ORIGIN_SZYSSZ07      -6.547e-01  7.564e-03   -86.551  &lt; 2e-16 ***
+ORIGIN_SZYSSZ08       2.995e-02  5.065e-03     5.913 3.37e-09 ***
+ORIGIN_SZYSSZ09       1.425e+00  3.513e-03   405.785  &lt; 2e-16 ***
+log(DESTIN_AGE25_64)  2.555e-02  6.516e-05   392.206  &lt; 2e-16 ***
+log(dist)            -7.112e-01  1.006e-04 -7070.144  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 107870462  on 21078  degrees of freedom
+Residual deviance:  47272393  on 20767  degrees of freedom
+AIC: 47407255
+
+Number of Fisher Scoring iterations: 7</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">CalcRSquared</span>(orcSIM<span class="sc">$</span>data<span class="sc">$</span>TRIPS, orcSIM<span class="sc">$</span>fitted.values)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.381021</code></pre>
+</div>
+</div>
+</section>
+<section id="destination-constrained" class="level2">
+<h2 class="anchored" data-anchor-id="destination-constrained"><strong>Destination constrained</strong></h2>
+<p>The general formula of Destination Constrained Spatial Interaction Model</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha_j + \beta ln d_{ij})
+\]</span></p>
+<p><em>This takes a while to run so be <strong>patient</strong></em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set eval = true when need to recompute</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>decSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>                DESTIN_SZ <span class="sc">+</span> </span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIGIN_AGE25_64) <span class="sc">+</span> </span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(dist),</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data,</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(decSIM, <span class="st">"data/rds/decSIM.rds"</span>) <span class="co"># This is 52 MB file</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>decSIM <span class="ot">&lt;-</span><span class="fu">read_rds</span>(<span class="st">"data/rds/decSIM.rds"</span>)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(decSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = TRIPS ~ DESTIN_SZ + log(ORIGIN_AGE25_64) + log(dist), 
+    family = poisson(link = "log"), data = SIM_data, na.action = na.exclude)
+
+Coefficients:
+                       Estimate Std. Error   z value Pr(&gt;|z|)    
+(Intercept)          11.1410882  0.0027772  4011.579  &lt; 2e-16 ***
+DESTIN_SZAMSZ02       0.2557910  0.0035112    72.849  &lt; 2e-16 ***
+DESTIN_SZAMSZ03       0.3942740  0.0033889   116.344  &lt; 2e-16 ***
+DESTIN_SZAMSZ04      -0.9146437  0.0051428  -177.851  &lt; 2e-16 ***
+DESTIN_SZAMSZ05      -1.0065173  0.0050124  -200.806  &lt; 2e-16 ***
+DESTIN_SZAMSZ06      -0.7854138  0.0048020  -163.560  &lt; 2e-16 ***
+DESTIN_SZAMSZ07      -1.7922909  0.0083032  -215.856  &lt; 2e-16 ***
+DESTIN_SZAMSZ08      -0.8768811  0.0052724  -166.316  &lt; 2e-16 ***
+DESTIN_SZAMSZ09      -0.9312194  0.0051073  -182.330  &lt; 2e-16 ***
+DESTIN_SZAMSZ10       0.4505467  0.0035376   127.360  &lt; 2e-16 ***
+DESTIN_SZAMSZ11       0.1890523  0.0059079    32.000  &lt; 2e-16 ***
+DESTIN_SZAMSZ12      -0.0604611  0.0043965   -13.752  &lt; 2e-16 ***
+DESTIN_SZBDSZ01       0.6054462  0.0031528   192.033  &lt; 2e-16 ***
+DESTIN_SZBDSZ02      -0.1435718  0.0040408   -35.530  &lt; 2e-16 ***
+DESTIN_SZBDSZ03       0.1182554  0.0035216    33.580  &lt; 2e-16 ***
+DESTIN_SZBDSZ04       1.0744574  0.0029056   369.788  &lt; 2e-16 ***
+DESTIN_SZBDSZ05       0.5188524  0.0032147   161.398  &lt; 2e-16 ***
+DESTIN_SZBDSZ06       0.2319272  0.0035570    65.203  &lt; 2e-16 ***
+DESTIN_SZBDSZ07      -1.0406382  0.0077629  -134.053  &lt; 2e-16 ***
+DESTIN_SZBDSZ08      -1.7004628  0.0087167  -195.081  &lt; 2e-16 ***
+DESTIN_SZBKSZ01      -1.0227576  0.0052976  -193.062  &lt; 2e-16 ***
+DESTIN_SZBKSZ02      -0.2292656  0.0044189   -51.883  &lt; 2e-16 ***
+DESTIN_SZBKSZ03      -0.3693980  0.0044297   -83.390  &lt; 2e-16 ***
+DESTIN_SZBKSZ04       0.1193148  0.0039610    30.123  &lt; 2e-16 ***
+DESTIN_SZBKSZ05      -0.6140193  0.0045147  -136.005  &lt; 2e-16 ***
+DESTIN_SZBKSZ06      -0.8077332  0.0050823  -158.931  &lt; 2e-16 ***
+DESTIN_SZBKSZ07       0.3204621  0.0033596    95.386  &lt; 2e-16 ***
+DESTIN_SZBKSZ08      -1.0587197  0.0056921  -185.997  &lt; 2e-16 ***
+DESTIN_SZBKSZ09      -0.1710273  0.0040114   -42.635  &lt; 2e-16 ***
+DESTIN_SZBLSZ01      -0.1716574  0.0055233   -31.079  &lt; 2e-16 ***
+DESTIN_SZBLSZ02       0.7748624  0.0053914   143.722  &lt; 2e-16 ***
+DESTIN_SZBLSZ03       1.5658660  0.0058875   265.965  &lt; 2e-16 ***
+DESTIN_SZBLSZ04       0.1720564  0.0104307    16.495  &lt; 2e-16 ***
+DESTIN_SZBMSZ01      -0.0932428  0.0036719   -25.394  &lt; 2e-16 ***
+DESTIN_SZBMSZ02      -0.4481271  0.0038953  -115.043  &lt; 2e-16 ***
+DESTIN_SZBMSZ03      -0.8353412  0.0046863  -178.250  &lt; 2e-16 ***
+DESTIN_SZBMSZ04      -0.5044261  0.0040142  -125.661  &lt; 2e-16 ***
+DESTIN_SZBMSZ05      -0.6064471  0.0049481  -122.561  &lt; 2e-16 ***
+DESTIN_SZBMSZ06      -1.9289578  0.0089309  -215.986  &lt; 2e-16 ***
+DESTIN_SZBMSZ07      -0.1215508  0.0035900   -33.858  &lt; 2e-16 ***
+DESTIN_SZBMSZ08      -1.1364431  0.0048569  -233.987  &lt; 2e-16 ***
+DESTIN_SZBMSZ09      -1.9481019  0.0074063  -263.031  &lt; 2e-16 ***
+DESTIN_SZBMSZ10      -1.5701680  0.0061711  -254.437  &lt; 2e-16 ***
+DESTIN_SZBMSZ11      -1.4324587  0.0057202  -250.420  &lt; 2e-16 ***
+DESTIN_SZBMSZ12      -0.9642301  0.0059452  -162.185  &lt; 2e-16 ***
+DESTIN_SZBMSZ13      -0.2102320  0.0038408   -54.736  &lt; 2e-16 ***
+DESTIN_SZBMSZ14      -1.0138679  0.0060453  -167.712  &lt; 2e-16 ***
+DESTIN_SZBMSZ15      -1.2276893  0.0057103  -214.994  &lt; 2e-16 ***
+DESTIN_SZBMSZ16      -1.5167958  0.0058527  -259.164  &lt; 2e-16 ***
+DESTIN_SZBMSZ17      -1.4557260  0.0070383  -206.828  &lt; 2e-16 ***
+DESTIN_SZBPSZ01      -0.5101095  0.0044678  -114.175  &lt; 2e-16 ***
+DESTIN_SZBPSZ02      -1.4610932  0.0070465  -207.350  &lt; 2e-16 ***
+DESTIN_SZBPSZ03      -1.1088582  0.0065318  -169.762  &lt; 2e-16 ***
+DESTIN_SZBPSZ04      -0.5694082  0.0047977  -118.685  &lt; 2e-16 ***
+DESTIN_SZBPSZ05       0.5121919  0.0032354   158.311  &lt; 2e-16 ***
+DESTIN_SZBPSZ06      -0.9324099  0.0064284  -145.045  &lt; 2e-16 ***
+DESTIN_SZBPSZ07      -0.4858707  0.0061650   -78.811  &lt; 2e-16 ***
+DESTIN_SZBSSZ01      -0.2014456  0.0037492   -53.731  &lt; 2e-16 ***
+DESTIN_SZBSSZ02      -0.7650851  0.0043491  -175.920  &lt; 2e-16 ***
+DESTIN_SZBSSZ03       0.3341571  0.0031673   105.501  &lt; 2e-16 ***
+DESTIN_SZBTSZ01       0.3248408  0.0033222    97.780  &lt; 2e-16 ***
+DESTIN_SZBTSZ02      -0.6003898  0.0052201  -115.016  &lt; 2e-16 ***
+DESTIN_SZBTSZ03       0.0609513  0.0037697    16.169  &lt; 2e-16 ***
+DESTIN_SZBTSZ04      -1.6207328  0.0080255  -201.947  &lt; 2e-16 ***
+DESTIN_SZBTSZ05      -0.8152297  0.0058112  -140.286  &lt; 2e-16 ***
+DESTIN_SZBTSZ06      -0.8646583  0.0050475  -171.305  &lt; 2e-16 ***
+DESTIN_SZBTSZ07      -1.8823303  0.0077719  -242.197  &lt; 2e-16 ***
+DESTIN_SZBTSZ08      -1.3177929  0.0069672  -189.142  &lt; 2e-16 ***
+DESTIN_SZCBSZ01      -4.8241179  0.3015219   -15.999  &lt; 2e-16 ***
+DESTIN_SZCCSZ01      -0.6939258  0.0058965  -117.685  &lt; 2e-16 ***
+DESTIN_SZCHSZ01      -0.9996470  0.0072272  -138.317  &lt; 2e-16 ***
+DESTIN_SZCHSZ02       0.0707234  0.0044595    15.859  &lt; 2e-16 ***
+DESTIN_SZCHSZ03       1.6864183  0.0031898   528.687  &lt; 2e-16 ***
+DESTIN_SZCKSZ01      -0.2182965  0.0041059   -53.167  &lt; 2e-16 ***
+DESTIN_SZCKSZ02      -0.4191666  0.0043847   -95.597  &lt; 2e-16 ***
+DESTIN_SZCKSZ03       0.7573985  0.0032111   235.870  &lt; 2e-16 ***
+DESTIN_SZCKSZ04      -0.7092606  0.0051730  -137.107  &lt; 2e-16 ***
+DESTIN_SZCKSZ05      -0.4268250  0.0056033   -76.174  &lt; 2e-16 ***
+DESTIN_SZCKSZ06       0.8266463  0.0037184   222.311  &lt; 2e-16 ***
+DESTIN_SZCLSZ01       0.5412025  0.0038632   140.092  &lt; 2e-16 ***
+DESTIN_SZCLSZ02      -2.2240933  0.0108450  -205.080  &lt; 2e-16 ***
+DESTIN_SZCLSZ03      -0.9122278  0.0061150  -149.178  &lt; 2e-16 ***
+DESTIN_SZCLSZ04       0.1257946  0.0035891    35.049  &lt; 2e-16 ***
+DESTIN_SZCLSZ05      -1.1720426  0.0067604  -173.368  &lt; 2e-16 ***
+DESTIN_SZCLSZ06       0.2397373  0.0033636    71.274  &lt; 2e-16 ***
+DESTIN_SZCLSZ07      -0.5905545  0.0043720  -135.077  &lt; 2e-16 ***
+DESTIN_SZCLSZ08      -0.4080784  0.0047930   -85.140  &lt; 2e-16 ***
+DESTIN_SZCLSZ09       0.4452463  0.0052671    84.533  &lt; 2e-16 ***
+DESTIN_SZDTSZ01      -0.7310478  0.0042890  -170.445  &lt; 2e-16 ***
+DESTIN_SZDTSZ02      -0.7964532  0.0042464  -187.561  &lt; 2e-16 ***
+DESTIN_SZDTSZ03      -1.0098416  0.0049261  -205.000  &lt; 2e-16 ***
+DESTIN_SZDTSZ04      -1.2108484  0.0110676  -109.404  &lt; 2e-16 ***
+DESTIN_SZDTSZ05      -1.1776465  0.0080031  -147.148  &lt; 2e-16 ***
+DESTIN_SZDTSZ06      -1.0064926  0.0052377  -192.164  &lt; 2e-16 ***
+DESTIN_SZDTSZ07      -1.9297373  0.0175979  -109.657  &lt; 2e-16 ***
+DESTIN_SZDTSZ08      -0.5761982  0.0040221  -143.258  &lt; 2e-16 ***
+DESTIN_SZDTSZ09      -1.4832177  0.0092718  -159.970  &lt; 2e-16 ***
+DESTIN_SZDTSZ10      -1.4979732  0.0078320  -191.263  &lt; 2e-16 ***
+DESTIN_SZDTSZ11      -0.6156417  0.0043013  -143.128  &lt; 2e-16 ***
+DESTIN_SZDTSZ12      -2.1682980  0.0129083  -167.977  &lt; 2e-16 ***
+DESTIN_SZDTSZ13      -1.8394504  0.0086458  -212.756  &lt; 2e-16 ***
+DESTIN_SZGLSZ01       0.0815050  0.0041206    19.780  &lt; 2e-16 ***
+DESTIN_SZGLSZ02      -0.2539348  0.0038109   -66.634  &lt; 2e-16 ***
+DESTIN_SZGLSZ03       0.4451898  0.0032052   138.898  &lt; 2e-16 ***
+DESTIN_SZGLSZ04       0.4426972  0.0031328   141.312  &lt; 2e-16 ***
+DESTIN_SZGLSZ05       0.2821448  0.0032396    87.093  &lt; 2e-16 ***
+DESTIN_SZHGSZ01       0.4616834  0.0031971   144.406  &lt; 2e-16 ***
+DESTIN_SZHGSZ02      -0.5466345  0.0043802  -124.796  &lt; 2e-16 ***
+DESTIN_SZHGSZ03      -1.1161776  0.0053520  -208.555  &lt; 2e-16 ***
+DESTIN_SZHGSZ04      -0.2557616  0.0037562   -68.090  &lt; 2e-16 ***
+DESTIN_SZHGSZ05      -0.1189317  0.0037386   -31.812  &lt; 2e-16 ***
+DESTIN_SZHGSZ06      -0.7439163  0.0045418  -163.794  &lt; 2e-16 ***
+DESTIN_SZHGSZ07       0.2224311  0.0034349    64.756  &lt; 2e-16 ***
+DESTIN_SZHGSZ08      -0.2507307  0.0039491   -63.491  &lt; 2e-16 ***
+DESTIN_SZHGSZ09       0.3431666  0.0041135    83.425  &lt; 2e-16 ***
+DESTIN_SZHGSZ10      -3.2527757  0.0278285  -116.887  &lt; 2e-16 ***
+DESTIN_SZJESZ01      -0.1177017  0.0041723   -28.210  &lt; 2e-16 ***
+DESTIN_SZJESZ02      -0.4453466  0.0043314  -102.817  &lt; 2e-16 ***
+DESTIN_SZJESZ03      -0.5117189  0.0046474  -110.109  &lt; 2e-16 ***
+DESTIN_SZJESZ04      -0.0863556  0.0050217   -17.196  &lt; 2e-16 ***
+DESTIN_SZJESZ05      -0.8807140  0.0076992  -114.391  &lt; 2e-16 ***
+DESTIN_SZJESZ06       0.4778151  0.0033735   141.638  &lt; 2e-16 ***
+DESTIN_SZJESZ07      -0.8444668  0.0060107  -140.493  &lt; 2e-16 ***
+DESTIN_SZJESZ08      -0.5016467  0.0063098   -79.503  &lt; 2e-16 ***
+DESTIN_SZJESZ09      -0.4379818  0.0046557   -94.074  &lt; 2e-16 ***
+DESTIN_SZJESZ10       0.7082718  0.0058424   121.230  &lt; 2e-16 ***
+DESTIN_SZJESZ11       0.9453462  0.0054406   173.759  &lt; 2e-16 ***
+DESTIN_SZJWSZ01      -0.3035883  0.0052309   -58.038  &lt; 2e-16 ***
+DESTIN_SZJWSZ02      -0.3028412  0.0044219   -68.487  &lt; 2e-16 ***
+DESTIN_SZJWSZ03       0.6912746  0.0033353   207.262  &lt; 2e-16 ***
+DESTIN_SZJWSZ04       1.0747916  0.0031061   346.022  &lt; 2e-16 ***
+DESTIN_SZJWSZ05      -0.1227583  0.0049735   -24.683  &lt; 2e-16 ***
+DESTIN_SZJWSZ06       0.4849237  0.0044513   108.939  &lt; 2e-16 ***
+DESTIN_SZJWSZ07      -0.9250006  0.0209277   -44.200  &lt; 2e-16 ***
+DESTIN_SZJWSZ08       0.4925645  0.0038032   129.512  &lt; 2e-16 ***
+DESTIN_SZJWSZ09       1.5444488  0.0028475   542.381  &lt; 2e-16 ***
+DESTIN_SZKLSZ01      -0.5660644  0.0040166  -140.932  &lt; 2e-16 ***
+DESTIN_SZKLSZ02      -0.7193809  0.0045690  -157.448  &lt; 2e-16 ***
+DESTIN_SZKLSZ03      -1.1860022  0.0050543  -234.651  &lt; 2e-16 ***
+DESTIN_SZKLSZ04      -1.6442159  0.0064182  -256.181  &lt; 2e-16 ***
+DESTIN_SZKLSZ05      -0.7215501  0.0056221  -128.342  &lt; 2e-16 ***
+DESTIN_SZKLSZ06      -0.8580631  0.0043659  -196.539  &lt; 2e-16 ***
+DESTIN_SZKLSZ07      -1.0290677  0.0049917  -206.155  &lt; 2e-16 ***
+DESTIN_SZKLSZ08      -0.0654458  0.0035962   -18.199  &lt; 2e-16 ***
+DESTIN_SZKLSZ09      -1.7941594  0.0064870  -276.578  &lt; 2e-16 ***
+DESTIN_SZLKSZ01      -1.5330310  0.0182228   -84.127  &lt; 2e-16 ***
+DESTIN_SZMDSZ01      -1.3631242  0.0152333   -89.483  &lt; 2e-16 ***
+DESTIN_SZMDSZ02      -1.0878945  0.0087183  -124.782  &lt; 2e-16 ***
+DESTIN_SZMDSZ03      -2.8395898  0.0192569  -147.458  &lt; 2e-16 ***
+DESTIN_SZMPSZ01      -0.9996139  0.0058493  -170.895  &lt; 2e-16 ***
+DESTIN_SZMPSZ02      -0.7893842  0.0047821  -165.069  &lt; 2e-16 ***
+DESTIN_SZMPSZ03      -0.0746966  0.0037806   -19.758  &lt; 2e-16 ***
+DESTIN_SZMSSZ01      -3.7645509  0.0711141   -52.937  &lt; 2e-16 ***
+DESTIN_SZMUSZ01      -1.1130223  0.0047914  -232.295  &lt; 2e-16 ***
+DESTIN_SZMUSZ02      -1.4200938  0.0069307  -204.898  &lt; 2e-16 ***
+DESTIN_SZMUSZ03      -1.0375226  0.0046101  -225.056  &lt; 2e-16 ***
+DESTIN_SZNTSZ01      -2.5204937  0.0197963  -127.322  &lt; 2e-16 ***
+DESTIN_SZNTSZ02      -2.1038832  0.0088508  -237.706  &lt; 2e-16 ***
+DESTIN_SZNTSZ03      -1.2953111  0.0061747  -209.779  &lt; 2e-16 ***
+DESTIN_SZNTSZ05      -1.6975407  0.0152792  -111.102  &lt; 2e-16 ***
+DESTIN_SZNTSZ06      -2.7387049  0.0248296  -110.300  &lt; 2e-16 ***
+DESTIN_SZNVSZ01      -0.2197281  0.0035429   -62.019  &lt; 2e-16 ***
+DESTIN_SZNVSZ02      -0.5038221  0.0040978  -122.949  &lt; 2e-16 ***
+DESTIN_SZNVSZ03      -0.6097426  0.0043454  -140.320  &lt; 2e-16 ***
+DESTIN_SZNVSZ04      -2.1768443  0.0088137  -246.983  &lt; 2e-16 ***
+DESTIN_SZNVSZ05      -1.8788605  0.0074956  -250.661  &lt; 2e-16 ***
+DESTIN_SZORSZ01      -1.7805694  0.0156980  -113.426  &lt; 2e-16 ***
+DESTIN_SZORSZ02      -0.0624431  0.0035972   -17.359  &lt; 2e-16 ***
+DESTIN_SZORSZ03      -0.8053448  0.0045194  -178.198  &lt; 2e-16 ***
+DESTIN_SZOTSZ01      -1.5313807  0.0060083  -254.876  &lt; 2e-16 ***
+DESTIN_SZOTSZ02      -0.7905666  0.0052145  -151.608  &lt; 2e-16 ***
+DESTIN_SZOTSZ03      -1.4244612  0.0055908  -254.786  &lt; 2e-16 ***
+DESTIN_SZOTSZ04      -1.5126835  0.0079353  -190.627  &lt; 2e-16 ***
+DESTIN_SZPGSZ01      -1.7383380  0.0122455  -141.957  &lt; 2e-16 ***
+DESTIN_SZPGSZ02      -0.7168389  0.0052936  -135.417  &lt; 2e-16 ***
+DESTIN_SZPGSZ03       0.5490926  0.0032816   167.327  &lt; 2e-16 ***
+DESTIN_SZPGSZ04       0.1733669  0.0036627    47.334  &lt; 2e-16 ***
+DESTIN_SZPGSZ05      -0.8968938  0.0060753  -147.629  &lt; 2e-16 ***
+DESTIN_SZPLSZ01       0.0313275  0.0052086     6.015 1.80e-09 ***
+DESTIN_SZPLSZ02      -1.1313930  0.0100427  -112.659  &lt; 2e-16 ***
+DESTIN_SZPLSZ03       0.0434166  0.0078653     5.520 3.39e-08 ***
+DESTIN_SZPLSZ04      -0.0495779  0.0074118    -6.689 2.25e-11 ***
+DESTIN_SZPLSZ05      -0.4640883  0.0090629   -51.207  &lt; 2e-16 ***
+DESTIN_SZPNSZ01       1.2045838  0.0041391   291.026  &lt; 2e-16 ***
+DESTIN_SZPNSZ02       1.7512371  0.0053846   325.234  &lt; 2e-16 ***
+DESTIN_SZPNSZ03       1.0757831  0.0060945   176.516  &lt; 2e-16 ***
+DESTIN_SZPNSZ04       1.8615721  0.0061205   304.153  &lt; 2e-16 ***
+DESTIN_SZPNSZ05       1.0742860  0.0086610   124.037  &lt; 2e-16 ***
+DESTIN_SZPRSZ01      -0.6224846  0.0060827  -102.337  &lt; 2e-16 ***
+DESTIN_SZPRSZ02      -0.0952483  0.0041134   -23.156  &lt; 2e-16 ***
+DESTIN_SZPRSZ03       0.7850760  0.0031505   249.192  &lt; 2e-16 ***
+DESTIN_SZPRSZ04      -0.6962574  0.0068133  -102.190  &lt; 2e-16 ***
+DESTIN_SZPRSZ05      -0.0461901  0.0039172   -11.792  &lt; 2e-16 ***
+DESTIN_SZPRSZ06       0.4961619  0.0040918   121.256  &lt; 2e-16 ***
+DESTIN_SZPRSZ07      -1.4513259  0.0097546  -148.784  &lt; 2e-16 ***
+DESTIN_SZPRSZ08      -0.7015024  0.0053776  -130.448  &lt; 2e-16 ***
+DESTIN_SZQTSZ01      -1.5333235  0.0080706  -189.989  &lt; 2e-16 ***
+DESTIN_SZQTSZ02      -1.4486407  0.0060325  -240.138  &lt; 2e-16 ***
+DESTIN_SZQTSZ03      -0.7813416  0.0051884  -150.595  &lt; 2e-16 ***
+DESTIN_SZQTSZ04      -1.1045790  0.0055093  -200.494  &lt; 2e-16 ***
+DESTIN_SZQTSZ05      -0.9768182  0.0049179  -198.626  &lt; 2e-16 ***
+DESTIN_SZQTSZ06      -1.1507833  0.0051462  -223.619  &lt; 2e-16 ***
+DESTIN_SZQTSZ07      -1.5672898  0.0084224  -186.086  &lt; 2e-16 ***
+DESTIN_SZQTSZ08       0.1015547  0.0037555    27.042  &lt; 2e-16 ***
+DESTIN_SZQTSZ09      -0.3697598  0.0045662   -80.978  &lt; 2e-16 ***
+DESTIN_SZQTSZ10      -0.4011342  0.0042859   -93.594  &lt; 2e-16 ***
+DESTIN_SZQTSZ11       0.2647289  0.0040109    66.002  &lt; 2e-16 ***
+DESTIN_SZQTSZ12      -0.2799756  0.0051396   -54.474  &lt; 2e-16 ***
+DESTIN_SZQTSZ13       0.1132740  0.0039640    28.576  &lt; 2e-16 ***
+DESTIN_SZQTSZ14      -0.0826046  0.0044267   -18.660  &lt; 2e-16 ***
+DESTIN_SZQTSZ15       0.0009792  0.0053379     0.183    0.854    
+DESTIN_SZRCSZ01      -0.9383329  0.0050183  -186.983  &lt; 2e-16 ***
+DESTIN_SZRCSZ02      -2.1739995  0.0132680  -163.852  &lt; 2e-16 ***
+DESTIN_SZRCSZ03      -1.0850298  0.0069631  -155.825  &lt; 2e-16 ***
+DESTIN_SZRCSZ04      -2.4810799  0.0103808  -239.008  &lt; 2e-16 ***
+DESTIN_SZRCSZ05      -2.2928951  0.0093577  -245.028  &lt; 2e-16 ***
+DESTIN_SZRCSZ06      -1.9480166  0.0113983  -170.904  &lt; 2e-16 ***
+DESTIN_SZRCSZ08      -2.1030164  0.0104174  -201.875  &lt; 2e-16 ***
+DESTIN_SZRCSZ09      -1.4595227  0.0090417  -161.422  &lt; 2e-16 ***
+DESTIN_SZRCSZ10      -1.1132535  0.0050022  -222.555  &lt; 2e-16 ***
+DESTIN_SZRVSZ01      -2.0419441  0.0084075  -242.872  &lt; 2e-16 ***
+DESTIN_SZRVSZ02      -2.1942670  0.0106208  -206.600  &lt; 2e-16 ***
+DESTIN_SZRVSZ03      -2.4290704  0.0100537  -241.611  &lt; 2e-16 ***
+DESTIN_SZRVSZ04      -2.0932370  0.0136112  -153.787  &lt; 2e-16 ***
+DESTIN_SZRVSZ05      -2.0853301  0.0115187  -181.038  &lt; 2e-16 ***
+DESTIN_SZSBSZ01      -0.0263033  0.0046850    -5.614 1.97e-08 ***
+DESTIN_SZSBSZ02      -0.8590224  0.0059907  -143.393  &lt; 2e-16 ***
+DESTIN_SZSBSZ03       0.7131890  0.0034251   208.223  &lt; 2e-16 ***
+DESTIN_SZSBSZ04       0.1923890  0.0043035    44.705  &lt; 2e-16 ***
+DESTIN_SZSBSZ05      -0.8147559  0.0058808  -138.545  &lt; 2e-16 ***
+DESTIN_SZSBSZ06      -2.3935314  0.0194619  -122.986  &lt; 2e-16 ***
+DESTIN_SZSBSZ07      -0.5722997  0.0143225   -39.958  &lt; 2e-16 ***
+DESTIN_SZSBSZ08       1.5683623  0.0041246   380.250  &lt; 2e-16 ***
+DESTIN_SZSBSZ09       0.9318417  0.0040652   229.226  &lt; 2e-16 ***
+DESTIN_SZSESZ02      -0.1326584  0.0038586   -34.380  &lt; 2e-16 ***
+DESTIN_SZSESZ03       0.7127808  0.0030634   232.678  &lt; 2e-16 ***
+DESTIN_SZSESZ04      -0.5533655  0.0044680  -123.851  &lt; 2e-16 ***
+DESTIN_SZSESZ05      -0.1122364  0.0037925   -29.594  &lt; 2e-16 ***
+DESTIN_SZSESZ06      -0.4466519  0.0046230   -96.615  &lt; 2e-16 ***
+DESTIN_SZSESZ07      -2.7468333  0.0180150  -152.475  &lt; 2e-16 ***
+DESTIN_SZSGSZ01      -0.3029221  0.0046409   -65.273  &lt; 2e-16 ***
+DESTIN_SZSGSZ02       0.1347783  0.0041858    32.199  &lt; 2e-16 ***
+DESTIN_SZSGSZ03      -0.2020929  0.0038669   -52.263  &lt; 2e-16 ***
+DESTIN_SZSGSZ04      -0.2097664  0.0038994   -53.795  &lt; 2e-16 ***
+DESTIN_SZSGSZ05      -1.9800270  0.0074638  -265.285  &lt; 2e-16 ***
+DESTIN_SZSGSZ06       0.4800476  0.0031165   154.036  &lt; 2e-16 ***
+DESTIN_SZSGSZ07      -0.3757532  0.0040596   -92.559  &lt; 2e-16 ***
+DESTIN_SZSISZ01      -1.3098094  0.0156233   -83.837  &lt; 2e-16 ***
+DESTIN_SZSKSZ01       0.0475755  0.0054682     8.700  &lt; 2e-16 ***
+DESTIN_SZSKSZ02       0.9315266  0.0040591   229.493  &lt; 2e-16 ***
+DESTIN_SZSKSZ03       0.0534964  0.0048827    10.956  &lt; 2e-16 ***
+DESTIN_SZSKSZ04      -0.5400391  0.0120767   -44.717  &lt; 2e-16 ***
+DESTIN_SZSKSZ05       0.1915550  0.0089868    21.315  &lt; 2e-16 ***
+DESTIN_SZSLSZ01      -0.3217850  0.0064644   -49.778  &lt; 2e-16 ***
+DESTIN_SZSLSZ04      -0.4431299  0.0052624   -84.207  &lt; 2e-16 ***
+DESTIN_SZSRSZ01      -1.5978643  0.0061388  -260.287  &lt; 2e-16 ***
+DESTIN_SZSRSZ02      -1.5915826  0.0073605  -216.234  &lt; 2e-16 ***
+DESTIN_SZSRSZ03      -1.4864486  0.0066144  -224.731  &lt; 2e-16 ***
+DESTIN_SZSVSZ01      -2.8882760  0.0411808   -70.137  &lt; 2e-16 ***
+DESTIN_SZTHSZ01      -2.9923350  0.0342129   -87.462  &lt; 2e-16 ***
+DESTIN_SZTHSZ03      -1.8922709  0.0170363  -111.073  &lt; 2e-16 ***
+DESTIN_SZTHSZ04      -2.2349279  0.0181834  -122.910  &lt; 2e-16 ***
+DESTIN_SZTHSZ06      -1.0747609  0.0095979  -111.979  &lt; 2e-16 ***
+DESTIN_SZTMSZ01       0.0408686  0.0042386     9.642  &lt; 2e-16 ***
+DESTIN_SZTMSZ02       1.7278433  0.0027471   628.973  &lt; 2e-16 ***
+DESTIN_SZTMSZ03       0.7873116  0.0031075   253.359  &lt; 2e-16 ***
+DESTIN_SZTMSZ04       0.8928932  0.0031754   281.192  &lt; 2e-16 ***
+DESTIN_SZTMSZ05       0.7400349  0.0039545   187.136  &lt; 2e-16 ***
+DESTIN_SZTNSZ01      -0.6870594  0.0044822  -153.288  &lt; 2e-16 ***
+DESTIN_SZTNSZ02      -1.3747410  0.0056164  -244.771  &lt; 2e-16 ***
+DESTIN_SZTNSZ03      -1.3980205  0.0068475  -204.165  &lt; 2e-16 ***
+DESTIN_SZTNSZ04      -1.0427422  0.0053344  -195.476  &lt; 2e-16 ***
+DESTIN_SZTPSZ01      -0.5463608  0.0044506  -122.761  &lt; 2e-16 ***
+DESTIN_SZTPSZ02       0.2420971  0.0031091    77.866  &lt; 2e-16 ***
+DESTIN_SZTPSZ03      -0.4535571  0.0044900  -101.016  &lt; 2e-16 ***
+DESTIN_SZTPSZ04      -1.4915297  0.0060259  -247.520  &lt; 2e-16 ***
+DESTIN_SZTPSZ05      -0.8888208  0.0047928  -185.448  &lt; 2e-16 ***
+DESTIN_SZTPSZ06      -0.2437218  0.0053143   -45.861  &lt; 2e-16 ***
+DESTIN_SZTPSZ07      -1.7251458  0.0087196  -197.847  &lt; 2e-16 ***
+DESTIN_SZTPSZ08      -1.3672687  0.0066542  -205.475  &lt; 2e-16 ***
+DESTIN_SZTPSZ09      -0.5402341  0.0048138  -112.225  &lt; 2e-16 ***
+DESTIN_SZTPSZ10      -0.7353788  0.0061864  -118.871  &lt; 2e-16 ***
+DESTIN_SZTPSZ11      -0.3379998  0.0040670   -83.107  &lt; 2e-16 ***
+DESTIN_SZTPSZ12      -0.8197097  0.0050090  -163.649  &lt; 2e-16 ***
+DESTIN_SZTSSZ01      -0.4158931  0.0170520   -24.390  &lt; 2e-16 ***
+DESTIN_SZTSSZ02       1.0895448  0.0072714   149.841  &lt; 2e-16 ***
+DESTIN_SZTSSZ03       1.7993092  0.0053831   334.252  &lt; 2e-16 ***
+DESTIN_SZTSSZ04       1.7075685  0.0054807   311.558  &lt; 2e-16 ***
+DESTIN_SZTSSZ05       1.8635850  0.0059695   312.185  &lt; 2e-16 ***
+DESTIN_SZTSSZ06       0.8701581  0.0098882    87.999  &lt; 2e-16 ***
+DESTIN_SZWCSZ01       1.6528704  0.0036371   454.442  &lt; 2e-16 ***
+DESTIN_SZWCSZ02       0.2096030  0.0078434    26.724  &lt; 2e-16 ***
+DESTIN_SZWCSZ03      -1.1702769  0.0221558   -52.820  &lt; 2e-16 ***
+DESTIN_SZWDSZ01       1.7222946  0.0028932   595.284  &lt; 2e-16 ***
+DESTIN_SZWDSZ02      -0.3265339  0.0048030   -67.986  &lt; 2e-16 ***
+DESTIN_SZWDSZ03       1.3196506  0.0030353   434.762  &lt; 2e-16 ***
+DESTIN_SZWDSZ04       0.1144794  0.0045018    25.429  &lt; 2e-16 ***
+DESTIN_SZWDSZ05       0.2512039  0.0042419    59.219  &lt; 2e-16 ***
+DESTIN_SZWDSZ06       0.5895357  0.0033892   173.945  &lt; 2e-16 ***
+DESTIN_SZWDSZ07       0.9440308  0.0047083   200.502  &lt; 2e-16 ***
+DESTIN_SZWDSZ08       0.8350312  0.0049445   168.882  &lt; 2e-16 ***
+DESTIN_SZWDSZ09       0.8051030  0.0036472   220.743  &lt; 2e-16 ***
+DESTIN_SZYSSZ01       1.2988936  0.0031119   417.391  &lt; 2e-16 ***
+DESTIN_SZYSSZ02       0.2630129  0.0041110    63.978  &lt; 2e-16 ***
+DESTIN_SZYSSZ03      -0.0402553  0.0043200    -9.318  &lt; 2e-16 ***
+DESTIN_SZYSSZ04       0.0730722  0.0040706    17.951  &lt; 2e-16 ***
+DESTIN_SZYSSZ05      -1.4876605  0.0082979  -179.281  &lt; 2e-16 ***
+DESTIN_SZYSSZ06      -1.3190335  0.0067242  -196.163  &lt; 2e-16 ***
+DESTIN_SZYSSZ07      -0.8848626  0.0080963  -109.293  &lt; 2e-16 ***
+DESTIN_SZYSSZ08       0.7305517  0.0032310   226.105  &lt; 2e-16 ***
+DESTIN_SZYSSZ09       0.4109047  0.0033189   123.807  &lt; 2e-16 ***
+log(ORIGIN_AGE25_64)  0.2298031  0.0001026  2240.432  &lt; 2e-16 ***
+log(dist)            -0.7121576  0.0001007 -7073.640  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 107870462  on 21078  degrees of freedom
+Residual deviance:  45794075  on 20766  degrees of freedom
+AIC: 45928939
+
+Number of Fisher Scoring iterations: 7</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">CalcRSquared</span>(decSIM<span class="sc">$</span>data<span class="sc">$</span>TRIPS, decSIM<span class="sc">$</span>fitted.values)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.4828129</code></pre>
+</div>
+</div>
+</section>
+<section id="doubly-constrained" class="level2">
+<h2 class="anchored" data-anchor-id="doubly-constrained"><strong>Doubly constrained</strong></h2>
+<p>The general formula of Doubly Constrained Spatial Interaction Model</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu_i + \alpha_j + \beta ln d_{ij})
+\]</span></p>
+<p><em>This code chunk takes a while to run (longer than previous ones) so be <strong>extrapatient</strong></em><strong>.</strong> I’ll save thre results so no need to rerun it when I rered</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set eval: true when we need to recompute</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>dbcSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>                ORIGIN_SZ <span class="sc">+</span> </span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>                DESTIN_SZ <span class="sc">+</span> </span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(dist),</span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data,</span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Save so we do not recompute again when rendering</span></span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(dbcSIM, <span class="st">"data/rds/dbcSIM.rds"</span>) <span class="co"># 82MB file</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>dbcSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/dbcSIM.rds"</span>)</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dbcSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = TRIPS ~ ORIGIN_SZ + DESTIN_SZ + log(dist), family = poisson(link = "log"), 
+    data = SIM_data, na.action = na.exclude)
+
+Coefficients:
+                  Estimate Std. Error   z value Pr(&gt;|z|)    
+(Intercept)     12.7762137  0.0036904  3461.985  &lt; 2e-16 ***
+ORIGIN_SZAMSZ02  1.0613712  0.0037340   284.242  &lt; 2e-16 ***
+ORIGIN_SZAMSZ03  0.6138256  0.0038090   161.150  &lt; 2e-16 ***
+ORIGIN_SZAMSZ04  0.2015671  0.0042506    47.421  &lt; 2e-16 ***
+ORIGIN_SZAMSZ05  0.0746673  0.0048845    15.287  &lt; 2e-16 ***
+ORIGIN_SZAMSZ06  0.5810827  0.0044381   130.930  &lt; 2e-16 ***
+ORIGIN_SZAMSZ07 -0.7674066  0.0073744  -104.064  &lt; 2e-16 ***
+ORIGIN_SZAMSZ08 -0.6170493  0.0068455   -90.139  &lt; 2e-16 ***
+ORIGIN_SZAMSZ09  0.4604832  0.0045938   100.241  &lt; 2e-16 ***
+ORIGIN_SZAMSZ10  0.4723211  0.0040060   117.904  &lt; 2e-16 ***
+ORIGIN_SZAMSZ11 -1.5642237  0.0091611  -170.746  &lt; 2e-16 ***
+ORIGIN_SZAMSZ12 -1.6438166  0.0089443  -183.785  &lt; 2e-16 ***
+ORIGIN_SZBDSZ01  0.8293184  0.0037271   222.508  &lt; 2e-16 ***
+ORIGIN_SZBDSZ02  0.4359540  0.0042921   101.571  &lt; 2e-16 ***
+ORIGIN_SZBDSZ03  0.8994728  0.0037968   236.901  &lt; 2e-16 ***
+ORIGIN_SZBDSZ04  1.4540393  0.0033454   434.643  &lt; 2e-16 ***
+ORIGIN_SZBDSZ05  0.6169243  0.0037524   164.407  &lt; 2e-16 ***
+ORIGIN_SZBDSZ06  0.8550131  0.0038337   223.024  &lt; 2e-16 ***
+ORIGIN_SZBDSZ07 -0.5763151  0.0063868   -90.235  &lt; 2e-16 ***
+ORIGIN_SZBDSZ08 -0.4370618  0.0060178   -72.628  &lt; 2e-16 ***
+ORIGIN_SZBKSZ01 -0.1496031  0.0053844   -27.784  &lt; 2e-16 ***
+ORIGIN_SZBKSZ02  0.6037144  0.0044187   136.627  &lt; 2e-16 ***
+ORIGIN_SZBKSZ03  0.9471518  0.0041494   228.261  &lt; 2e-16 ***
+ORIGIN_SZBKSZ04 -0.0759537  0.0050404   -15.069  &lt; 2e-16 ***
+ORIGIN_SZBKSZ05  0.1838346  0.0046847    39.241  &lt; 2e-16 ***
+ORIGIN_SZBKSZ06  0.3430252  0.0049949    68.675  &lt; 2e-16 ***
+ORIGIN_SZBKSZ07  0.8094643  0.0038028   212.862  &lt; 2e-16 ***
+ORIGIN_SZBKSZ08  0.3296643  0.0044201    74.583  &lt; 2e-16 ***
+ORIGIN_SZBKSZ09  0.0800666  0.0047045    17.019  &lt; 2e-16 ***
+ORIGIN_SZBLSZ01 -1.7418178  0.0104800  -166.203  &lt; 2e-16 ***
+ORIGIN_SZBLSZ02 -2.7444810  0.0147933  -185.521  &lt; 2e-16 ***
+ORIGIN_SZBLSZ03 -5.0390908  0.0329205  -153.069  &lt; 2e-16 ***
+ORIGIN_SZBLSZ04 -2.7508979  0.0192633  -142.805  &lt; 2e-16 ***
+ORIGIN_SZBMSZ01  0.2838060  0.0040343    70.348  &lt; 2e-16 ***
+ORIGIN_SZBMSZ02 -0.9582468  0.0057123  -167.753  &lt; 2e-16 ***
+ORIGIN_SZBMSZ03 -0.0375031  0.0046027    -8.148 3.70e-16 ***
+ORIGIN_SZBMSZ04  0.3610678  0.0041063    87.930  &lt; 2e-16 ***
+ORIGIN_SZBMSZ05 -0.9398597  0.0059614  -157.657  &lt; 2e-16 ***
+ORIGIN_SZBMSZ06 -1.2156711  0.0095685  -127.050  &lt; 2e-16 ***
+ORIGIN_SZBMSZ07 -0.2469994  0.0045462   -54.331  &lt; 2e-16 ***
+ORIGIN_SZBMSZ08 -0.1207828  0.0045330   -26.645  &lt; 2e-16 ***
+ORIGIN_SZBMSZ09 -0.6967339  0.0058554  -118.990  &lt; 2e-16 ***
+ORIGIN_SZBMSZ10 -0.9127748  0.0064361  -141.821  &lt; 2e-16 ***
+ORIGIN_SZBMSZ11 -0.4477587  0.0053936   -83.017  &lt; 2e-16 ***
+ORIGIN_SZBMSZ12 -0.7584160  0.0071339  -106.311  &lt; 2e-16 ***
+ORIGIN_SZBMSZ13  0.0219772  0.0045624     4.817 1.46e-06 ***
+ORIGIN_SZBMSZ14 -0.2303478  0.0053940   -42.704  &lt; 2e-16 ***
+ORIGIN_SZBMSZ15  0.1298292  0.0048807    26.601  &lt; 2e-16 ***
+ORIGIN_SZBMSZ16 -0.9530186  0.0061525  -154.899  &lt; 2e-16 ***
+ORIGIN_SZBMSZ17 -1.3226877  0.0093030  -142.179  &lt; 2e-16 ***
+ORIGIN_SZBPSZ01  0.5775036  0.0046028   125.467  &lt; 2e-16 ***
+ORIGIN_SZBPSZ02  0.8368029  0.0051248   163.286  &lt; 2e-16 ***
+ORIGIN_SZBPSZ03  1.0646965  0.0048189   220.942  &lt; 2e-16 ***
+ORIGIN_SZBPSZ04  0.7836209  0.0041877   187.125  &lt; 2e-16 ***
+ORIGIN_SZBPSZ05  0.5907260  0.0039113   151.032  &lt; 2e-16 ***
+ORIGIN_SZBPSZ06 -0.9198393  0.0069884  -131.624  &lt; 2e-16 ***
+ORIGIN_SZBPSZ07 -0.6986015  0.0066322  -105.335  &lt; 2e-16 ***
+ORIGIN_SZBSSZ01  0.1449520  0.0043983    32.956  &lt; 2e-16 ***
+ORIGIN_SZBSSZ02  0.5468233  0.0039498   138.444  &lt; 2e-16 ***
+ORIGIN_SZBSSZ03  0.2401545  0.0039266    61.160  &lt; 2e-16 ***
+ORIGIN_SZBTSZ01  0.0435107  0.0043522     9.997  &lt; 2e-16 ***
+ORIGIN_SZBTSZ02 -0.8041310  0.0061107  -131.594  &lt; 2e-16 ***
+ORIGIN_SZBTSZ03 -0.0269388  0.0045497    -5.921 3.20e-09 ***
+ORIGIN_SZBTSZ04 -0.3898678  0.0079841   -48.830  &lt; 2e-16 ***
+ORIGIN_SZBTSZ05 -1.2888510  0.0085409  -150.903  &lt; 2e-16 ***
+ORIGIN_SZBTSZ06 -0.4743758  0.0057436   -82.592  &lt; 2e-16 ***
+ORIGIN_SZBTSZ07 -1.6201702  0.0091853  -176.386  &lt; 2e-16 ***
+ORIGIN_SZBTSZ08 -1.0120608  0.0074373  -136.079  &lt; 2e-16 ***
+ORIGIN_SZCBSZ01 -2.5130438  0.0366145   -68.635  &lt; 2e-16 ***
+ORIGIN_SZCCSZ01 -1.5479198  0.0110230  -140.426  &lt; 2e-16 ***
+ORIGIN_SZCHSZ01 -1.2075754  0.0095668  -126.226  &lt; 2e-16 ***
+ORIGIN_SZCHSZ02 -0.8809258  0.0068110  -129.338  &lt; 2e-16 ***
+ORIGIN_SZCHSZ03 -0.4220566  0.0048757   -86.564  &lt; 2e-16 ***
+ORIGIN_SZCKSZ01  0.5096981  0.0042139   120.956  &lt; 2e-16 ***
+ORIGIN_SZCKSZ02  1.0681715  0.0043571   245.156  &lt; 2e-16 ***
+ORIGIN_SZCKSZ03  0.8736769  0.0039169   223.056  &lt; 2e-16 ***
+ORIGIN_SZCKSZ04  1.8686285  0.0040664   459.529  &lt; 2e-16 ***
+ORIGIN_SZCKSZ05  1.6098567  0.0050104   321.302  &lt; 2e-16 ***
+ORIGIN_SZCKSZ06  1.1819260  0.0053980   218.957  &lt; 2e-16 ***
+ORIGIN_SZCLSZ01 -0.5993487  0.0058387  -102.651  &lt; 2e-16 ***
+ORIGIN_SZCLSZ02 -1.1160165  0.0105581  -105.702  &lt; 2e-16 ***
+ORIGIN_SZCLSZ03 -0.4850603  0.0058862   -82.407  &lt; 2e-16 ***
+ORIGIN_SZCLSZ04  0.9638542  0.0037219   258.965  &lt; 2e-16 ***
+ORIGIN_SZCLSZ05 -1.6253340  0.0106467  -152.660  &lt; 2e-16 ***
+ORIGIN_SZCLSZ06  0.9394801  0.0035750   262.791  &lt; 2e-16 ***
+ORIGIN_SZCLSZ07 -0.0244913  0.0044813    -5.465 4.62e-08 ***
+ORIGIN_SZCLSZ08  0.2847792  0.0051565    55.227  &lt; 2e-16 ***
+ORIGIN_SZCLSZ09 -2.2284995  0.0137181  -162.450  &lt; 2e-16 ***
+ORIGIN_SZDTSZ01 -1.3290105  0.0069184  -192.099  &lt; 2e-16 ***
+ORIGIN_SZDTSZ02 -1.2100118  0.0062646  -193.150  &lt; 2e-16 ***
+ORIGIN_SZDTSZ03 -2.1417804  0.0106967  -200.229  &lt; 2e-16 ***
+ORIGIN_SZDTSZ04 -3.6002445  0.0963012   -37.385  &lt; 2e-16 ***
+ORIGIN_SZDTSZ05 -2.6750218  0.0192809  -138.739  &lt; 2e-16 ***
+ORIGIN_SZDTSZ06 -2.7341262  0.0158702  -172.281  &lt; 2e-16 ***
+ORIGIN_SZDTSZ07 -1.4844927  0.0198692   -74.713  &lt; 2e-16 ***
+ORIGIN_SZDTSZ08 -2.1537294  0.0099160  -217.198  &lt; 2e-16 ***
+ORIGIN_SZDTSZ09 -2.5870080  0.0195157  -132.560  &lt; 2e-16 ***
+ORIGIN_SZDTSZ10 -1.8813307  0.0107730  -174.633  &lt; 2e-16 ***
+ORIGIN_SZDTSZ11 -1.9626701  0.0102594  -191.304  &lt; 2e-16 ***
+ORIGIN_SZDTSZ12 -2.9403937  0.0224233  -131.131  &lt; 2e-16 ***
+ORIGIN_SZDTSZ13 -1.9850507  0.0118057  -168.143  &lt; 2e-16 ***
+ORIGIN_SZGLSZ01 -1.3444205  0.0071257  -188.672  &lt; 2e-16 ***
+ORIGIN_SZGLSZ02  0.2943216  0.0040886    71.985  &lt; 2e-16 ***
+ORIGIN_SZGLSZ03  0.1120475  0.0040727    27.512  &lt; 2e-16 ***
+ORIGIN_SZGLSZ04  1.0076191  0.0034727   290.152  &lt; 2e-16 ***
+ORIGIN_SZGLSZ05  0.6507498  0.0036386   178.845  &lt; 2e-16 ***
+ORIGIN_SZHGSZ01  0.1934308  0.0040425    47.850  &lt; 2e-16 ***
+ORIGIN_SZHGSZ02  0.7061993  0.0039062   180.790  &lt; 2e-16 ***
+ORIGIN_SZHGSZ03  0.4607193  0.0042602   108.145  &lt; 2e-16 ***
+ORIGIN_SZHGSZ04  1.0138817  0.0036303   279.283  &lt; 2e-16 ***
+ORIGIN_SZHGSZ05  1.3196005  0.0035870   367.884  &lt; 2e-16 ***
+ORIGIN_SZHGSZ06  0.1697308  0.0043960    38.610  &lt; 2e-16 ***
+ORIGIN_SZHGSZ07  0.6568400  0.0037863   173.480  &lt; 2e-16 ***
+ORIGIN_SZHGSZ08  0.2033478  0.0043213    47.057  &lt; 2e-16 ***
+ORIGIN_SZHGSZ09 -0.6928230  0.0058625  -118.179  &lt; 2e-16 ***
+ORIGIN_SZHGSZ10 -3.2062481  0.0398679   -80.422  &lt; 2e-16 ***
+ORIGIN_SZJESZ01  0.5328330  0.0042352   125.810  &lt; 2e-16 ***
+ORIGIN_SZJESZ02  0.4223881  0.0042167   100.171  &lt; 2e-16 ***
+ORIGIN_SZJESZ03  0.3837628  0.0044639    85.970  &lt; 2e-16 ***
+ORIGIN_SZJESZ04 -1.0243932  0.0072468  -141.359  &lt; 2e-16 ***
+ORIGIN_SZJESZ05 -1.9791823  0.0114449  -172.931  &lt; 2e-16 ***
+ORIGIN_SZJESZ06  0.2291274  0.0041423    55.314  &lt; 2e-16 ***
+ORIGIN_SZJESZ07 -1.5672736  0.0089515  -175.085  &lt; 2e-16 ***
+ORIGIN_SZJESZ08 -0.4439991  0.0081901   -54.212  &lt; 2e-16 ***
+ORIGIN_SZJESZ09  0.5470525  0.0043287   126.377  &lt; 2e-16 ***
+ORIGIN_SZJESZ10 -2.5883909  0.0165482  -156.415  &lt; 2e-16 ***
+ORIGIN_SZJESZ11 -2.9419898  0.0172092  -170.955  &lt; 2e-16 ***
+ORIGIN_SZJWSZ01  0.5316998  0.0056149    94.694  &lt; 2e-16 ***
+ORIGIN_SZJWSZ02  0.9948443  0.0039223   253.637  &lt; 2e-16 ***
+ORIGIN_SZJWSZ03  1.2375047  0.0037200   332.665  &lt; 2e-16 ***
+ORIGIN_SZJWSZ04  0.9971958  0.0038278   260.514  &lt; 2e-16 ***
+ORIGIN_SZJWSZ05 -1.7086782  0.0104955  -162.802  &lt; 2e-16 ***
+ORIGIN_SZJWSZ06 -1.1623182  0.0086215  -134.817  &lt; 2e-16 ***
+ORIGIN_SZJWSZ07 -2.0304381  0.0197845  -102.628  &lt; 2e-16 ***
+ORIGIN_SZJWSZ08  2.0400726  0.0037462   544.571  &lt; 2e-16 ***
+ORIGIN_SZJWSZ09  1.4614167  0.0034849   419.353  &lt; 2e-16 ***
+ORIGIN_SZKLSZ01  0.3534249  0.0039546    89.370  &lt; 2e-16 ***
+ORIGIN_SZKLSZ02 -0.2375841  0.0048534   -48.952  &lt; 2e-16 ***
+ORIGIN_SZKLSZ03 -0.2288697  0.0048681   -47.014  &lt; 2e-16 ***
+ORIGIN_SZKLSZ04 -1.2689575  0.0068734  -184.618  &lt; 2e-16 ***
+ORIGIN_SZKLSZ05 -0.2325427  0.0058144   -39.994  &lt; 2e-16 ***
+ORIGIN_SZKLSZ06 -0.2587476  0.0045747   -56.561  &lt; 2e-16 ***
+ORIGIN_SZKLSZ07 -0.6567093  0.0060098  -109.273  &lt; 2e-16 ***
+ORIGIN_SZKLSZ08 -0.6576123  0.0052140  -126.125  &lt; 2e-16 ***
+ORIGIN_SZKLSZ09 -1.1318963  0.0064934  -174.315  &lt; 2e-16 ***
+ORIGIN_SZLKSZ01 -2.4682747  0.0299997   -82.277  &lt; 2e-16 ***
+ORIGIN_SZMDSZ01 -1.3926591  0.0222908   -62.477  &lt; 2e-16 ***
+ORIGIN_SZMDSZ02 -0.9046267  0.0094453   -95.775  &lt; 2e-16 ***
+ORIGIN_SZMDSZ03 -1.2303046  0.0130774   -94.079  &lt; 2e-16 ***
+ORIGIN_SZMPSZ01 -0.5397192  0.0057838   -93.315  &lt; 2e-16 ***
+ORIGIN_SZMPSZ02 -0.3418827  0.0052399   -65.246  &lt; 2e-16 ***
+ORIGIN_SZMPSZ03  0.4494199  0.0040005   112.342  &lt; 2e-16 ***
+ORIGIN_SZMSSZ01 -7.2751444  0.3811976   -19.085  &lt; 2e-16 ***
+ORIGIN_SZMUSZ01 -0.7886457  0.0055460  -142.201  &lt; 2e-16 ***
+ORIGIN_SZMUSZ02 -2.7507048  0.0146878  -187.278  &lt; 2e-16 ***
+ORIGIN_SZMUSZ03 -1.3888219  0.0065207  -212.986  &lt; 2e-16 ***
+ORIGIN_SZNTSZ01 -2.3132628  0.0249833   -92.592  &lt; 2e-16 ***
+ORIGIN_SZNTSZ02 -2.1648169  0.0131248  -164.941  &lt; 2e-16 ***
+ORIGIN_SZNTSZ03 -0.5393612  0.0060662   -88.913  &lt; 2e-16 ***
+ORIGIN_SZNTSZ05 -2.8187700  0.0377745   -74.621  &lt; 2e-16 ***
+ORIGIN_SZNTSZ06 -2.8773282  0.0372394   -77.266  &lt; 2e-16 ***
+ORIGIN_SZNVSZ01  0.8600924  0.0036205   237.563  &lt; 2e-16 ***
+ORIGIN_SZNVSZ02 -0.2693976  0.0048695   -55.324  &lt; 2e-16 ***
+ORIGIN_SZNVSZ03 -0.9483669  0.0060139  -157.696  &lt; 2e-16 ***
+ORIGIN_SZNVSZ04 -1.0655908  0.0071727  -148.562  &lt; 2e-16 ***
+ORIGIN_SZNVSZ05 -2.3434382  0.0130068  -180.170  &lt; 2e-16 ***
+ORIGIN_SZORSZ01 -2.9424266  0.0314453   -93.573  &lt; 2e-16 ***
+ORIGIN_SZORSZ02 -0.9787090  0.0056855  -172.142  &lt; 2e-16 ***
+ORIGIN_SZORSZ03 -1.2448593  0.0065805  -189.173  &lt; 2e-16 ***
+ORIGIN_SZOTSZ01 -1.3707221  0.0072042  -190.267  &lt; 2e-16 ***
+ORIGIN_SZOTSZ02 -1.5432832  0.0082360  -187.383  &lt; 2e-16 ***
+ORIGIN_SZOTSZ03 -0.3884079  0.0052469   -74.026  &lt; 2e-16 ***
+ORIGIN_SZOTSZ04 -0.4537754  0.0082764   -54.828  &lt; 2e-16 ***
+ORIGIN_SZPGSZ01  0.4190939  0.0117091    35.792  &lt; 2e-16 ***
+ORIGIN_SZPGSZ02 -0.2245270  0.0057566   -39.003  &lt; 2e-16 ***
+ORIGIN_SZPGSZ03  0.9693079  0.0037614   257.701  &lt; 2e-16 ***
+ORIGIN_SZPGSZ04  1.1818495  0.0037319   316.693  &lt; 2e-16 ***
+ORIGIN_SZPGSZ05  0.5936403  0.0047466   125.065  &lt; 2e-16 ***
+ORIGIN_SZPLSZ01 -0.6436762  0.0081143   -79.326  &lt; 2e-16 ***
+ORIGIN_SZPLSZ02 -1.1354083  0.0114675   -99.011  &lt; 2e-16 ***
+ORIGIN_SZPLSZ03 -3.2947075  0.0311101  -105.905  &lt; 2e-16 ***
+ORIGIN_SZPLSZ04 -3.3473399  0.0278363  -120.251  &lt; 2e-16 ***
+ORIGIN_SZPLSZ05 -2.3429244  0.0180209  -130.012  &lt; 2e-16 ***
+ORIGIN_SZPNSZ01  0.9303976  0.0045852   202.915  &lt; 2e-16 ***
+ORIGIN_SZPNSZ02 -1.9054972  0.0110752  -172.051  &lt; 2e-16 ***
+ORIGIN_SZPNSZ03 -2.6540255  0.0164558  -161.282  &lt; 2e-16 ***
+ORIGIN_SZPNSZ04 -4.8107003  0.0258674  -185.975  &lt; 2e-16 ***
+ORIGIN_SZPNSZ05 -3.6034740  0.0214652  -167.875  &lt; 2e-16 ***
+ORIGIN_SZPRSZ01 -0.6681473  0.0094792   -70.485  &lt; 2e-16 ***
+ORIGIN_SZPRSZ02  1.0129353  0.0039186   258.495  &lt; 2e-16 ***
+ORIGIN_SZPRSZ03  0.4900451  0.0039274   124.777  &lt; 2e-16 ***
+ORIGIN_SZPRSZ04 -0.3466709  0.0062240   -55.699  &lt; 2e-16 ***
+ORIGIN_SZPRSZ05  1.1754545  0.0037249   315.563  &lt; 2e-16 ***
+ORIGIN_SZPRSZ06 -0.9175714  0.0068924  -133.129  &lt; 2e-16 ***
+ORIGIN_SZPRSZ07 -2.5368497  0.0163834  -154.843  &lt; 2e-16 ***
+ORIGIN_SZPRSZ08  0.0729474  0.0050652    14.402  &lt; 2e-16 ***
+ORIGIN_SZQTSZ01  0.1555824  0.0054276    28.665  &lt; 2e-16 ***
+ORIGIN_SZQTSZ02 -0.3822720  0.0050397   -75.852  &lt; 2e-16 ***
+ORIGIN_SZQTSZ03  0.1554544  0.0046402    33.502  &lt; 2e-16 ***
+ORIGIN_SZQTSZ04 -0.9342678  0.0062487  -149.515  &lt; 2e-16 ***
+ORIGIN_SZQTSZ05  0.1309227  0.0046404    28.213  &lt; 2e-16 ***
+ORIGIN_SZQTSZ06 -0.2257612  0.0052682   -42.854  &lt; 2e-16 ***
+ORIGIN_SZQTSZ07 -1.2142202  0.0077352  -156.973  &lt; 2e-16 ***
+ORIGIN_SZQTSZ08 -0.1650278  0.0048069   -34.332  &lt; 2e-16 ***
+ORIGIN_SZQTSZ09 -0.4258736  0.0053674   -79.344  &lt; 2e-16 ***
+ORIGIN_SZQTSZ10 -0.3352035  0.0053090   -63.139  &lt; 2e-16 ***
+ORIGIN_SZQTSZ11 -1.4013793  0.0075778  -184.932  &lt; 2e-16 ***
+ORIGIN_SZQTSZ12 -0.9972389  0.0074068  -134.639  &lt; 2e-16 ***
+ORIGIN_SZQTSZ13 -0.1967334  0.0049213   -39.976  &lt; 2e-16 ***
+ORIGIN_SZQTSZ14 -1.3716454  0.0072556  -189.046  &lt; 2e-16 ***
+ORIGIN_SZQTSZ15 -1.0734616  0.0088673  -121.058  &lt; 2e-16 ***
+ORIGIN_SZRCSZ01 -0.3118246  0.0052166   -59.776  &lt; 2e-16 ***
+ORIGIN_SZRCSZ02 -1.8209593  0.0145321  -125.306  &lt; 2e-16 ***
+ORIGIN_SZRCSZ03 -0.8606245  0.0071598  -120.202  &lt; 2e-16 ***
+ORIGIN_SZRCSZ04 -1.8956537  0.0105087  -180.389  &lt; 2e-16 ***
+ORIGIN_SZRCSZ05 -2.0018155  0.0115207  -173.758  &lt; 2e-16 ***
+ORIGIN_SZRCSZ06 -0.1540624  0.0070074   -21.986  &lt; 2e-16 ***
+ORIGIN_SZRCSZ08 -2.2111335  0.0150941  -146.490  &lt; 2e-16 ***
+ORIGIN_SZRCSZ09 -1.6705949  0.0121700  -137.271  &lt; 2e-16 ***
+ORIGIN_SZRCSZ10 -1.4039876  0.0068064  -206.274  &lt; 2e-16 ***
+ORIGIN_SZRVSZ01 -2.2959792  0.0119650  -191.891  &lt; 2e-16 ***
+ORIGIN_SZRVSZ02 -0.6149302  0.0067748   -90.767  &lt; 2e-16 ***
+ORIGIN_SZRVSZ03 -1.2970378  0.0096484  -134.431  &lt; 2e-16 ***
+ORIGIN_SZRVSZ04 -1.5069632  0.0140984  -106.889  &lt; 2e-16 ***
+ORIGIN_SZRVSZ05 -1.5616063  0.0121901  -128.105  &lt; 2e-16 ***
+ORIGIN_SZSBSZ01  0.8597200  0.0049912   172.246  &lt; 2e-16 ***
+ORIGIN_SZSBSZ02 -0.6353564  0.0065525   -96.963  &lt; 2e-16 ***
+ORIGIN_SZSBSZ03  0.6117473  0.0041099   148.847  &lt; 2e-16 ***
+ORIGIN_SZSBSZ04  0.4683425  0.0047405    98.796  &lt; 2e-16 ***
+ORIGIN_SZSBSZ05 -0.0451646  0.0056922    -7.934 2.12e-15 ***
+ORIGIN_SZSBSZ06 -1.0535456  0.0143390   -73.474  &lt; 2e-16 ***
+ORIGIN_SZSBSZ07 -0.1368624  0.0098544   -13.888  &lt; 2e-16 ***
+ORIGIN_SZSBSZ08 -1.9778267  0.0097033  -203.831  &lt; 2e-16 ***
+ORIGIN_SZSBSZ09 -1.0945021  0.0072619  -150.719  &lt; 2e-16 ***
+ORIGIN_SZSESZ02  1.2002737  0.0037019   324.233  &lt; 2e-16 ***
+ORIGIN_SZSESZ03  1.1252145  0.0035349   318.320  &lt; 2e-16 ***
+ORIGIN_SZSESZ04  1.1579952  0.0040703   284.497  &lt; 2e-16 ***
+ORIGIN_SZSESZ05 -0.1233168  0.0048752   -25.295  &lt; 2e-16 ***
+ORIGIN_SZSESZ06  1.1296884  0.0038719   291.768  &lt; 2e-16 ***
+ORIGIN_SZSESZ07 -1.9733903  0.0141617  -139.347  &lt; 2e-16 ***
+ORIGIN_SZSGSZ01 -0.8346869  0.0069949  -119.327  &lt; 2e-16 ***
+ORIGIN_SZSGSZ02 -1.1927328  0.0081869  -145.688  &lt; 2e-16 ***
+ORIGIN_SZSGSZ03  0.3496020  0.0043188    80.948  &lt; 2e-16 ***
+ORIGIN_SZSGSZ04  0.4336720  0.0039788   108.997  &lt; 2e-16 ***
+ORIGIN_SZSGSZ05 -1.4201793  0.0081408  -174.452  &lt; 2e-16 ***
+ORIGIN_SZSGSZ06  0.3975356  0.0038009   104.591  &lt; 2e-16 ***
+ORIGIN_SZSGSZ07 -0.4001257  0.0049530   -80.785  &lt; 2e-16 ***
+ORIGIN_SZSKSZ01 -0.1672307  0.0066837   -25.021  &lt; 2e-16 ***
+ORIGIN_SZSKSZ02  0.2258282  0.0050667    44.571  &lt; 2e-16 ***
+ORIGIN_SZSKSZ03 -0.4428259  0.0064263   -68.908  &lt; 2e-16 ***
+ORIGIN_SZSKSZ04 -1.9678400  0.0217531   -90.463  &lt; 2e-16 ***
+ORIGIN_SZSKSZ05 -1.2594037  0.0145894   -86.323  &lt; 2e-16 ***
+ORIGIN_SZSLSZ01 -2.8310988  0.0240771  -117.585  &lt; 2e-16 ***
+ORIGIN_SZSLSZ04 -0.2939469  0.0058522   -50.229  &lt; 2e-16 ***
+ORIGIN_SZSRSZ01 -1.1190117  0.0071113  -157.357  &lt; 2e-16 ***
+ORIGIN_SZSRSZ02 -1.4068290  0.0071421  -196.977  &lt; 2e-16 ***
+ORIGIN_SZSRSZ03 -2.2813969  0.0147491  -154.681  &lt; 2e-16 ***
+ORIGIN_SZSVSZ01 -2.8880836  0.0546834   -52.815  &lt; 2e-16 ***
+ORIGIN_SZTHSZ01 -2.3668153  0.0373678   -63.338  &lt; 2e-16 ***
+ORIGIN_SZTHSZ03 -1.0165316  0.0146094   -69.581  &lt; 2e-16 ***
+ORIGIN_SZTHSZ04 -2.2224809  0.0239246   -92.895  &lt; 2e-16 ***
+ORIGIN_SZTHSZ06 -1.7681836  0.0142588  -124.006  &lt; 2e-16 ***
+ORIGIN_SZTMSZ01  0.7025950  0.0043391   161.923  &lt; 2e-16 ***
+ORIGIN_SZTMSZ02  1.6324769  0.0032929   495.764  &lt; 2e-16 ***
+ORIGIN_SZTMSZ03  1.1842953  0.0035077   337.625  &lt; 2e-16 ***
+ORIGIN_SZTMSZ04  0.4037194  0.0040717    99.152  &lt; 2e-16 ***
+ORIGIN_SZTMSZ05 -0.8454661  0.0063323  -133.517  &lt; 2e-16 ***
+ORIGIN_SZTNSZ01 -0.8914013  0.0061431  -145.105  &lt; 2e-16 ***
+ORIGIN_SZTNSZ02 -0.7032036  0.0057796  -121.671  &lt; 2e-16 ***
+ORIGIN_SZTNSZ03 -1.1756049  0.0076009  -154.667  &lt; 2e-16 ***
+ORIGIN_SZTNSZ04 -0.3320635  0.0056023   -59.273  &lt; 2e-16 ***
+ORIGIN_SZTPSZ01 -0.4329595  0.0051765   -83.639  &lt; 2e-16 ***
+ORIGIN_SZTPSZ02  0.5543129  0.0036477   151.964  &lt; 2e-16 ***
+ORIGIN_SZTPSZ03 -0.3808213  0.0050968   -74.718  &lt; 2e-16 ***
+ORIGIN_SZTPSZ04  0.0207226  0.0047652     4.349 1.37e-05 ***
+ORIGIN_SZTPSZ05  0.1534198  0.0049889    30.752  &lt; 2e-16 ***
+ORIGIN_SZTPSZ06  0.6617769  0.0056062   118.043  &lt; 2e-16 ***
+ORIGIN_SZTPSZ07  0.0702685  0.0051105    13.750  &lt; 2e-16 ***
+ORIGIN_SZTPSZ08 -0.3841251  0.0068424   -56.139  &lt; 2e-16 ***
+ORIGIN_SZTPSZ09 -0.3589040  0.0052508   -68.353  &lt; 2e-16 ***
+ORIGIN_SZTPSZ10 -0.2841897  0.0057647   -49.299  &lt; 2e-16 ***
+ORIGIN_SZTPSZ11  0.3628775  0.0042980    84.430  &lt; 2e-16 ***
+ORIGIN_SZTPSZ12 -0.3870331  0.0053001   -73.023  &lt; 2e-16 ***
+ORIGIN_SZTSSZ01 -3.3154334  0.0379468   -87.371  &lt; 2e-16 ***
+ORIGIN_SZTSSZ02  0.0806767  0.0077143    10.458  &lt; 2e-16 ***
+ORIGIN_SZTSSZ03 -0.1934922  0.0077972   -24.816  &lt; 2e-16 ***
+ORIGIN_SZTSSZ04 -0.5128461  0.0080874   -63.413  &lt; 2e-16 ***
+ORIGIN_SZTSSZ05 -2.7358286  0.0133134  -205.495  &lt; 2e-16 ***
+ORIGIN_SZTSSZ06 -2.7997982  0.0190125  -147.261  &lt; 2e-16 ***
+ORIGIN_SZWCSZ01 -0.8131149  0.0064097  -126.856  &lt; 2e-16 ***
+ORIGIN_SZWCSZ02 -2.6613423  0.0239483  -111.129  &lt; 2e-16 ***
+ORIGIN_SZWCSZ03 -4.5082871  0.1155229   -39.025  &lt; 2e-16 ***
+ORIGIN_SZWDSZ01  0.8911247  0.0036053   247.172  &lt; 2e-16 ***
+ORIGIN_SZWDSZ02  1.0387189  0.0040854   254.252  &lt; 2e-16 ***
+ORIGIN_SZWDSZ03  1.7104108  0.0036962   462.753  &lt; 2e-16 ***
+ORIGIN_SZWDSZ04  1.2090220  0.0044533   271.491  &lt; 2e-16 ***
+ORIGIN_SZWDSZ05  0.5162706  0.0043060   119.896  &lt; 2e-16 ***
+ORIGIN_SZWDSZ06  1.0045245  0.0040576   247.564  &lt; 2e-16 ***
+ORIGIN_SZWDSZ07 -0.2866857  0.0062002   -46.238  &lt; 2e-16 ***
+ORIGIN_SZWDSZ08 -0.7548912  0.0066389  -113.708  &lt; 2e-16 ***
+ORIGIN_SZWDSZ09  1.6190137  0.0038620   419.215  &lt; 2e-16 ***
+ORIGIN_SZYSSZ01 -0.3989663  0.0047009   -84.870  &lt; 2e-16 ***
+ORIGIN_SZYSSZ02  1.0280266  0.0044633   230.328  &lt; 2e-16 ***
+ORIGIN_SZYSSZ03  2.2856940  0.0037115   615.837  &lt; 2e-16 ***
+ORIGIN_SZYSSZ04  0.9458162  0.0038085   248.346  &lt; 2e-16 ***
+ORIGIN_SZYSSZ05  0.3848719  0.0046724    82.372  &lt; 2e-16 ***
+ORIGIN_SZYSSZ06 -0.5454746  0.0077588   -70.304  &lt; 2e-16 ***
+ORIGIN_SZYSSZ07 -0.4998069  0.0081011   -61.696  &lt; 2e-16 ***
+ORIGIN_SZYSSZ08 -0.3444412  0.0052562   -65.530  &lt; 2e-16 ***
+ORIGIN_SZYSSZ09  1.2613656  0.0036958   341.295  &lt; 2e-16 ***
+DESTIN_SZAMSZ02 -0.0090399  0.0036254    -2.494 0.012648 *  
+DESTIN_SZAMSZ03  0.2512895  0.0034768    72.277  &lt; 2e-16 ***
+DESTIN_SZAMSZ04 -0.9253731  0.0051982  -178.018  &lt; 2e-16 ***
+DESTIN_SZAMSZ05 -0.9173432  0.0050746  -180.773  &lt; 2e-16 ***
+DESTIN_SZAMSZ06 -0.7664811  0.0049152  -155.942  &lt; 2e-16 ***
+DESTIN_SZAMSZ07 -1.5920761  0.0083692  -190.230  &lt; 2e-16 ***
+DESTIN_SZAMSZ08 -0.7715751  0.0053565  -144.045  &lt; 2e-16 ***
+DESTIN_SZAMSZ09 -0.9908946  0.0052019  -190.488  &lt; 2e-16 ***
+DESTIN_SZAMSZ10  0.0747666  0.0036210    20.648  &lt; 2e-16 ***
+DESTIN_SZAMSZ11  0.0650384  0.0061036    10.656  &lt; 2e-16 ***
+DESTIN_SZAMSZ12  0.1094086  0.0044608    24.527  &lt; 2e-16 ***
+DESTIN_SZBDSZ01  0.4606543  0.0032805   140.421  &lt; 2e-16 ***
+DESTIN_SZBDSZ02 -0.2851305  0.0041832   -68.161  &lt; 2e-16 ***
+DESTIN_SZBDSZ03 -0.0502638  0.0036528   -13.760  &lt; 2e-16 ***
+DESTIN_SZBDSZ04  0.7572217  0.0030360   249.417  &lt; 2e-16 ***
+DESTIN_SZBDSZ05  0.4713216  0.0033306   141.514  &lt; 2e-16 ***
+DESTIN_SZBDSZ06  0.0664937  0.0037174    17.887  &lt; 2e-16 ***
+DESTIN_SZBDSZ07 -0.8151564  0.0080089  -101.782  &lt; 2e-16 ***
+DESTIN_SZBDSZ08 -1.7619262  0.0087946  -200.341  &lt; 2e-16 ***
+DESTIN_SZBKSZ01 -1.1580572  0.0054228  -213.553  &lt; 2e-16 ***
+DESTIN_SZBKSZ02 -0.4331678  0.0046774   -92.608  &lt; 2e-16 ***
+DESTIN_SZBKSZ03 -0.7371361  0.0046709  -157.815  &lt; 2e-16 ***
+DESTIN_SZBKSZ04 -0.0155780  0.0041846    -3.723 0.000197 ***
+DESTIN_SZBKSZ05 -0.6106025  0.0046676  -130.816  &lt; 2e-16 ***
+DESTIN_SZBKSZ06 -0.9901477  0.0052671  -187.986  &lt; 2e-16 ***
+DESTIN_SZBKSZ07  0.1450589  0.0035450    40.920  &lt; 2e-16 ***
+DESTIN_SZBKSZ08 -1.1298867  0.0058374  -193.561  &lt; 2e-16 ***
+DESTIN_SZBKSZ09 -0.1228396  0.0041792   -29.393  &lt; 2e-16 ***
+DESTIN_SZBLSZ01 -0.5720031  0.0056589  -101.081  &lt; 2e-16 ***
+DESTIN_SZBLSZ02  0.5167119  0.0056189    91.960  &lt; 2e-16 ***
+DESTIN_SZBLSZ03  1.7440804  0.0062115   280.782  &lt; 2e-16 ***
+DESTIN_SZBLSZ04 -0.1927581  0.0108946   -17.693  &lt; 2e-16 ***
+DESTIN_SZBMSZ01 -0.0057613  0.0037810    -1.524 0.127571    
+DESTIN_SZBMSZ02 -0.1858456  0.0039734   -46.773  &lt; 2e-16 ***
+DESTIN_SZBMSZ03 -0.5191446  0.0048004  -108.145  &lt; 2e-16 ***
+DESTIN_SZBMSZ04 -0.2665002  0.0041422   -64.337  &lt; 2e-16 ***
+DESTIN_SZBMSZ05 -0.4309725  0.0050386   -85.534  &lt; 2e-16 ***
+DESTIN_SZBMSZ06 -1.4289091  0.0090428  -158.015  &lt; 2e-16 ***
+DESTIN_SZBMSZ07  0.1697895  0.0036969    45.928  &lt; 2e-16 ***
+DESTIN_SZBMSZ08 -0.8042249  0.0049408  -162.773  &lt; 2e-16 ***
+DESTIN_SZBMSZ09 -1.4976945  0.0074776  -200.290  &lt; 2e-16 ***
+DESTIN_SZBMSZ10 -1.1040876  0.0062484  -176.699  &lt; 2e-16 ***
+DESTIN_SZBMSZ11 -1.1176271  0.0057986  -192.740  &lt; 2e-16 ***
+DESTIN_SZBMSZ12 -0.5052794  0.0061462   -82.210  &lt; 2e-16 ***
+DESTIN_SZBMSZ13  0.0469214  0.0039850    11.774  &lt; 2e-16 ***
+DESTIN_SZBMSZ14 -0.6065308  0.0062775   -96.619  &lt; 2e-16 ***
+DESTIN_SZBMSZ15 -0.9269201  0.0058628  -158.102  &lt; 2e-16 ***
+DESTIN_SZBMSZ16 -1.1967420  0.0059108  -202.467  &lt; 2e-16 ***
+DESTIN_SZBMSZ17 -1.2600105  0.0071081  -177.263  &lt; 2e-16 ***
+DESTIN_SZBPSZ01 -0.8215475  0.0046830  -175.433  &lt; 2e-16 ***
+DESTIN_SZBPSZ02 -1.7232481  0.0073394  -234.795  &lt; 2e-16 ***
+DESTIN_SZBPSZ03 -1.5211793  0.0069230  -219.728  &lt; 2e-16 ***
+DESTIN_SZBPSZ04 -0.8198739  0.0050141  -163.515  &lt; 2e-16 ***
+DESTIN_SZBPSZ05  0.2906362  0.0034327    84.668  &lt; 2e-16 ***
+DESTIN_SZBPSZ06 -0.8235794  0.0065818  -125.130  &lt; 2e-16 ***
+DESTIN_SZBPSZ07 -0.4339289  0.0064190   -67.601  &lt; 2e-16 ***
+DESTIN_SZBSSZ01 -0.0084053  0.0038356    -2.191 0.028425 *  
+DESTIN_SZBSSZ02 -0.7632220  0.0044126  -172.964  &lt; 2e-16 ***
+DESTIN_SZBSSZ03  0.4159526  0.0032329   128.662  &lt; 2e-16 ***
+DESTIN_SZBTSZ01  0.3719534  0.0034537   107.696  &lt; 2e-16 ***
+DESTIN_SZBTSZ02 -0.5304604  0.0053375   -99.383  &lt; 2e-16 ***
+DESTIN_SZBTSZ03  0.2220414  0.0039089    56.804  &lt; 2e-16 ***
+DESTIN_SZBTSZ04 -1.2322756  0.0083086  -148.314  &lt; 2e-16 ***
+DESTIN_SZBTSZ05 -0.4784112  0.0059442   -80.484  &lt; 2e-16 ***
+DESTIN_SZBTSZ06 -0.6296966  0.0051396  -122.519  &lt; 2e-16 ***
+DESTIN_SZBTSZ07 -1.4992633  0.0078238  -191.629  &lt; 2e-16 ***
+DESTIN_SZBTSZ08 -0.7888866  0.0071119  -110.925  &lt; 2e-16 ***
+DESTIN_SZCBSZ01 -5.7490675  0.3015260   -19.067  &lt; 2e-16 ***
+DESTIN_SZCCSZ01 -0.6228152  0.0059934  -103.916  &lt; 2e-16 ***
+DESTIN_SZCHSZ01 -1.0599084  0.0073391  -144.420  &lt; 2e-16 ***
+DESTIN_SZCHSZ02  0.0225333  0.0046037     4.895 9.85e-07 ***
+DESTIN_SZCHSZ03  1.3001540  0.0033650   386.377  &lt; 2e-16 ***
+DESTIN_SZCKSZ01 -0.4607876  0.0043246  -106.551  &lt; 2e-16 ***
+DESTIN_SZCKSZ02 -0.8514408  0.0046569  -182.836  &lt; 2e-16 ***
+DESTIN_SZCKSZ03  0.3081439  0.0034954    88.157  &lt; 2e-16 ***
+DESTIN_SZCKSZ04 -1.5911473  0.0055533  -286.520  &lt; 2e-16 ***
+DESTIN_SZCKSZ05 -1.3747403  0.0064799  -212.155  &lt; 2e-16 ***
+DESTIN_SZCKSZ06  0.1656912  0.0050193    33.011  &lt; 2e-16 ***
+DESTIN_SZCLSZ01  0.2873713  0.0040546    70.875  &lt; 2e-16 ***
+DESTIN_SZCLSZ02 -2.0750563  0.0109437  -189.611  &lt; 2e-16 ***
+DESTIN_SZCLSZ03 -0.7343668  0.0062776  -116.983  &lt; 2e-16 ***
+DESTIN_SZCLSZ04 -0.0731781  0.0037658   -19.432  &lt; 2e-16 ***
+DESTIN_SZCLSZ05 -0.9054319  0.0068687  -131.820  &lt; 2e-16 ***
+DESTIN_SZCLSZ06  0.0950843  0.0035038    27.138  &lt; 2e-16 ***
+DESTIN_SZCLSZ07 -0.4829716  0.0044875  -107.626  &lt; 2e-16 ***
+DESTIN_SZCLSZ08 -0.3769961  0.0050913   -74.048  &lt; 2e-16 ***
+DESTIN_SZCLSZ09  0.4773761  0.0055158    86.547  &lt; 2e-16 ***
+DESTIN_SZDTSZ01 -0.4654749  0.0043477  -107.063  &lt; 2e-16 ***
+DESTIN_SZDTSZ02 -0.7471213  0.0042961  -173.906  &lt; 2e-16 ***
+DESTIN_SZDTSZ03 -0.9544640  0.0049695  -192.063  &lt; 2e-16 ***
+DESTIN_SZDTSZ04 -0.6207128  0.0111608   -55.615  &lt; 2e-16 ***
+DESTIN_SZDTSZ05 -0.6792127  0.0080674   -84.192  &lt; 2e-16 ***
+DESTIN_SZDTSZ06 -0.9191055  0.0052744  -174.257  &lt; 2e-16 ***
+DESTIN_SZDTSZ07 -1.9505227  0.0176421  -110.561  &lt; 2e-16 ***
+DESTIN_SZDTSZ08 -0.4558191  0.0040750  -111.858  &lt; 2e-16 ***
+DESTIN_SZDTSZ09 -1.6168459  0.0093023  -173.812  &lt; 2e-16 ***
+DESTIN_SZDTSZ10 -1.2996110  0.0078989  -164.530  &lt; 2e-16 ***
+DESTIN_SZDTSZ11 -0.5333164  0.0043526  -122.528  &lt; 2e-16 ***
+DESTIN_SZDTSZ12 -2.1322909  0.0129407  -164.775  &lt; 2e-16 ***
+DESTIN_SZDTSZ13 -1.5641658  0.0086931  -179.932  &lt; 2e-16 ***
+DESTIN_SZGLSZ01  0.0706629  0.0042080    16.792  &lt; 2e-16 ***
+DESTIN_SZGLSZ02 -0.1905650  0.0039049   -48.801  &lt; 2e-16 ***
+DESTIN_SZGLSZ03  0.4282643  0.0032861   130.328  &lt; 2e-16 ***
+DESTIN_SZGLSZ04  0.3789046  0.0032380   117.017  &lt; 2e-16 ***
+DESTIN_SZGLSZ05  0.2492438  0.0033276    74.903  &lt; 2e-16 ***
+DESTIN_SZHGSZ01  0.3240772  0.0032762    98.917  &lt; 2e-16 ***
+DESTIN_SZHGSZ02 -0.7408270  0.0044767  -165.486  &lt; 2e-16 ***
+DESTIN_SZHGSZ03 -1.2648715  0.0054331  -232.808  &lt; 2e-16 ***
+DESTIN_SZHGSZ04 -0.4916254  0.0038505  -127.677  &lt; 2e-16 ***
+DESTIN_SZHGSZ05 -0.5099161  0.0038656  -131.912  &lt; 2e-16 ***
+DESTIN_SZHGSZ06 -0.7974575  0.0046093  -173.011  &lt; 2e-16 ***
+DESTIN_SZHGSZ07  0.0741845  0.0035304    21.013  &lt; 2e-16 ***
+DESTIN_SZHGSZ08 -0.2910869  0.0040350   -72.140  &lt; 2e-16 ***
+DESTIN_SZHGSZ09  0.0147042  0.0042104     3.492 0.000479 ***
+DESTIN_SZHGSZ10 -3.3192590  0.0278660  -119.115  &lt; 2e-16 ***
+DESTIN_SZJESZ01 -0.3513262  0.0043899   -80.031  &lt; 2e-16 ***
+DESTIN_SZJESZ02 -0.6287145  0.0044890  -140.058  &lt; 2e-16 ***
+DESTIN_SZJESZ03 -0.6600254  0.0048237  -136.829  &lt; 2e-16 ***
+DESTIN_SZJESZ04 -0.2143484  0.0052218   -41.049  &lt; 2e-16 ***
+DESTIN_SZJESZ05 -1.0464437  0.0077971  -134.209  &lt; 2e-16 ***
+DESTIN_SZJESZ06  0.2556833  0.0035299    72.433  &lt; 2e-16 ***
+DESTIN_SZJESZ07 -0.9388694  0.0061058  -153.766  &lt; 2e-16 ***
+DESTIN_SZJESZ08 -0.8873531  0.0065828  -134.799  &lt; 2e-16 ***
+DESTIN_SZJESZ09 -0.5175288  0.0048724  -106.216  &lt; 2e-16 ***
+DESTIN_SZJESZ10  0.4235479  0.0061252    69.149  &lt; 2e-16 ***
+DESTIN_SZJESZ11  0.8124224  0.0057291   141.807  &lt; 2e-16 ***
+DESTIN_SZJWSZ01 -0.8287239  0.0056309  -147.176  &lt; 2e-16 ***
+DESTIN_SZJWSZ02 -0.7487269  0.0046465  -161.140  &lt; 2e-16 ***
+DESTIN_SZJWSZ03  0.2458626  0.0036316    67.701  &lt; 2e-16 ***
+DESTIN_SZJWSZ04  0.7540798  0.0034046   221.487  &lt; 2e-16 ***
+DESTIN_SZJWSZ05 -0.4339697  0.0051107   -84.914  &lt; 2e-16 ***
+DESTIN_SZJWSZ06 -0.1685553  0.0046727   -36.073  &lt; 2e-16 ***
+DESTIN_SZJWSZ07 -1.7066370  0.0216172   -78.948  &lt; 2e-16 ***
+DESTIN_SZJWSZ08 -0.6130563  0.0042838  -143.109  &lt; 2e-16 ***
+DESTIN_SZJWSZ09  0.9790610  0.0031231   313.492  &lt; 2e-16 ***
+DESTIN_SZKLSZ01 -0.4333011  0.0040995  -105.696  &lt; 2e-16 ***
+DESTIN_SZKLSZ02 -0.6144506  0.0046468  -132.230  &lt; 2e-16 ***
+DESTIN_SZKLSZ03 -1.0360469  0.0051172  -202.462  &lt; 2e-16 ***
+DESTIN_SZKLSZ04 -1.4805613  0.0064591  -229.220  &lt; 2e-16 ***
+DESTIN_SZKLSZ05 -0.6173818  0.0058050  -106.353  &lt; 2e-16 ***
+DESTIN_SZKLSZ06 -0.6096238  0.0044349  -137.460  &lt; 2e-16 ***
+DESTIN_SZKLSZ07 -0.7846468  0.0050656  -154.897  &lt; 2e-16 ***
+DESTIN_SZKLSZ08  0.0327319  0.0036692     8.921  &lt; 2e-16 ***
+DESTIN_SZKLSZ09 -1.5041583  0.0065291  -230.378  &lt; 2e-16 ***
+DESTIN_SZLKSZ01 -1.8762329  0.0185297  -101.255  &lt; 2e-16 ***
+DESTIN_SZMDSZ01 -1.6915164  0.0161910  -104.473  &lt; 2e-16 ***
+DESTIN_SZMDSZ02 -1.3455764  0.0089035  -151.128  &lt; 2e-16 ***
+DESTIN_SZMDSZ03 -2.5797766  0.0194380  -132.718  &lt; 2e-16 ***
+DESTIN_SZMPSZ01 -0.7336083  0.0059618  -123.051  &lt; 2e-16 ***
+DESTIN_SZMPSZ02 -0.6800348  0.0048649  -139.784  &lt; 2e-16 ***
+DESTIN_SZMPSZ03 -0.0588278  0.0038990   -15.088  &lt; 2e-16 ***
+DESTIN_SZMSSZ01 -1.2315397  0.0720247   -17.099  &lt; 2e-16 ***
+DESTIN_SZMUSZ01 -0.9982577  0.0048452  -206.028  &lt; 2e-16 ***
+DESTIN_SZMUSZ02 -0.9777965  0.0069929  -139.827  &lt; 2e-16 ***
+DESTIN_SZMUSZ03 -0.9364483  0.0046579  -201.044  &lt; 2e-16 ***
+DESTIN_SZNTSZ01 -2.1675081  0.0198299  -109.305  &lt; 2e-16 ***
+DESTIN_SZNTSZ02 -1.7472243  0.0088938  -196.455  &lt; 2e-16 ***
+DESTIN_SZNTSZ03 -1.1454774  0.0062563  -183.091  &lt; 2e-16 ***
+DESTIN_SZNTSZ05 -1.7381130  0.0153286  -113.390  &lt; 2e-16 ***
+DESTIN_SZNTSZ06 -2.7926947  0.0248656  -112.311  &lt; 2e-16 ***
+DESTIN_SZNVSZ01 -0.2038169  0.0036335   -56.093  &lt; 2e-16 ***
+DESTIN_SZNVSZ02 -0.3113161  0.0041825   -74.433  &lt; 2e-16 ***
+DESTIN_SZNVSZ03 -0.3770824  0.0044136   -85.436  &lt; 2e-16 ***
+DESTIN_SZNVSZ04 -1.9320410  0.0088561  -218.160  &lt; 2e-16 ***
+DESTIN_SZNVSZ05 -1.5428117  0.0075292  -204.909  &lt; 2e-16 ***
+DESTIN_SZORSZ01 -1.2355081  0.0157731   -78.330  &lt; 2e-16 ***
+DESTIN_SZORSZ02  0.1250163  0.0036777    33.993  &lt; 2e-16 ***
+DESTIN_SZORSZ03 -0.6452476  0.0045825  -140.806  &lt; 2e-16 ***
+DESTIN_SZOTSZ01 -1.0704906  0.0060731  -176.268  &lt; 2e-16 ***
+DESTIN_SZOTSZ02 -0.3781679  0.0053173   -71.120  &lt; 2e-16 ***
+DESTIN_SZOTSZ03 -1.1481810  0.0056670  -202.608  &lt; 2e-16 ***
+DESTIN_SZOTSZ04 -1.4202254  0.0079652  -178.304  &lt; 2e-16 ***
+DESTIN_SZPGSZ01 -1.8350720  0.0154368  -118.877  &lt; 2e-16 ***
+DESTIN_SZPGSZ02 -0.7564661  0.0054524  -138.741  &lt; 2e-16 ***
+DESTIN_SZPGSZ03  0.2505301  0.0034370    72.892  &lt; 2e-16 ***
+DESTIN_SZPGSZ04 -0.2173963  0.0038323   -56.727  &lt; 2e-16 ***
+DESTIN_SZPGSZ05 -1.0267257  0.0063632  -161.353  &lt; 2e-16 ***
+DESTIN_SZPLSZ01 -0.4035506  0.0054252   -74.384  &lt; 2e-16 ***
+DESTIN_SZPLSZ02 -1.5062324  0.0102290  -147.251  &lt; 2e-16 ***
+DESTIN_SZPLSZ03 -0.0236522  0.0080940    -2.922 0.003476 ** 
+DESTIN_SZPLSZ04  0.0180567  0.0076703     2.354 0.018567 *  
+DESTIN_SZPLSZ05 -0.6094267  0.0092680   -65.756  &lt; 2e-16 ***
+DESTIN_SZPNSZ01 -0.1368197  0.0047254   -28.954  &lt; 2e-16 ***
+DESTIN_SZPNSZ02  1.1051298  0.0063275   174.654  &lt; 2e-16 ***
+DESTIN_SZPNSZ03  0.2257901  0.0064458    35.029  &lt; 2e-16 ***
+DESTIN_SZPNSZ04  2.0035937  0.0070722   283.306  &lt; 2e-16 ***
+DESTIN_SZPNSZ05  1.3067158  0.0098823   132.228  &lt; 2e-16 ***
+DESTIN_SZPRSZ01 -0.9820082  0.0062529  -157.049  &lt; 2e-16 ***
+DESTIN_SZPRSZ02 -0.4228424  0.0043189   -97.906  &lt; 2e-16 ***
+DESTIN_SZPRSZ03  0.6354546  0.0032898   193.157  &lt; 2e-16 ***
+DESTIN_SZPRSZ04 -0.5550102  0.0071849   -77.247  &lt; 2e-16 ***
+DESTIN_SZPRSZ05 -0.3612456  0.0041113   -87.867  &lt; 2e-16 ***
+DESTIN_SZPRSZ06  0.2081266  0.0042348    49.147  &lt; 2e-16 ***
+DESTIN_SZPRSZ07 -1.0449719  0.0098563  -106.020  &lt; 2e-16 ***
+DESTIN_SZPRSZ08 -0.7571762  0.0055397  -136.682  &lt; 2e-16 ***
+DESTIN_SZQTSZ01 -1.4857266  0.0082843  -179.343  &lt; 2e-16 ***
+DESTIN_SZQTSZ02 -1.2170144  0.0061081  -199.246  &lt; 2e-16 ***
+DESTIN_SZQTSZ03 -0.6219226  0.0053633  -115.959  &lt; 2e-16 ***
+DESTIN_SZQTSZ04 -0.7058853  0.0056012  -126.024  &lt; 2e-16 ***
+DESTIN_SZQTSZ05 -0.6660971  0.0050476  -131.962  &lt; 2e-16 ***
+DESTIN_SZQTSZ06 -0.8590703  0.0052480  -163.694  &lt; 2e-16 ***
+DESTIN_SZQTSZ07 -1.3480834  0.0085058  -158.490  &lt; 2e-16 ***
+DESTIN_SZQTSZ08  0.2234121  0.0038996    57.291  &lt; 2e-16 ***
+DESTIN_SZQTSZ09 -0.4155807  0.0046764   -88.867  &lt; 2e-16 ***
+DESTIN_SZQTSZ10 -0.2168239  0.0044081   -49.187  &lt; 2e-16 ***
+DESTIN_SZQTSZ11  0.3416454  0.0041325    82.673  &lt; 2e-16 ***
+DESTIN_SZQTSZ12 -0.0701328  0.0053253   -13.170  &lt; 2e-16 ***
+DESTIN_SZQTSZ13  0.2104927  0.0041398    50.846  &lt; 2e-16 ***
+DESTIN_SZQTSZ14  0.1741816  0.0045428    38.342  &lt; 2e-16 ***
+DESTIN_SZQTSZ15  0.0549791  0.0056229     9.778  &lt; 2e-16 ***
+DESTIN_SZRCSZ01 -0.7119701  0.0051113  -139.293  &lt; 2e-16 ***
+DESTIN_SZRCSZ02 -2.1115822  0.0132956  -158.818  &lt; 2e-16 ***
+DESTIN_SZRCSZ03 -0.9880653  0.0070701  -139.753  &lt; 2e-16 ***
+DESTIN_SZRCSZ04 -2.1593121  0.0104118  -207.392  &lt; 2e-16 ***
+DESTIN_SZRCSZ05 -2.1458138  0.0093879  -228.573  &lt; 2e-16 ***
+DESTIN_SZRCSZ06 -1.6533074  0.0114337  -144.599  &lt; 2e-16 ***
+DESTIN_SZRCSZ08 -1.5440384  0.0105007  -147.041  &lt; 2e-16 ***
+DESTIN_SZRCSZ09 -1.1534494  0.0090862  -126.946  &lt; 2e-16 ***
+DESTIN_SZRCSZ10 -0.7427657  0.0050578  -146.855  &lt; 2e-16 ***
+DESTIN_SZRVSZ01 -1.5307971  0.0084545  -181.063  &lt; 2e-16 ***
+DESTIN_SZRVSZ02 -2.0469520  0.0107004  -191.296  &lt; 2e-16 ***
+DESTIN_SZRVSZ03 -1.9563053  0.0101178  -193.352  &lt; 2e-16 ***
+DESTIN_SZRVSZ04 -1.7151110  0.0136535  -125.617  &lt; 2e-16 ***
+DESTIN_SZRVSZ05 -1.3973761  0.0117040  -119.393  &lt; 2e-16 ***
+DESTIN_SZSBSZ01 -0.3445065  0.0053709   -64.143  &lt; 2e-16 ***
+DESTIN_SZSBSZ02 -0.7901522  0.0061627  -128.216  &lt; 2e-16 ***
+DESTIN_SZSBSZ03  0.5686155  0.0037479   151.716  &lt; 2e-16 ***
+DESTIN_SZSBSZ04  0.0948650  0.0048030    19.751  &lt; 2e-16 ***
+DESTIN_SZSBSZ05 -0.8502140  0.0061259  -138.791  &lt; 2e-16 ***
+DESTIN_SZSBSZ06 -1.9470117  0.0204807   -95.066  &lt; 2e-16 ***
+DESTIN_SZSBSZ07 -1.8889857  0.0154736  -122.078  &lt; 2e-16 ***
+DESTIN_SZSBSZ08  1.0916206  0.0044551   245.027  &lt; 2e-16 ***
+DESTIN_SZSBSZ09  0.5717996  0.0043530   131.357  &lt; 2e-16 ***
+DESTIN_SZSESZ02 -0.4986952  0.0039968  -124.772  &lt; 2e-16 ***
+DESTIN_SZSESZ03  0.4180354  0.0031750   131.664  &lt; 2e-16 ***
+DESTIN_SZSESZ04 -0.8534378  0.0046680  -182.826  &lt; 2e-16 ***
+DESTIN_SZSESZ05 -0.2355405  0.0038785   -60.730  &lt; 2e-16 ***
+DESTIN_SZSESZ06 -0.7800669  0.0048106  -162.155  &lt; 2e-16 ***
+DESTIN_SZSESZ07 -3.0824755  0.0180415  -170.855  &lt; 2e-16 ***
+DESTIN_SZSGSZ01 -0.0878278  0.0047555   -18.469  &lt; 2e-16 ***
+DESTIN_SZSGSZ02 -0.1224880  0.0042568   -28.774  &lt; 2e-16 ***
+DESTIN_SZSGSZ03 -0.3033322  0.0039550   -76.696  &lt; 2e-16 ***
+DESTIN_SZSGSZ04 -0.2190187  0.0039866   -54.939  &lt; 2e-16 ***
+DESTIN_SZSGSZ05 -1.8582654  0.0074920  -248.035  &lt; 2e-16 ***
+DESTIN_SZSGSZ06  0.4255461  0.0031870   133.524  &lt; 2e-16 ***
+DESTIN_SZSGSZ07 -0.3695539  0.0041243   -89.604  &lt; 2e-16 ***
+DESTIN_SZSISZ01 -0.8587196  0.0156917   -54.725  &lt; 2e-16 ***
+DESTIN_SZSKSZ01 -0.5054408  0.0058211   -86.830  &lt; 2e-16 ***
+DESTIN_SZSKSZ02  0.3944638  0.0045641    86.428  &lt; 2e-16 ***
+DESTIN_SZSKSZ03 -0.4365958  0.0051246   -85.196  &lt; 2e-16 ***
+DESTIN_SZSKSZ04 -0.8139278  0.0129772   -62.720  &lt; 2e-16 ***
+DESTIN_SZSKSZ05 -0.2790184  0.0106256   -26.259  &lt; 2e-16 ***
+DESTIN_SZSLSZ01 -0.6970672  0.0065655  -106.171  &lt; 2e-16 ***
+DESTIN_SZSLSZ04 -0.8670220  0.0053636  -161.648  &lt; 2e-16 ***
+DESTIN_SZSRSZ01 -1.1143464  0.0062111  -179.413  &lt; 2e-16 ***
+DESTIN_SZSRSZ02 -1.2910974  0.0074195  -174.015  &lt; 2e-16 ***
+DESTIN_SZSRSZ03 -1.2856614  0.0066576  -193.111  &lt; 2e-16 ***
+DESTIN_SZSVSZ01 -1.3293635  0.0524662   -25.338  &lt; 2e-16 ***
+DESTIN_SZTHSZ01 -3.7060783  0.0342658  -108.157  &lt; 2e-16 ***
+DESTIN_SZTHSZ03 -2.4238238  0.0173564  -139.650  &lt; 2e-16 ***
+DESTIN_SZTHSZ04 -2.5493082  0.0182992  -139.313  &lt; 2e-16 ***
+DESTIN_SZTHSZ06 -1.4545368  0.0097474  -149.223  &lt; 2e-16 ***
+DESTIN_SZTMSZ01 -0.2986406  0.0044873   -66.553  &lt; 2e-16 ***
+DESTIN_SZTMSZ02  1.3094630  0.0029024   451.164  &lt; 2e-16 ***
+DESTIN_SZTMSZ03  0.5310564  0.0032698   162.411  &lt; 2e-16 ***
+DESTIN_SZTMSZ04  0.8505528  0.0033608   253.083  &lt; 2e-16 ***
+DESTIN_SZTMSZ05  0.7606646  0.0041987   181.167  &lt; 2e-16 ***
+DESTIN_SZTNSZ01 -0.4189245  0.0045601   -91.868  &lt; 2e-16 ***
+DESTIN_SZTNSZ02 -0.9565221  0.0056933  -168.009  &lt; 2e-16 ***
+DESTIN_SZTNSZ03 -0.9785646  0.0069362  -141.081  &lt; 2e-16 ***
+DESTIN_SZTNSZ04 -0.9047693  0.0054228  -166.846  &lt; 2e-16 ***
+DESTIN_SZTPSZ01 -0.3315217  0.0045312   -73.164  &lt; 2e-16 ***
+DESTIN_SZTPSZ02  0.2976676  0.0031834    93.506  &lt; 2e-16 ***
+DESTIN_SZTPSZ03 -0.2191873  0.0046109   -47.537  &lt; 2e-16 ***
+DESTIN_SZTPSZ04 -1.4816355  0.0060901  -243.284  &lt; 2e-16 ***
+DESTIN_SZTPSZ05 -0.9451304  0.0048844  -193.499  &lt; 2e-16 ***
+DESTIN_SZTPSZ06 -0.4402911  0.0061953   -71.068  &lt; 2e-16 ***
+DESTIN_SZTPSZ07 -1.7312387  0.0088635  -195.323  &lt; 2e-16 ***
+DESTIN_SZTPSZ08 -1.2593763  0.0067715  -185.983  &lt; 2e-16 ***
+DESTIN_SZTPSZ09 -0.2877616  0.0049488   -58.148  &lt; 2e-16 ***
+DESTIN_SZTPSZ10 -0.9697193  0.0063083  -153.721  &lt; 2e-16 ***
+DESTIN_SZTPSZ11 -0.3005951  0.0041849   -71.829  &lt; 2e-16 ***
+DESTIN_SZTPSZ12 -0.7000077  0.0050923  -137.464  &lt; 2e-16 ***
+DESTIN_SZTSSZ01 -0.8486651  0.0179055   -47.397  &lt; 2e-16 ***
+DESTIN_SZTSSZ02 -0.4612835  0.0091652   -50.330  &lt; 2e-16 ***
+DESTIN_SZTSSZ03  0.3855345  0.0073471    52.474  &lt; 2e-16 ***
+DESTIN_SZTSSZ04  0.5646875  0.0073620    76.703  &lt; 2e-16 ***
+DESTIN_SZTSSZ05  1.5412341  0.0075667   203.685  &lt; 2e-16 ***
+DESTIN_SZTSSZ06  1.4055634  0.0148658    94.550  &lt; 2e-16 ***
+DESTIN_SZWCSZ01  1.3002792  0.0041779   311.230  &lt; 2e-16 ***
+DESTIN_SZWCSZ02 -0.6410929  0.0081431   -78.729  &lt; 2e-16 ***
+DESTIN_SZWCSZ03 -1.8668639  0.0222402   -83.941  &lt; 2e-16 ***
+DESTIN_SZWDSZ01  0.9822644  0.0030806   318.860  &lt; 2e-16 ***
+DESTIN_SZWDSZ02 -0.8743246  0.0050725  -172.366  &lt; 2e-16 ***
+DESTIN_SZWDSZ03  0.5998313  0.0034643   173.146  &lt; 2e-16 ***
+DESTIN_SZWDSZ04 -0.5484603  0.0050578  -108.437  &lt; 2e-16 ***
+DESTIN_SZWDSZ05 -0.1276892  0.0045257   -28.214  &lt; 2e-16 ***
+DESTIN_SZWDSZ06  0.1425300  0.0036637    38.903  &lt; 2e-16 ***
+DESTIN_SZWDSZ07 -0.0488935  0.0051192    -9.551  &lt; 2e-16 ***
+DESTIN_SZWDSZ08  0.0907587  0.0052909    17.154  &lt; 2e-16 ***
+DESTIN_SZWDSZ09 -0.2041143  0.0040971   -49.819  &lt; 2e-16 ***
+DESTIN_SZYSSZ01  0.9543738  0.0033197   287.486  &lt; 2e-16 ***
+DESTIN_SZYSSZ02 -0.3337783  0.0045291   -73.696  &lt; 2e-16 ***
+DESTIN_SZYSSZ03 -1.2283386  0.0047357  -259.379  &lt; 2e-16 ***
+DESTIN_SZYSSZ04 -0.3435894  0.0042780   -80.316  &lt; 2e-16 ***
+DESTIN_SZYSSZ05 -1.7940024  0.0084381  -212.606  &lt; 2e-16 ***
+DESTIN_SZYSSZ06 -1.3894763  0.0068219  -203.680  &lt; 2e-16 ***
+DESTIN_SZYSSZ07 -0.7313014  0.0086863   -84.191  &lt; 2e-16 ***
+DESTIN_SZYSSZ08  0.6469980  0.0033582   192.662  &lt; 2e-16 ***
+DESTIN_SZYSSZ09 -0.0025843  0.0035030    -0.738 0.460676    
+log(dist)       -0.6907747  0.0001061 -6507.641  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 107870462  on 21078  degrees of freedom
+Residual deviance:  36958927  on 20458  degrees of freedom
+AIC: 37094407
+
+Number of Fisher Scoring iterations: 7</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="fu">CalcRSquared</span>(dbcSIM<span class="sc">$</span>data<span class="sc">$</span>TRIPS, dbcSIM<span class="sc">$</span>fitted.values)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.5563317</code></pre>
+</div>
+</div>
+</section>
+<section id="model-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="model-comparison"><strong>Model comparison</strong></h2>
+<p>Compare performance.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>model_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">unconstrained=</span>uncSIM,</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">originConstrained=</span>orcSIM,</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">destinationConstrained=</span>decSIM,</span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">doublyConstrained=</span>dbcSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_performance</span>(model_list,</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">metrics =</span> <span class="st">"RMSE"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Comparison of Model Performance Indices
+
+Name                   | Model |     RMSE
+-----------------------------------------
+unconstrained          |   glm | 5581.548
+originConstrained      |   glm | 4940.551
+destinationConstrained |   glm | 4496.325
+doublyConstrained      |   glm | 4323.664</code></pre>
+</div>
+</div>
+<p>Best model has the <strong>smallest RMSE</strong> so it is <strong>doubleConstrained</strong></p>
+</section>
+<section id="visualising-fitted" class="level2">
+<h2 class="anchored" data-anchor-id="visualising-fitted"><strong>Visualising fitted</strong></h2>
+<p>Unconstrained</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(uncSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(df) <span class="sc">%&gt;%</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">uncTRIPS =</span> <span class="st">"uncSIM$fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Origin constrained</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(orcSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(df) <span class="sc">%&gt;%</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">orcTRIPS =</span> <span class="st">"orcSIM$fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Destination constrained</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(decSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(df) <span class="sc">%&gt;%</span></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">decTRIPS =</span> <span class="st">"decSIM$fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Doubly constrained</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(dbcSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(df) <span class="sc">%&gt;%</span></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dbcTRIPS =</span> <span class="st">"dbcSIM$fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Generating plots</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>unc_p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> SIM_data,</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes</span>(<span class="at">x =</span> uncTRIPS,</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">y =</span> TRIPS)) <span class="sc">+</span></span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>orc_p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> SIM_data,</span>
+<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes</span>(<span class="at">x =</span> orcTRIPS,</span>
+<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">y =</span> TRIPS)) <span class="sc">+</span></span>
+<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span>
+<span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb76-13"><a href="#cb76-13" aria-hidden="true" tabindex="-1"></a>dec_p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> SIM_data,</span>
+<span id="cb76-14"><a href="#cb76-14" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes</span>(<span class="at">x =</span> decTRIPS,</span>
+<span id="cb76-15"><a href="#cb76-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">y =</span> TRIPS)) <span class="sc">+</span></span>
+<span id="cb76-16"><a href="#cb76-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb76-17"><a href="#cb76-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span>
+<span id="cb76-18"><a href="#cb76-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb76-19"><a href="#cb76-19" aria-hidden="true" tabindex="-1"></a>dbc_p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> SIM_data,</span>
+<span id="cb76-20"><a href="#cb76-20" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes</span>(<span class="at">x =</span> dbcTRIPS,</span>
+<span id="cb76-21"><a href="#cb76-21" aria-hidden="true" tabindex="-1"></a>                    <span class="at">y =</span> TRIPS)) <span class="sc">+</span></span>
+<span id="cb76-22"><a href="#cb76-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb76-23"><a href="#cb76-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span>
+<span id="cb76-24"><a href="#cb76-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb76-25"><a href="#cb76-25" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(unc_p, orc_p, dec_p, dbc_p,</span>
+<span id="cb76-26"><a href="#cb76-26" aria-hidden="true" tabindex="-1"></a>          <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb76-27"><a href="#cb76-27" aria-hidden="true" tabindex="-1"></a>          <span class="at">nrow =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="In-class_Ex3_files/figure-html/unnamed-chunk-55-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Double constrained looks less scattered and more fitted to the line, consistent with RMSE results</p>
 </section>
 </section>
 <section id="reflections" class="level1">
 <h1>Reflections</h1>
+<ul>
+<li><p>To be honest I was quite distracted in class earlier as I was revising my Take home ex 1, and my notes are not so coherent. I will revise after I finish my Take Home Ex 1</p></li>
+<li><p>However, I find this lesson interesting as we finally get to learn some flow analysis. I had some questions I wanted to answer during Take Home Exercise that I discovered couldn’t be provided by EHSA and LISA e.g.</p>
+<ul>
+<li><p>Were people really coming from home on mornings whether it is weekday or weekend, or</p></li>
+<li><p>Is the flow of people coming home in the evenings during weekdays more scattered through the rest of the day compare to traffic of people going out of their houses in the morning?</p>
+<ul>
+<li>My hypothesis is that in the morning, people go straight to office/school but in the evening people do some recreational activities before going home</li>
+</ul></li>
+</ul></li>
+<li><p>Lastly, I was a Math major in my undergrad so this activity reminded me why I fell in love with Math in the first place. I want to explore about the models more and I would’ve enjoyed the class if we had more time. I know that DT students in MITB have a reputations of do not like technical classes like this but I am enjoying and learning a lot so far although it requires a lot of effort. I guess my Math training prepared me for the persistence required for rigorous learning like this.</p></li>
+</ul>
 
 
 </section>
