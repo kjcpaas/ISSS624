@@ -67,12 +67,15 @@ Before running this part, please run all the code chunks in [Data Wrangling](/Ta
 Use `read_rds()` to load the `rds` data needed for geovisualization and analysis.
 
 ```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
 honeycomb <- read_rds("data/rds/honeycomb202310.rds")
 trips_cube_wkdy <- read_rds("data/rds/trips_cube_wkdy202310.rds")
 trips_cube_wknd <- read_rds("data/rds/trips_cube_wknd202310.rds")
 ```
 
--   `honeycomb` - contains the geometry
+-   `mpsz` - contains Singapore subzone boundaries, will be used for visualizations
+
+-   `honeycomb` - contains the geometry for the honeycomb grid
 
 -   `trips_cube_wkdy` - hourly number bus trips originating from hexagons during weekday
 
@@ -82,13 +85,13 @@ trips_cube_wknd <- read_rds("data/rds/trips_cube_wknd202310.rds")
 If you want to use the **August 2023** or **September 2023** data sets, replace `202310` to `202308` or `202309`, respectively.
 :::
 
-# Extracting data for peak times
+# Creating spatial data for each peak period
 
 As we want to study the data for peak times, we have to extract and aggregate the data for those times.
 
-## Filtering data from the *trips_cube\_\** data
+## Extracting peak hour data
 
-The first thing to do is to filter the data from relevant hours using `filter()`.
+We will need filter the data from relevant hours using `filter()`. We also need to aggregate the data to get the total number of trips per hexagon, using `group_by(HEX_ID)` and `summarise()`.
 
 ::: {.callout-tip collapse="true" appearance="simple"}
 ### How to filter data by *HOUR_OF_DAY*
@@ -106,44 +109,845 @@ HOUR_DAY >= 6 & HOUR_OF_DAY < 9
 ### Weekday AM (6 - 9 AM)
 
 ```{r}
-peak_wkdy_am_hrly <- trips_cube_wkdy %>%
+peak_wkdy_am <- trips_cube_wkdy %>%
   filter(
     HOUR_OF_DAY >= 6 &
       HOUR_OF_DAY < 9
-  )
-kable(head(peak_wkdy_am_hrly))
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(peak_wkdy_am))
 ```
 
 ### Weekday PM (5 - 8 PM)
 
 ```{r}
-peak_wkdy_pm_hrly <- trips_cube_wkdy %>%
+peak_wkdy_pm <- trips_cube_wkdy %>%
   filter(
     HOUR_OF_DAY >= 17 &
       HOUR_OF_DAY < 20
-  )
-kable(head(peak_wkdy_pm_hrly))
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(peak_wkdy_pm))
 ```
 
 ### Weekend AM (11 AM - 2 PM)
 
 ```{r}
-peak_wknd_am_hrly <- trips_cube_wknd %>%
+peak_wknd_am <- trips_cube_wknd %>%
   filter(
     HOUR_OF_DAY >= 11 &
       HOUR_OF_DAY < 14
-  )
-kable(head(peak_wknd_am_hrly))
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(peak_wknd_am))
+```
+
+### Weekend PM (4 - 7 PM) {#weekend-pm-4---7-pm}
+
+```{r}
+peak_wknd_pm <- trips_cube_wknd %>%
+  filter(
+    HOUR_OF_DAY >= 16 &
+      HOUR_OF_DAY < 19
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(peak_wknd_pm))
+```
+:::
+
+## Adding geometry data
+
+To plot the maps, we need to do add geometry to our spatial data. This can be done by doing a `left_join` of our geometry to the aspatial data generated in [Creating spatial data for each peak period].
+
+We also need to covert this to a `sf` data frame to be processed properly as spatial data.
+
+::: panel-tabset
+### Weekday AM (6 - 9 AM)
+
+```{r}
+peak_wkdy_am_sf <- left_join(peak_wkdy_am, honeycomb) %>% st_sf()
+kable(head(peak_wkdy_am_sf))
+```
+
+### Weekday PM (5 - 8 PM)
+
+```{r}
+peak_wkdy_pm_sf <- left_join(peak_wkdy_pm, honeycomb) %>% st_sf()
+kable(head(peak_wkdy_pm_sf))
+```
+
+### Weekend AM (11 AM - 2 PM)
+
+```{r}
+peak_wknd_am_sf <- left_join(peak_wknd_am, honeycomb) %>% st_sf()
+kable(head(peak_wknd_am_sf))
 ```
 
 ### Weekend PM (4 - 7 PM)
 
 ```{r}
-peak_wknd_pm_hrly <- trips_cube_wknd %>%
-  filter(
-    HOUR_OF_DAY >= 16 &
-      HOUR_OF_DAY < 19
-  )
-kable(head(peak_wknd_pm_hrly))
+peak_wknd_pm_sf <- left_join(peak_wknd_pm, honeycomb) %>% st_sf()
+kable(head(peak_wknd_pm_sf))
 ```
+:::
+
+::: callout-warning
+## Data clear point
+
+We do not need the `peak_wk*_*` data anymore as contents are already in the sf data. We will remove them from the R environment so we can see the relevant data more easily.
+
+```{r}
+rm(peak_wkdy_am)
+rm(peak_wkdy_pm)
+rm(peak_wknd_am)
+rm(peak_wknd_pm)
+```
+:::
+
+# Visualizing the data
+
+## Initial look at the data
+
+Let us plot maps for each peak period. I'm using **tabsets** for this so we can see the differences in data when switching from 1 tab to the other
+
+::: panel-tabset
+### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+The visualizations above are satisfactory **if we look at them individually** as we can see which areas are busier than the others.
+
+However, comparing the commuter patterns from a peak period to another can be **misleading**.
+
+To illustrate, consider the values of the **darkest red** on **weekends**. Hexagons with **6000** trips already are dark red on weekend maps. However, these values fall under the middle category, visualized as **orange,** on **weekdays**.
+
+Due to this, one might misinterpret that an area is **busier on certain peak periods** due to the difference in colors when in fact, they are actually **as busy or even less busy**. Colors are powerful and easier to interpret than looking at the categories in the legend.
+
+As it is, we are comparing apples to oranges. We need a way to compare these maps apples to apples.
+:::
+
+## Deriving the break points
+
+To compare the maps apples to apples, we need to calculate the break points that our maps can use. When `tmap` uses `style = quantile`, it calculates the styles depending on the number of categories.
+
+We can replicate this by using `quantile()` and using the **full range of data** from all the peak periods. To see the differences in more detail, we will use **8 categories** instead of the default 5 categories.
+
+::: {.callout-note collapse="true" appearance="simple"}
+### How to calculate *probs*?
+
+Since we want 8 categories, we will divide 100 by 8.
+
+$$
+\frac{100}{8} = 12.5
+$$
+
+Hence, we will supply multiples of `0.125` as `probs`, e.g. `0`, `0.125`, `0.25`, ... `1`
+:::
+
+```{r}
+quantile(
+  c(
+    peak_wkdy_am_sf$TRIPS,
+    peak_wkdy_pm_sf$TRIPS,
+    peak_wknd_am_sf$TRIPS,
+    peak_wknd_pm_sf$TRIPS
+  ),
+  probs = c(0, 0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1)
+)
+```
+
+With this result, instead of using `style = quantile` in our maps, we can specify these values to `breaks`.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Why not just use summary()?
+
+`summary()` uses quartiles or every **25th quantile**. This results in only **4 categories**. This is not enough for the level detail we want to present so it's better to use `quantile()` to generate more categories ourselves.
+:::
+
+## Remapping with the breaks
+
+We will supply the values generated (rounded to the nearest integer) to `breaks`, instead of `style = "quantile"`.
+
+``` r
+breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160)
+```
+
+::: panel-tabset
+### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+There is a stark difference is colors in this map, showing a concentration of places with the darkest reds, along with areas of lighter colors.
+
+We may infer that this concentration could be from residential areas due to **people leaving their homes** for their daily activities like work or school.
+
+### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+This peak period looks busiest because it looks reddest. However we must **take some caution** on this interpretation as the reds are more scattered so our brains may interpret this as red all throughout, compared to clusters of red and white.
+
+This peak period is when workers and student most likely go home so it may look more scattered as workplaces or schools may be more scattered compared to residential areas.
+
+### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+This map looks a lot paler compared to the weekday maps. This could be because it there is no work or school, people tend to stay home.
+
+However, while paler, people going out should still come from their homes so this should just look like the lighter weekday morning map. We will explore this later when we compare these 2 peak periods.
+
+### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+This map also looks lighter due to it being a weekend and people staying home. However, another possible explanation is that **people have more freedom to schedule** their activities on weekends or holidays so the traffic may be more scattered throughout the day.
+
+A spatio-temporal analysis may reveal more information that can validate this inference.
+:::
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+Doing the adjustments made it **much easier** to compare peak hours compared to the others.
+
+For example, we are able to see that **weekdays are** **indeed generally busier than weekends** due to the weekends due to the maps **looking darker**.
+
+We can also observe that the West and Northwest parts of Singapore has less bus trips compared to the rest of Singapore. The cause could be fewer residents in that area, sparse distribution of the population, or people preferring to use other modes of transportation (e.g., MRT, cars).
+
+However, **some details were lost** with this adjustment. For example, we are not able to see what is the **highest and lowest number of trips for each peak period**. If this is the intention or the narrative we want, the previous **unadjusted visualizations** are more effective for these purposes.
+
+For our analysis, we want to **compare** the number of bus trips from one peak period to the other so making the adjustment in the break points is very helpful for this purpose.
+:::
+
+## Comparing peak periods
+
+Now that our maps can be compared apples to apples, we will compare 2 peak periods side by side.
+
+::: {.callout-tip appearance="simple"}
+To compare each pair of maps more easily, we will use **tabs** so we can just switch between them to see how the patterns change from one map to the other.
+:::
+
+### Weekday peak periods
+
+::: panel-tabset
+#### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+#### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+An interesting observation is that when switch from **weekend AM to weekend PM** map, there is perceived **outward scattering** from the darker areas to the neighboring areas.
+
+Switching to **weekend PM to weekend AM** shows the **reds converging** to the darker points.
+
+This is consistent with real world pattern of people **going out of their homes for their daily activities** in the morning and **going home** in the evening.
+
+However, what cannot be verified from this comparison is whether people really going to work or school in places close to their homes, as suggested by **outside scattering**. This may not be necessarily true as people from different areas of Singapore may travel long distances or so to their places of work and school, not the neighboring areas. A flow analysis will give us better insights about this.
+:::
+
+### Weekend peak periods
+
+::: {.callout-important collapse="true" appearance="simple"}
+#### Adjusting the break points
+
+For this comparison, we adjusted the break points using the same method as in [Deriving the break points]. This is because the traffic is much less over the weekend so we are not able to use the full range of categories we previously derived.
+
+See the maps below.
+
+::: panel-tabset
+##### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+##### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+Hence, we couldn't get insights to the same level of details as the other comparisons. We will use the following breaks for this comparison:
+
+```{r}
+quantile(
+  c(
+    peak_wknd_am_sf$TRIPS,
+    peak_wknd_pm_sf$TRIPS
+  ),
+  probs = c(0, 0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1)
+)
+```
+
+With this change, we have shifted **7786** from the **6th to 8th** category, providing us with the better level of detail on values **between 0 to 7786**.
+
+This just shows that the breaks we calculated before is **not appropriate** for all comparisons. We still need to apply the scale appropriate to the data we have,
+:::
+
+::: panel-tabset
+#### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 113, 382, 855, 1686, 2862, 4616, 7785, 111171),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+#### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 113, 382, 855, 1686, 2862, 4616, 7785, 111171),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+Like the weekday comparison, there is a slight scattering observed, although not as stark. The difference is not as big despite [Adjusting the break points].
+
+This very small shift could be because people are coming out of their homes throughout the day as they are free to schedule their activities throughout the day on weekends or holidays.
+
+This is consistent with the insights in [Weekend PM (4 - 7 PM)](#weekend-pm-4---7-pm). Again, a spatio-temporal analysis may provide us more information to verify this inference.
+:::
+
+### Morning peaks
+
+::: panel-tabset
+#### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+#### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_am_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+The weekend map generally looks like a **lighter version** of the weekday map. This may mean that **less people** go out of their homes on weekends.
+
+However, there are some notable things that can be observed.
+
+-   Some busy areas on the West during weekdays have low bus trips on weekends
+
+    -   This area corresponds to what seems to be an industrial area near the Tuas checkpoint.
+
+    -   This looks strange to me as it **contradicts** our hypothesis that morning bus rides are mostly due to people commuting from their home.
+
+-   Locations that coincide with bus interchanges are constantly busy
+
+    -   There are multiple bus lines originating from these interchanges so they are expected to have constant flow of commuters.
+
+-   The bus stops for international travel are constantly busy
+
+    -   Examples are those in Woodlands Checkpoint, Kranji Station, Changi Airport bus stops
+
+    -   These are popular for tourists and locals alike as Sinagapore is a business and tourism hub in Asia. Workers also commute regularly between Johor Bahru and Singapore, while locals visit Johor Bahru for weekend recreation.
+
+-   The bus stops to areas popular to tourists are constantly busy
+
+    -   Some examples are the Vivo City bus stops and the bus stop near Singapore Zoo (North of Central Water Catchment). Tourists come to this places throughout the week, and locals also go too these places for recreation.
+:::
+
+### Evening peaks
+
+::: panel-tabset
+#### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wkdy_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+#### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_wknd_pm_sf) +
+  tm_polygons(
+    "TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "# of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.outside = FALSE,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+There is not much difference in insights compared to [Morning peaks] aside from the **active bus stop near Tuas Checkpoint on weekday mornings** is not active in the evenings.
+
+This is an interesting observation that is difficult to explain. One possible explanations is because of its **relative proximity to Nanyang Technological University**, students commuting to NTU transfer via these bus stops going to school. However, we may not see the same pattern during weekday evening peak period because university students have different schedules so their time leaving the university may be **more scattered throughout the day**.
+
+A flow analysis with information on the destination bus stop may reveal more information about this.
+:::
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Why do we seem notice the busiest areas first?
+
+Another interesting insight about these visualizations is that we seem **notice the busy areas in the map** more easily than the areas that have low traffic.
+
+Interestingly, our biology may play into this as [our eyes have more cones that are sensitive to red light than any other type](https://www.londonvisionclinic.com/these-are-the-colours-your-eyes-cant-see/). As we use [**red**]{style="color:red;"} to visualized the busiest areas in our map, they are the ones that catches our eye first.
+
+If we had reversed our color scheme, perhaps we would have noticed the least busy areas first.
+
+However, we have to look into more reliable scientific and psychology sources to verify if this phenomenon is true.
 :::

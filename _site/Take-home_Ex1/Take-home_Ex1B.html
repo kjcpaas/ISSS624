@@ -96,6 +96,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -227,9 +229,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#environment-settings" id="toc-environment-settings" class="nav-link" data-scroll-target="#environment-settings">Environment settings</a></li>
   <li><a href="#loading-the-data" id="toc-loading-the-data" class="nav-link" data-scroll-target="#loading-the-data">Loading the data</a></li>
   </ul></li>
-  <li><a href="#extracting-data-for-peak-times" id="toc-extracting-data-for-peak-times" class="nav-link" data-scroll-target="#extracting-data-for-peak-times">Extracting data for peak times</a>
+  <li><a href="#creating-spatial-data-for-each-peak-period" id="toc-creating-spatial-data-for-each-peak-period" class="nav-link" data-scroll-target="#creating-spatial-data-for-each-peak-period">Creating spatial data for each peak period</a>
   <ul class="collapse">
-  <li><a href="#filtering-data-from-the-trips_cube_-data" id="toc-filtering-data-from-the-trips_cube_-data" class="nav-link" data-scroll-target="#filtering-data-from-the-trips_cube_-data">Filtering data from the <em>trips_cube_*</em> data</a></li>
+  <li><a href="#extracting-peak-hour-data" id="toc-extracting-peak-hour-data" class="nav-link" data-scroll-target="#extracting-peak-hour-data">Extracting peak hour data</a></li>
+  <li><a href="#adding-geometry-data" id="toc-adding-geometry-data" class="nav-link" data-scroll-target="#adding-geometry-data">Adding geometry data</a></li>
+  </ul></li>
+  <li><a href="#visualizing-the-data" id="toc-visualizing-the-data" class="nav-link" data-scroll-target="#visualizing-the-data">Visualizing the data</a>
+  <ul class="collapse">
+  <li><a href="#initial-look-at-the-data" id="toc-initial-look-at-the-data" class="nav-link" data-scroll-target="#initial-look-at-the-data">Initial look at the data</a></li>
+  <li><a href="#deriving-the-break-points" id="toc-deriving-the-break-points" class="nav-link" data-scroll-target="#deriving-the-break-points">Deriving the break points</a></li>
+  <li><a href="#remapping-with-the-breaks" id="toc-remapping-with-the-breaks" class="nav-link" data-scroll-target="#remapping-with-the-breaks">Remapping with the breaks</a></li>
+  <li><a href="#comparing-peak-periods" id="toc-comparing-peak-periods" class="nav-link" data-scroll-target="#comparing-peak-periods">Comparing peak periods</a>
+  <ul class="collapse">
+  <li><a href="#weekday-peak-periods" id="toc-weekday-peak-periods" class="nav-link" data-scroll-target="#weekday-peak-periods">Weekday peak periods</a></li>
+  <li><a href="#weekend-peak-periods" id="toc-weekend-peak-periods" class="nav-link" data-scroll-target="#weekend-peak-periods">Weekend peak periods</a></li>
+  <li><a href="#morning-peaks" id="toc-morning-peaks" class="nav-link" data-scroll-target="#morning-peaks">Morning peaks</a></li>
+  <li><a href="#evening-peaks" id="toc-evening-peaks" class="nav-link" data-scroll-target="#evening-peaks">Evening peaks</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 </nav>
@@ -349,12 +365,14 @@ Important
 </div>
 <p>Use <code>read_rds()</code> to load the <code>rds</code> data needed for geovisualization and analysis.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb202310.rds"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>trips_cube_wkdy <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/trips_cube_wkdy202310.rds"</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>trips_cube_wknd <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/trips_cube_wknd202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/mpsz.rds"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb202310.rds"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>trips_cube_wkdy <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/trips_cube_wkdy202310.rds"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>trips_cube_wknd <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/trips_cube_wknd202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
-<li><p><code>honeycomb</code> - contains the geometry</p></li>
+<li><p><code>mpsz</code> - contains Singapore subzone boundaries, will be used for visualizations</p></li>
+<li><p><code>honeycomb</code> - contains the geometry for the honeycomb grid</p></li>
 <li><p><code>trips_cube_wkdy</code> - hourly number bus trips originating from hexagons during weekday</p></li>
 <li><p><code>trips_cube_wknd</code> - hourly number bus trips originating from hexagons during weekend</p></li>
 </ul>
@@ -370,12 +388,12 @@ Important
 </div>
 </section>
 </section>
-<section id="extracting-data-for-peak-times" class="level1">
-<h1>Extracting data for peak times</h1>
+<section id="creating-spatial-data-for-each-peak-period" class="level1">
+<h1>Creating spatial data for each peak period</h1>
 <p>As we want to study the data for peak times, we have to extract and aggregate the data for those times.</p>
-<section id="filtering-data-from-the-trips_cube_-data" class="level2">
-<h2 class="anchored" data-anchor-id="filtering-data-from-the-trips_cube_-data">Filtering data from the <em>trips_cube_*</em> data</h2>
-<p>The first thing to do is to filter the data from relevant hours using <code>filter()</code>.</p>
+<section id="extracting-peak-hour-data" class="level2">
+<h2 class="anchored" data-anchor-id="extracting-peak-hour-data">Extracting peak hour data</h2>
+<p>We will need filter the data from relevant hours using <code>filter()</code>. We also need to aggregate the data to get the total number of trips per hexagon, using <code>group_by(HEX_ID)</code> and <code>summarise()</code>.</p>
 <div class="callout callout-style-simple callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -399,51 +417,46 @@ How to filter data by <em>HOUR_OF_DAY</em>
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>peak_wkdy_am_hrly <span class="ot">&lt;-</span> trips_cube_wkdy <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>peak_wkdy_am <span class="ot">&lt;-</span> trips_cube_wkdy <span class="sc">%&gt;%</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    HOUR_OF_DAY <span class="sc">&gt;=</span> <span class="dv">6</span> <span class="sc">&amp;</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>      HOUR_OF_DAY <span class="sc">&lt;</span> <span class="dv">9</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wkdy_am_hrly))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(HEX_ID) <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TRIPS))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wkdy_am))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">HEX_ID</th>
-<th style="text-align: right;">HOUR_OF_DAY</th>
 <th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">H0001</td>
-<td style="text-align: right;">6</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">93</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">7</td>
-<td style="text-align: right;">74</td>
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">73</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">19</td>
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">185</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">6</td>
-<td style="text-align: right;">23</td>
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">265</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">7</td>
-<td style="text-align: right;">24</td>
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">43</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">26</td>
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">54</td>
 </tr>
 </tbody>
 </table>
@@ -452,51 +465,46 @@ How to filter data by <em>HOUR_OF_DAY</em>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>peak_wkdy_pm_hrly <span class="ot">&lt;-</span> trips_cube_wkdy <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>peak_wkdy_pm <span class="ot">&lt;-</span> trips_cube_wkdy <span class="sc">%&gt;%</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    HOUR_OF_DAY <span class="sc">&gt;=</span> <span class="dv">17</span> <span class="sc">&amp;</span></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>      HOUR_OF_DAY <span class="sc">&lt;</span> <span class="dv">20</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wkdy_pm_hrly))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(HEX_ID) <span class="sc">%&gt;%</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TRIPS))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wkdy_pm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">HEX_ID</th>
-<th style="text-align: right;">HOUR_OF_DAY</th>
 <th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">H0001</td>
-<td style="text-align: right;">17</td>
-<td style="text-align: right;">122</td>
+<td style="text-align: right;">384</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">18</td>
-<td style="text-align: right;">224</td>
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">263</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">19</td>
-<td style="text-align: right;">38</td>
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">1812</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">17</td>
-<td style="text-align: right;">159</td>
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">259</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">18</td>
-<td style="text-align: right;">62</td>
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">211</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">19</td>
-<td style="text-align: right;">42</td>
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">259</td>
 </tr>
 </tbody>
 </table>
@@ -505,51 +513,46 @@ How to filter data by <em>HOUR_OF_DAY</em>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>peak_wknd_am_hrly <span class="ot">&lt;-</span> trips_cube_wknd <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>peak_wknd_am <span class="ot">&lt;-</span> trips_cube_wknd <span class="sc">%&gt;%</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    HOUR_OF_DAY <span class="sc">&gt;=</span> <span class="dv">11</span> <span class="sc">&amp;</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>      HOUR_OF_DAY <span class="sc">&lt;</span> <span class="dv">14</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wknd_am_hrly))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(HEX_ID) <span class="sc">%&gt;%</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TRIPS))</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wknd_am))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">HEX_ID</th>
-<th style="text-align: right;">HOUR_OF_DAY</th>
 <th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">H0001</td>
-<td style="text-align: right;">11</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">41</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">13</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">154</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">11</td>
-<td style="text-align: right;">14</td>
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">75</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">19</td>
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">56</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">13</td>
-<td style="text-align: right;">8</td>
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">18</td>
 </tr>
 </tbody>
 </table>
@@ -558,51 +561,46 @@ How to filter data by <em>HOUR_OF_DAY</em>
 </div>
 <div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>peak_wknd_pm_hrly <span class="ot">&lt;-</span> trips_cube_wknd <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>peak_wknd_pm <span class="ot">&lt;-</span> trips_cube_wknd <span class="sc">%&gt;%</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    HOUR_OF_DAY <span class="sc">&gt;=</span> <span class="dv">16</span> <span class="sc">&amp;</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      HOUR_OF_DAY <span class="sc">&lt;</span> <span class="dv">19</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wknd_pm_hrly))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(HEX_ID) <span class="sc">%&gt;%</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TRIPS))</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wknd_pm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">HEX_ID</th>
-<th style="text-align: right;">HOUR_OF_DAY</th>
 <th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">H0001</td>
-<td style="text-align: right;">16</td>
-<td style="text-align: right;">3</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">17</td>
-<td style="text-align: right;">21</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">H0001</td>
-<td style="text-align: right;">18</td>
-<td style="text-align: right;">18</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">16</td>
 <td style="text-align: right;">42</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;">H0002</td>
-<td style="text-align: right;">17</td>
-<td style="text-align: right;">15</td>
-</tr>
 <tr class="even">
 <td style="text-align: left;">H0002</td>
-<td style="text-align: right;">18</td>
-<td style="text-align: right;">32</td>
+<td style="text-align: right;">89</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">275</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">94</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">42</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">41</td>
 </tr>
 </tbody>
 </table>
@@ -611,8 +609,1117 @@ How to filter data by <em>HOUR_OF_DAY</em>
 </div>
 </div>
 </div>
+</section>
+<section id="adding-geometry-data" class="level2">
+<h2 class="anchored" data-anchor-id="adding-geometry-data">Adding geometry data</h2>
+<p>To plot the maps, we need to do add geometry to our spatial data. This can be done by doing a <code>left_join</code> of our geometry to the aspatial data generated in <a href="#creating-spatial-data-for-each-peak-period">Creating spatial data for each peak period</a>.</p>
+<p>We also need to covert this to a <code>sf</code> data frame to be processed properly as spatial data.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Weekday AM (6 - 9 AM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">Weekday PM (5 - 8 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Weekend AM (11 AM - 2 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-4" role="tab" aria-controls="tabset-2-4" aria-selected="false">Weekend PM (4 - 7 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>peak_wkdy_am_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(peak_wkdy_am, honeycomb) <span class="sc">%&gt;%</span> <span class="fu">st_sf</span>()</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wkdy_am_sf))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">HEX_ID</th>
+<th style="text-align: right;">TRIPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">185</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>peak_wkdy_pm_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(peak_wkdy_pm, honeycomb) <span class="sc">%&gt;%</span> <span class="fu">st_sf</span>()</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wkdy_pm_sf))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">HEX_ID</th>
+<th style="text-align: right;">TRIPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">384</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">263</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">1812</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">211</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>peak_wknd_am_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(peak_wknd_am, honeycomb) <span class="sc">%&gt;%</span> <span class="fu">st_sf</span>()</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wknd_am_sf))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">HEX_ID</th>
+<th style="text-align: right;">TRIPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">154</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="tabset-2-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>peak_wknd_pm_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(peak_wknd_pm, honeycomb) <span class="sc">%&gt;%</span> <span class="fu">st_sf</span>()</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(peak_wknd_pm_sf))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">HEX_ID</th>
+<th style="text-align: right;">TRIPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((3917.538 28017.41…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">89</td>
+<td style="text-align: left;">POLYGON ((4417.538 30615.49…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: left;">POLYGON ((4667.538 28450.43…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: left;">POLYGON ((4667.538 30182.48…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: left;">POLYGON ((4667.538 31048.5,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: left;">POLYGON ((4917.538 28883.44…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We do not need the <code>peak_wk*_*</code> data anymore as contents are already in the sf data. We will remove them from the R environment so we can see the relevant data more easily.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(peak_wkdy_am)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(peak_wkdy_pm)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(peak_wknd_am)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(peak_wknd_pm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="visualizing-the-data" class="level1">
+<h1>Visualizing the data</h1>
+<section id="initial-look-at-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="initial-look-at-the-data">Initial look at the data</h2>
+<p>Let us plot maps for each peak period. I’m using <strong>tabsets</strong> for this so we can see the differences in data when switching from 1 tab to the other</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Weekday AM (6 - 9 AM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">Weekday PM (5 - 8 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Weekend AM (11 AM - 2 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-4" role="tab" aria-controls="tabset-3-4" aria-selected="false">Weekend PM (4 - 7 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_am_sf) <span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)"</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_pm_sf) <span class="sc">+</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)"</span>,</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_am_sf) <span class="sc">+</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)"</span>,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-4-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_pm_sf) <span class="sc">+</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)"</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The visualizations above are satisfactory <strong>if we look at them individually</strong> as we can see which areas are busier than the others.</p>
+<p>However, comparing the commuter patterns from a peak period to another can be <strong>misleading</strong>.</p>
+<p>To illustrate, consider the values of the <strong>darkest red</strong> on <strong>weekends</strong>. Hexagons with <strong>6000</strong> trips already are dark red on weekend maps. However, these values fall under the middle category, visualized as <strong>orange,</strong> on <strong>weekdays</strong>.</p>
+<p>Due to this, one might misinterpret that an area is <strong>busier on certain peak periods</strong> due to the difference in colors when in fact, they are actually <strong>as busy or even less busy</strong>. Colors are powerful and easier to interpret than looking at the categories in the legend.</p>
+<p>As it is, we are comparing apples to oranges. We need a way to compare these maps apples to apples.</p>
+</div>
+</div>
+</section>
+<section id="deriving-the-break-points" class="level2">
+<h2 class="anchored" data-anchor-id="deriving-the-break-points">Deriving the break points</h2>
+<p>To compare the maps apples to apples, we need to calculate the break points that our maps can use. When <code>tmap</code> uses <code>style = quantile</code>, it calculates the styles depending on the number of categories.</p>
+<p>We can replicate this by using <code>quantile()</code> and using the <strong>full range of data</strong> from all the peak periods. To see the differences in more detail, we will use <strong>8 categories</strong> instead of the default 5 categories.</p>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+How to calculate <em>probs</em>?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Since we want 8 categories, we will divide 100 by 8.</p>
+<p><span class="math display">\[
+\frac{100}{8} = 12.5
+\]</span></p>
+<p>Hence, we will supply multiples of <code>0.125</code> as <code>probs</code>, e.g.&nbsp;<code>0</code>, <code>0.125</code>, <code>0.25</code>, … <code>1</code></p>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    peak_wkdy_am_sf<span class="sc">$</span>TRIPS,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    peak_wkdy_pm_sf<span class="sc">$</span>TRIPS,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    peak_wknd_am_sf<span class="sc">$</span>TRIPS,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    peak_wknd_pm_sf<span class="sc">$</span>TRIPS</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.125</span>, <span class="fl">0.25</span>, <span class="fl">0.375</span>, <span class="fl">0.50</span>, <span class="fl">0.625</span>, <span class="fl">0.75</span>, <span class="fl">0.875</span>, <span class="dv">1</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        0%      12.5%        25%      37.5%        50%      62.5%        75% 
+     0.000    165.000    631.750   1544.375   2985.000   5275.875   9179.750 
+     87.5%       100% 
+ 17850.750 462160.000 </code></pre>
+</div>
+</div>
+<p>With this result, instead of using <code>style = quantile</code> in our maps, we can specify these values to <code>breaks</code>.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Why not just use summary()?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><code>summary()</code> uses quartiles or every <strong>25th quantile</strong>. This results in only <strong>4 categories</strong>. This is not enough for the level detail we want to present so it’s better to use <code>quantile()</code> to generate more categories ourselves.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="remapping-with-the-breaks" class="level2">
+<h2 class="anchored" data-anchor-id="remapping-with-the-breaks">Remapping with the breaks</h2>
+<p>We will supply the values generated (rounded to the nearest integer) to <code>breaks</code>, instead of <code>style = "quantile"</code>.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>breaks <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true">Weekday AM (6 - 9 AM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false">Weekday PM (5 - 8 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false">Weekend AM (11 AM - 2 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-4" role="tab" aria-controls="tabset-4-4" aria-selected="false">Weekend PM (4 - 7 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_am_sf) <span class="sc">+</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)"</span>,</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>There is a stark difference is colors in this map, showing a concentration of places with the darkest reds, along with areas of lighter colors.</p>
+<p>We may infer that this concentration could be from residential areas due to <strong>people leaving their homes</strong> for their daily activities like work or school.</p>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_pm_sf) <span class="sc">+</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)"</span>,</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>This peak period looks busiest because it looks reddest. However we must <strong>take some caution</strong> on this interpretation as the reds are more scattered so our brains may interpret this as red all throughout, compared to clusters of red and white.</p>
+<p>This peak period is when workers and student most likely go home so it may look more scattered as workplaces or schools may be more scattered compared to residential areas.</p>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_am_sf) <span class="sc">+</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)"</span>,</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>This map looks a lot paler compared to the weekday maps. This could be because it there is no work or school, people tend to stay home.</p>
+<p>However, while paler, people going out should still come from their homes so this should just look like the lighter weekday morning map. We will explore this later when we compare these 2 peak periods.</p>
+</div>
+<div id="tabset-4-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-4-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_pm_sf) <span class="sc">+</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)"</span>,</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>This map also looks lighter due to it being a weekend and people staying home. However, another possible explanation is that <strong>people have more freedom to schedule</strong> their activities on weekends or holidays so the traffic may be more scattered throughout the day.</p>
+<p>A spatio-temporal analysis may reveal more information that can validate this inference.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Doing the adjustments made it <strong>much easier</strong> to compare peak hours compared to the others.</p>
+<p>For example, we are able to see that <strong>weekdays are</strong> <strong>indeed generally busier than weekends</strong> due to the weekends due to the maps <strong>looking darker</strong>.</p>
+<p>We can also observe that the West and Northwest parts of Singapore has less bus trips compared to the rest of Singapore. The cause could be fewer residents in that area, sparse distribution of the population, or people preferring to use other modes of transportation (e.g., MRT, cars).</p>
+<p>However, <strong>some details were lost</strong> with this adjustment. For example, we are not able to see what is the <strong>highest and lowest number of trips for each peak period</strong>. If this is the intention or the narrative we want, the previous <strong>unadjusted visualizations</strong> are more effective for these purposes.</p>
+<p>For our analysis, we want to <strong>compare</strong> the number of bus trips from one peak period to the other so making the adjustment in the break points is very helpful for this purpose.</p>
+</div>
+</div>
+</section>
+<section id="comparing-peak-periods" class="level2">
+<h2 class="anchored" data-anchor-id="comparing-peak-periods">Comparing peak periods</h2>
+<p>Now that our maps can be compared apples to apples, we will compare 2 peak periods side by side.</p>
+<div class="callout callout-style-simple callout-tip">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>To compare each pair of maps more easily, we will use <strong>tabs</strong> so we can just switch between them to see how the patterns change from one map to the other.</p>
+</div>
+</div>
+</div>
+<section id="weekday-peak-periods" class="level3">
+<h3 class="anchored" data-anchor-id="weekday-peak-periods">Weekday peak periods</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true">Weekday AM (6 - 9 AM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false">Weekday PM (5 - 8 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_am_sf) <span class="sc">+</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)"</span>,</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_pm_sf) <span class="sc">+</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)"</span>,</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>An interesting observation is that when switch from <strong>weekend AM to weekend PM</strong> map, there is perceived <strong>outward scattering</strong> from the darker areas to the neighboring areas.</p>
+<p>Switching to <strong>weekend PM to weekend AM</strong> shows the <strong>reds converging</strong> to the darker points.</p>
+<p>This is consistent with real world pattern of people <strong>going out of their homes for their daily activities</strong> in the morning and <strong>going home</strong> in the evening.</p>
+<p>However, what cannot be verified from this comparison is whether people really going to work or school in places close to their homes, as suggested by <strong>outside scattering</strong>. This may not be necessarily true as people from different areas of Singapore may travel long distances or so to their places of work and school, not the neighboring areas. A flow analysis will give us better insights about this.</p>
+</div>
+</div>
+</section>
+<section id="weekend-peak-periods" class="level3">
+<h3 class="anchored" data-anchor-id="weekend-peak-periods">Weekend peak periods</h3>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Adjusting the break points
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>For this comparison, we adjusted the break points using the same method as in <a href="#deriving-the-break-points">Deriving the break points</a>. This is because the traffic is much less over the weekend so we are not able to use the full range of categories we previously derived.</p>
+<p>See the maps below.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true">Weekend AM (11 AM - 2 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false">Weekend PM (4 - 7 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_am_sf) <span class="sc">+</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)"</span>,</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_pm_sf) <span class="sc">+</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)"</span>,</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>Hence, we couldn’t get insights to the same level of details as the other comparisons. We will use the following breaks for this comparison:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    peak_wknd_am_sf<span class="sc">$</span>TRIPS,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    peak_wknd_pm_sf<span class="sc">$</span>TRIPS</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.125</span>, <span class="fl">0.25</span>, <span class="fl">0.375</span>, <span class="fl">0.50</span>, <span class="fl">0.625</span>, <span class="fl">0.75</span>, <span class="fl">0.875</span>, <span class="dv">1</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        0%      12.5%        25%      37.5%        50%      62.5%        75% 
+     0.000    113.000    382.000    854.750   1686.000   2861.625   4616.250 
+     87.5%       100% 
+  7785.375 111171.000 </code></pre>
+</div>
+</div>
+<p>With this change, we have shifted <strong>7786</strong> from the <strong>6th to 8th</strong> category, providing us with the better level of detail on values <strong>between 0 to 7786</strong>.</p>
+<p>This just shows that the breaks we calculated before is <strong>not appropriate</strong> for all comparisons. We still need to apply the scale appropriate to the data we have,</p>
+</div>
+</div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true">Weekend AM (11 AM - 2 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false">Weekend PM (4 - 7 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_am_sf) <span class="sc">+</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">113</span>, <span class="dv">382</span>, <span class="dv">855</span>, <span class="dv">1686</span>, <span class="dv">2862</span>, <span class="dv">4616</span>, <span class="dv">7785</span>, <span class="dv">111171</span>),</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)"</span>,</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_pm_sf) <span class="sc">+</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">113</span>, <span class="dv">382</span>, <span class="dv">855</span>, <span class="dv">1686</span>, <span class="dv">2862</span>, <span class="dv">4616</span>, <span class="dv">7785</span>, <span class="dv">111171</span>),</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)"</span>,</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Like the weekday comparison, there is a slight scattering observed, although not as stark. The difference is not as big despite <a href="#adjusting-the-break-points">Adjusting the break points</a>.</p>
+<p>This very small shift could be because people are coming out of their homes throughout the day as they are free to schedule their activities throughout the day on weekends or holidays.</p>
+<p>This is consistent with the insights in <a href="#weekend-pm-4---7-pm">Weekend PM (4 - 7 PM)</a>. Again, a spatio-temporal analysis may provide us more information to verify this inference.</p>
+</div>
+</div>
+</section>
+<section id="morning-peaks" class="level3">
+<h3 class="anchored" data-anchor-id="morning-peaks">Morning peaks</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true">Weekday AM (6 - 9 AM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false">Weekend AM (11 AM - 2 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_am_sf) <span class="sc">+</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)"</span>,</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_am_sf) <span class="sc">+</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)"</span>,</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The weekend map generally looks like a <strong>lighter version</strong> of the weekday map. This may mean that <strong>less people</strong> go out of their homes on weekends.</p>
+<p>However, there are some notable things that can be observed.</p>
+<ul>
+<li><p>Some busy areas on the West during weekdays have low bus trips on weekends</p>
+<ul>
+<li><p>This area corresponds to what seems to be an industrial area near the Tuas checkpoint.</p></li>
+<li><p>This looks strange to me as it <strong>contradicts</strong> our hypothesis that morning bus rides are mostly due to people commuting from their home.</p></li>
+</ul></li>
+<li><p>Locations that coincide with bus interchanges are constantly busy</p>
+<ul>
+<li>There are multiple bus lines originating from these interchanges so they are expected to have constant flow of commuters.</li>
+</ul></li>
+<li><p>The bus stops for international travel are constantly busy</p>
+<ul>
+<li><p>Examples are those in Woodlands Checkpoint, Kranji Station, Changi Airport bus stops</p></li>
+<li><p>These are popular for tourists and locals alike as Sinagapore is a business and tourism hub in Asia. Workers also commute regularly between Johor Bahru and Singapore, while locals visit Johor Bahru for weekend recreation.</p></li>
+</ul></li>
+<li><p>The bus stops to areas popular to tourists are constantly busy</p>
+<ul>
+<li>Some examples are the Vivo City bus stops and the bus stop near Singapore Zoo (North of Central Water Catchment). Tourists come to this places throughout the week, and locals also go too these places for recreation.</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="evening-peaks" class="level3">
+<h3 class="anchored" data-anchor-id="evening-peaks">Evening peaks</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true">Weekday PM (5 - 8 PM)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false">Weekend PM (4 - 7 PM)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wkdy_pm_sf) <span class="sc">+</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)"</span>,</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-31-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="at">col=</span> <span class="st">"green"</span>) <span class="sc">+</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(peak_wknd_pm_sf) <span class="sc">+</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TRIPS"</span>,</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">165</span>, <span class="dv">632</span>, <span class="dv">1545</span>, <span class="dv">2985</span>, <span class="dv">5276</span>, <span class="dv">9180</span>, <span class="dv">17851</span>, <span class="dv">462160</span>),</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"YlOrRd"</span>,</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"# of trips"</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)"</span>,</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.width =</span> <span class="fl">0.25</span>,</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.outside =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"bottom"</span>)</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>() <span class="sc">+</span></span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex1B_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>There is not much difference in insights compared to <a href="#morning-peaks">Morning peaks</a> aside from the <strong>active bus stop near Tuas Checkpoint on weekday mornings</strong> is not active in the evenings.</p>
+<p>This is an interesting observation that is difficult to explain. One possible explanations is because of its <strong>relative proximity to Nanyang Technological University</strong>, students commuting to NTU transfer via these bus stops going to school. However, we may not see the same pattern during weekday evening peak period because university students have different schedules so their time leaving the university may be <strong>more scattered throughout the day</strong>.</p>
+<p>A flow analysis with information on the destination bus stop may reveal more information about this.</p>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-13-contents" aria-controls="callout-13" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Why do we seem notice the busiest areas first?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-13" class="callout-13-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Another interesting insight about these visualizations is that we seem <strong>notice the busy areas in the map</strong> more easily than the areas that have low traffic.</p>
+<p>Interestingly, our biology may play into this as <a href="https://www.londonvisionclinic.com/these-are-the-colours-your-eyes-cant-see/">our eyes have more cones that are sensitive to red light than any other type</a>. As we use <span style="color:red;"><strong>red</strong></span> to visualized the busiest areas in our map, they are the ones that catches our eye first.</p>
+<p>If we had reversed our color scheme, perhaps we would have noticed the least busy areas first.</p>
+<p>However, we have to look into more reliable scientific and psychology sources to verify if this phenomenon is true.</p>
+</div>
+</div>
+</div>
 
 
+</section>
 </section>
 </section>
 
