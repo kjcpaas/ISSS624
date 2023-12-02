@@ -85,16 +85,20 @@ trips_cube_wknd <- read_rds("data/rds/trips_cube_wknd202310.rds")
 If you want to use the **August 2023** or **September 2023** data sets, replace `202310` to `202308` or `202309`, respectively.
 :::
 
-# Creating spatial data for each peak period
+# Creating spatial data for peak period traffic
 
 As we want to study the data for peak times, we have to extract and aggregate the data for those times.
 
-## Extracting peak hour data
+We will create a geospatial object with columns for peak_period trips and join them with the aggregation data.
+
+```{r}
+peak_trips_sf <- honeycomb
+```
 
 We will need filter the data from relevant hours using `filter()`. We also need to aggregate the data to get the total number of trips per hexagon, using `group_by(HEX_ID)` and `summarise()`.
 
 ::: {.callout-tip collapse="true" appearance="simple"}
-### How to filter data by *HOUR_OF_DAY*
+## How to filter data by *HOUR_OF_DAY*
 
 The `HOUR_OF_DAY` in data set covers the data from the start to the end of the hour in **24-hour format**, i.e. when `HOUR_OF_DAY = 16`, this means bus taps from `4:00 PM` ton`4:59:59PM`.
 
@@ -106,105 +110,72 @@ HOUR_DAY >= 6 & HOUR_OF_DAY < 9
 :::
 
 ::: panel-tabset
-### Weekday AM (6 - 9 AM)
+## Weekday AM (6 - 9 AM)
 
 ```{r}
-peak_wkdy_am <- trips_cube_wkdy %>%
+peak_trips_sf <- trips_cube_wkdy %>%
   filter(
     HOUR_OF_DAY >= 6 &
       HOUR_OF_DAY < 9
   ) %>%
   group_by(HEX_ID) %>%
-  summarise(TRIPS = sum(TRIPS))
-kable(head(peak_wkdy_am))
+  summarise(WEEKDAY_AM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
 ```
 
-### Weekday PM (5 - 8 PM)
+## Weekday PM (5 - 8 PM)
 
 ```{r}
-peak_wkdy_pm <- trips_cube_wkdy %>%
+peak_trips_sf <- trips_cube_wkdy %>%
   filter(
     HOUR_OF_DAY >= 17 &
       HOUR_OF_DAY < 20
   ) %>%
   group_by(HEX_ID) %>%
-  summarise(TRIPS = sum(TRIPS))
-kable(head(peak_wkdy_pm))
+  summarise(WEEKDAY_PM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
 ```
 
-### Weekend AM (11 AM - 2 PM)
+## Weekend AM (11 AM - 2 PM)
 
 ```{r}
-peak_wknd_am <- trips_cube_wknd %>%
+peak_trips_sf <- trips_cube_wknd %>%
   filter(
     HOUR_OF_DAY >= 11 &
       HOUR_OF_DAY < 14
   ) %>%
   group_by(HEX_ID) %>%
-  summarise(TRIPS = sum(TRIPS))
-kable(head(peak_wknd_am))
+  summarise(WEEKEND_AM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
 ```
 
-### Weekend PM (4 - 7 PM) {#weekend-pm-4---7-pm}
+## Weekend PM (4 - 7 PM) {#weekend-pm-4---7-pm}
 
 ```{r}
-peak_wknd_pm <- trips_cube_wknd %>%
+peak_trips_sf <- trips_cube_wknd %>%
   filter(
     HOUR_OF_DAY >= 16 &
       HOUR_OF_DAY < 19
   ) %>%
   group_by(HEX_ID) %>%
-  summarise(TRIPS = sum(TRIPS))
-kable(head(peak_wknd_pm))
+  summarise(WEEKEND_PM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
 ```
 :::
 
-## Adding geometry data
+::: {.callout-important collapse="true" appearance="simple"}
+## Converting back to sf data type
 
-To plot the maps, we need to do add geometry to our spatial data. This can be done by doing a `left_join` of our geometry to the aspatial data generated in [Creating spatial data for each peak period].
+Since we used `right_join()`, `peak_trips_sf` became a `tbl_df` data type.
 
-We also need to covert this to a `sf` data frame to be processed properly as spatial data.
-
-::: panel-tabset
-### Weekday AM (6 - 9 AM)
+We need convert the `peak_trips_sf` back to `sf` data type so it can be processed as a spatial data.
 
 ```{r}
-peak_wkdy_am_sf <- left_join(peak_wkdy_am, honeycomb) %>% st_sf()
-kable(head(peak_wkdy_am_sf))
-```
-
-### Weekday PM (5 - 8 PM)
-
-```{r}
-peak_wkdy_pm_sf <- left_join(peak_wkdy_pm, honeycomb) %>% st_sf()
-kable(head(peak_wkdy_pm_sf))
-```
-
-### Weekend AM (11 AM - 2 PM)
-
-```{r}
-peak_wknd_am_sf <- left_join(peak_wknd_am, honeycomb) %>% st_sf()
-kable(head(peak_wknd_am_sf))
-```
-
-### Weekend PM (4 - 7 PM)
-
-```{r}
-peak_wknd_pm_sf <- left_join(peak_wknd_pm, honeycomb) %>% st_sf()
-kable(head(peak_wknd_pm_sf))
-```
-:::
-
-::: callout-warning
-## Data clear point
-
-We do not need the `peak_wk*_*` data anymore as contents are already in the sf data. We will remove them from the R environment so we can see the relevant data more easily.
-
-```{r}
-rm(peak_wkdy_am)
-rm(peak_wkdy_pm)
-rm(peak_wknd_am)
-rm(peak_wknd_pm)
+peak_trips_sf <- peak_trips_sf %>% st_sf()
 ```
 :::
 
@@ -223,9 +194,9 @@ Let us plot maps for each peak period. I'm using **tabsets** for this so we can 
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_AM_TRIPS",
     style = "quantile",
     palette = "YlOrRd",
     title = "# of trips"
@@ -252,9 +223,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_PM_TRIPS",
     style = "quantile",
     palette = "YlOrRd",
     title = "# of trips"
@@ -281,9 +252,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_AM_TRIPS",
     style = "quantile",
     palette = "YlOrRd",
     title = "# of trips"
@@ -310,9 +281,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_PM_TRIPS",
     style = "quantile",
     palette = "YlOrRd",
     title = "# of trips"
@@ -367,10 +338,10 @@ Hence, we will supply multiples of `0.125` as `probs`, e.g. `0`, `0.125`, `0.25`
 ```{r}
 quantile(
   c(
-    peak_wkdy_am_sf$TRIPS,
-    peak_wkdy_pm_sf$TRIPS,
-    peak_wknd_am_sf$TRIPS,
-    peak_wknd_pm_sf$TRIPS
+    peak_trips_sf$WEEKDAY_AM_TRIPS,
+    peak_trips_sf$WEEKDAY_PM_TRIPS,
+    peak_trips_sf$WEEKEND_AM_TRIPS,
+    peak_trips_sf$WEEKEND_PM_TRIPS
   ),
   probs = c(0, 0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1)
 )
@@ -401,9 +372,9 @@ breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160)
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_AM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -434,9 +405,9 @@ We may infer that this concentration could be from residential areas due to **pe
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_PM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -467,9 +438,9 @@ This peak period is when workers and student most likely go home so it may look 
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_AM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -500,9 +471,9 @@ However, while paler, people going out should still come from their homes so thi
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_PM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -559,9 +530,9 @@ To compare each pair of maps more easily, we will use **tabs** so we can just sw
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_AM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -588,9 +559,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_PM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -640,9 +611,9 @@ See the maps below.
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_AM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -669,9 +640,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_PM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -696,8 +667,8 @@ Hence, we couldn't get insights to the same level of details as the other compar
 ```{r}
 quantile(
   c(
-    peak_wknd_am_sf$TRIPS,
-    peak_wknd_pm_sf$TRIPS
+    peak_trips_sf$WEEKEND_AM_TRIPS,
+    peak_trips_sf$WEEKEND_PM_TRIPS
   ),
   probs = c(0, 0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1)
 )
@@ -717,9 +688,9 @@ This just shows that the breaks we calculated before is **not appropriate** for 
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_AM_TRIPS",
     breaks = c(0, 113, 382, 855, 1686, 2862, 4616, 7785, 111171),
     palette = "YlOrRd",
     title = "# of trips"
@@ -746,9 +717,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_PM_TRIPS",
     breaks = c(0, 113, 382, 855, 1686, 2862, 4616, 7785, 111171),
     palette = "YlOrRd",
     title = "# of trips"
@@ -789,9 +760,9 @@ This is consistent with the insights in [Weekend PM (4 - 7 PM)](#weekend-pm-4---
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_AM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -818,9 +789,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_am_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_AM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -879,9 +850,9 @@ However, there are some notable things that can be observed.
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wkdy_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKDAY_PM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -908,9 +879,9 @@ tm_shape(mpsz) +
 tm_shape(mpsz) +
   tm_fill(col= "green") +
   tm_borders(alpha = 0.5) +
-  tm_shape(peak_wknd_pm_sf) +
+  tm_shape(peak_trips_sf) +
   tm_polygons(
-    "TRIPS",
+    "WEEKEND_PM_TRIPS",
     breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
     palette = "YlOrRd",
     title = "# of trips"
@@ -950,4 +921,14 @@ Interestingly, our biology may play into this as [our eyes have more cones that 
 If we had reversed our color scheme, perhaps we would have noticed the least busy areas first.
 
 However, we have to look into more reliable scientific and psychology sources to verify if this phenomenon is true.
+:::
+
+::: {.callout-tip collapse="true"}
+### Save point
+
+We will use `peak_trips_sf` for **Local Indicators of Spatial Association** (LISA) analysis.
+
+```{r}
+write_rds(peak_trips_sf, "data/rds/peak_trips_sf202310.rds")
+```
 :::
