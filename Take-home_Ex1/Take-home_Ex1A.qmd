@@ -115,6 +115,8 @@ We will also set the default settings on for this document
 
 -   `tmap_mode` to **plot**: for plotting simple maps
 
+-   `tmap_style` to **natural**: for my preferred mapping style
+
 -   set **seed** for reproducibility of results
 
 ## Running the setup
@@ -125,6 +127,7 @@ We will label this code chunk as the setup chunk so the R runs it even after the
 #| label: setup
 pacman::p_load(sf, tmap, tidyverse, knitr, sfdep)
 tmap_mode("plot")
+tmap_style("natural")
 set.seed(1234)
 ```
 
@@ -442,7 +445,7 @@ kable(head(honeycomb))
 Is it also one of the [Goal data sets] we need. Hence, we will save it.
 
 ```{r}
-write_rds(honeycomb, "data/rds/honeycomb.rds")
+write_rds(honeycomb, "data/rds/honeycomb202310.rds")
 ```
 :::
 
@@ -464,7 +467,9 @@ The goal for this part of data wrangling is to have information on **how many tr
 We will use the *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API for the months of **August, September, October 2023**.
 
 ::: {.callout-note appearance="simple"}
-For demonstrating the steps, we will use the **August 2023** data set. The same steps will be applied to the other data sets later on.
+For demonstrating the steps, we will use the **October 2023** data set. The same steps will be applied to the other data sets later on.
+
+If you want to run the code for **August 2023** and **September 2023**, replace *202310*, with *202308* or *202309**.*** Our code can be used to analyze this dataset from any month.
 :::
 
 ## Importing the data set
@@ -472,8 +477,8 @@ For demonstrating the steps, we will use the **August 2023** data set. The same 
 The data set is an aspatial data in `csv` format so we will use `read_csv()` to import the data.
 
 ```{r}
-odbus202308 <- read_csv("data/aspatial/origin_destination_bus_202308.csv")
-kable(head(odbus202308))
+odbus <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
+kable(head(odbus))
 ```
 
 ::: {.callout-note appearance="simple"}
@@ -507,12 +512,12 @@ Before going deep in the wrangling, we will clean up the data so that we are lef
 We will also rename the columns to make them more understandable and will make joining with other data sets easier.
 
 ```{r}
-trips202308 <- odbus202308 %>%
+trips <- odbus %>%
   select(c(ORIGIN_PT_CODE, DAY_TYPE, TIME_PER_HOUR, TOTAL_TRIPS)) %>%
   rename(BUS_STOP_N = ORIGIN_PT_CODE) %>%
   rename(HOUR_OF_DAY = TIME_PER_HOUR) %>%
   rename(TRIPS = TOTAL_TRIPS)
-kable(head(trips202308))
+kable(head(trips))
 ```
 
 ::: {.callout-note appearance="minimal"}
@@ -524,11 +529,11 @@ kable(head(trips202308))
 ::: {.callout-warning collapse="true"}
 ### Data clear point
 
-We do not need `odbus202308` anymore as we will be working with the more lightweight `trips202308` from this point on.
+We do not need `odbus` anymore as we will be working with the more lightweight `trips` from this point on.
 
 ```{r}
 #| eval: true
-rm(odbus202308)
+rm(odbus)
 ```
 :::
 
@@ -563,30 +568,30 @@ kable(head(bs_hex))
 
 ## Adding `HEX_ID` information to bus `trips` data
 
-To achieve our goal of having the hourly \# of bus trips per location, we need to add `HEX_ID` to `trips202308` data. This is so we can answer, *how many bus trip originate from a certain hexagon?*
+To achieve our goal of having the hourly \# of bus trips per location, we need to add `HEX_ID` to `trips` data. This is so we can answer, *how many bus trip originate from a certain hexagon?*
 
-To do this, we will do an `inner_join()` to join the `trips202308` data with `bs_hex`.
+To do this, we will do an `inner_join()` to join the `trips` data with `bs_hex`.
 
 ::: {.callout-tip collapse="true"}
 ### Why \`inner_join()\` instead of \`left_join()\`?
 
-We will use `inner_join` as there are `BUS_STOP_N` values in `trips202308` data that are not in `bs_hex`.
+We will use `inner_join` as there are `BUS_STOP_N` values in `trips` data that are not in `bs_hex`.
 
 ```{r}
-trips202308$BUS_STOP_N[!(trips202308$BUS_STOP_N %in% bs_hex$BUS_STOP_N)] %>%
+trips$BUS_STOP_N[!(trips$BUS_STOP_N %in% bs_hex$BUS_STOP_N)] %>%
   unique() %>% length()
 ```
 
-There are **57** bus stops in `trips202308` that are not in `bs_hex`. **5** of this can be attributed the bus stops we removed in [About those points outside Singapore]. Others may be due to the *BusStops* data set not having complete information.
+There are **57** bus stops in `trips` that are not in `bs_hex`. **5** of this can be attributed the bus stops we removed in [About those points outside Singapore]. Others may be due to the *BusStops* data set not having complete information.
 
 Nonetheless, we have to **remove** these bus stops from our analysis as **we do not have geospatial data** to associate to the hexagons.
 
-Therefore, we will use `inner_join` to keep only the observations in `trips202308` with the matching bus stops in `bs_hex`.
+Therefore, we will use `inner_join` to keep only the observations in `trips` with the matching bus stops in `bs_hex`.
 :::
 
 ```{r}
-trips202308 <- inner_join(trips202308, bs_hex)
-kable(head(trips202308))
+trips <- inner_join(trips, bs_hex)
+kable(head(trips))
 ```
 
 ## Aggregating `TRIPS` based on `HEX_ID`
@@ -594,184 +599,26 @@ kable(head(trips202308))
 Next, we will add the `TRIPS` for all the bus stops within a hexagon. We will group via `HEX_ID`, `DAY_TYPE`, and `HOUR_OF_DAY`.
 
 ```{r}
-trips202308 <- trips202308 %>%
+trips <- trips %>%
   group_by(
     HEX_ID,
     DAY_TYPE,
     HOUR_OF_DAY) %>%
   summarise(TRIPS = sum(TRIPS))
-kable(head(trips202308))
+kable(head(trips))
 ```
 
 ::: {.callout-tip collapse="true"}
 ## Save point
 
-`trips202308` was processed from *Passenger Volume By Origin Destination Bus Stops*, which has almost **6 million** observations.
+`trips` was processed from *Passenger Volume By Origin Destination Bus Stops*, which has almost **6 million** observations.
 
 We now have a more lightweight dataset with almost **60,000** observations, which is about **100x smaller**.
 
-Let's save this data as an `rds` file so we don't need to reprocess everytime later on.
+Let's save this data as an `rds` file so we don't need to reprocess again later on.
 
 ```{r}
-write_rds(trips202308, "data/rds/trips202308.rds")
-```
-:::
-
-## Transforming the September and October data
-
-Now that `odbus202308` is in the form we want, we will apply the same methods for the September and October data.
-
-::: {.callout-important appearance="simple"}
-This will do a quick run-through of the code. To understand the thought process, please read from [Extracting Hourly \# of Bus Trips Originating from Hexagons](#extracting-hourly-of-bus-trips-originating-from-hexagons).
-:::
-
-### September
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Importing the data set
-
-Refer to [Importing the data set] for context behind this code.
-
-```{r}
-odbus202309 <- read_csv("data/aspatial/origin_destination_bus_202309.csv")
-kable(head(odbus202309))
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Cleaning the data
-
-Refer to [Cleaning the data] for context behind this code.
-
-```{r}
-trips202309 <- odbus202309 %>%
-  select(c(ORIGIN_PT_CODE, DAY_TYPE, TIME_PER_HOUR, TOTAL_TRIPS)) %>%
-  rename(BUS_STOP_N = ORIGIN_PT_CODE) %>%
-  rename(HOUR_OF_DAY = TIME_PER_HOUR) %>%
-  rename(TRIPS = TOTAL_TRIPS)
-kable(head(odbus202309))
-```
-:::
-
-::: {.callout-warning collapse="true"}
-#### Data clear point
-
-We do not need `odbus202309` anymore as we will be working with the more lightweight `trips202309` from this point on.
-
-```{r}
-#| eval: true
-rm(odbus202309)
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Adding `HEX_ID` information to `trips` data
-
-Refer to \[Adding HEX_ID information to trips data\] for context behind this code.
-
-```{r}
-trips202309 <- inner_join(trips202309, bs_hex)
-kable(head(trips202309))
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Aggregating `TRIPS` based on `HEX_ID`
-
-Refer to \[Aggregating TRIPS based on HEX_ID\] for context behind this code.
-
-```{r}
-trips202309 <- trips202309 %>%
-  group_by(
-    HEX_ID,
-    DAY_TYPE,
-    HOUR_OF_DAY) %>%
-  summarise(TRIPS = sum(TRIPS))
-kable(head(trips202309))
-
-```
-:::
-
-::: {.callout-tip collapse="true"}
-#### Save point
-
-```{r}
-write_rds(trips202309, "data/rds/trips202309.rds")
-```
-:::
-
-### October
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Importing the data set
-
-Refer to [Importing the data set] for context behind this code.
-
-```{r}
-odbus202310 <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
-kable(head(odbus202310))
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Cleaning the data
-
-Refer to [Cleaning the data] for context behind this code.
-
-```{r}
-trips202310 <- odbus202310 %>%
-  select(c(ORIGIN_PT_CODE, DAY_TYPE, TIME_PER_HOUR, TOTAL_TRIPS)) %>%
-  rename(BUS_STOP_N = ORIGIN_PT_CODE) %>%
-  rename(HOUR_OF_DAY = TIME_PER_HOUR) %>%
-  rename(TRIPS = TOTAL_TRIPS)
-kable(head(odbus202310))
-```
-:::
-
-::: {.callout-warning collapse="true"}
-#### Data clear point
-
-We do not need `odbus202310` anymore as we will be working with the more lightweight `trips202310` from this point on.
-
-```{r}
-#| eval: true
-rm(odbus202310)
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Adding `HEX_ID` information to `trips` data
-
-Refer to \[Adding HEX_ID information to trips data\] for context behind this code.
-
-```{r}
-trips202310 <- inner_join(trips202310, bs_hex)
-kable(head(trips202310))
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Aggregating `TRIPS` based on `HEX_ID`
-
-Refer to \[Aggregating TRIPS based on HEX_ID\] for context behind this code.
-
-```{r}
-trips202310 <- trips202310 %>%
-  group_by(
-    HEX_ID,
-    DAY_TYPE,
-    HOUR_OF_DAY) %>%
-  summarise(TRIPS = sum(TRIPS))
-kable(head(trips202310))
-
-```
-:::
-
-::: {.callout-tip collapse="true"}
-#### Save point
-
-```{r}
-write_rds(trips202310, "data/rds/trips202310.rds")
+write_rds(trips, "data/rds/trips202310.rds")
 ```
 :::
 
@@ -783,8 +630,8 @@ write_rds(trips202310, "data/rds/trips202310.rds")
 We can run the rest of the document from this point by loading this data.
 
 ```{r}
-trips202308 <- read_rds("data/rds/trips202308.rds")
-honeycomb <- read_rds("data/rds/honeycomb.rds")
+trips <- read_rds("data/rds/trips202310.rds")
+honeycomb <- read_rds("data/rds/honeycomb202310.rds")
 ```
 :::
 
@@ -795,10 +642,10 @@ When doing **Emerging Hotspot Analysis** (EHSA), we need to create a time series
 -   There are **no missing** values in `TRIPS` column
 
 ::: {.callout-important collapse="true" appearance="simple"}
-## Is our *trips202308* **data time series cube-friendly? The answer is NO.**
+## Is our *trips* **data time series cube-friendly? The answer is NO.**
 
 ```{r}
-spacetime(trips202308, honeycomb,
+spacetime(trips, honeycomb,
           .loc_col = "HEX_ID",
           .time_col = "HOUR_OF_DAY") %>%
   is_spacetime_cube()
@@ -853,31 +700,31 @@ As we want to do separate analysis for weekdays and weekends, we will split the 
 ### Weekday
 
 ```{r}
-trips_wkdy202308 <- trips202308 %>%
+trips_wkdy <- trips %>%
   filter(DAY_TYPE == "WEEKDAY") %>%
   ungroup() %>%
   select(, -DAY_TYPE)
-kable(trips_wkdy202308[20:29,])
+kable(trips_wkdy[20:29,])
 ```
 
 ### Weekend/Holidays
 
 ```{r}
-trips_wknd202308 <- trips202308 %>%
+trips_wknd <- trips %>%
   filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
   ungroup() %>%
   select(, -DAY_TYPE)
-kable(trips_wknd202308[20:29,])
+kable(trips_wknd[20:29,])
 ```
 :::
 
 ::: {.callout-note collapse="true"}
 ### Checking if split covers the full data
 
-Let's check the total rows in `trips_wkdy202308` and `trips_wknd202308` add up to the number of rows in `trips202308`.
+Let's check the total rows in `trips_wkdy` and `trips_wknd` add up to the number of rows in `trips`.
 
 ```{r}
-nrow(trips_wkdy202308) + nrow(trips_wknd202308) == nrow(trips202308)
+nrow(trips_wkdy) + nrow(trips_wknd) == nrow(trips)
 ```
 
 There are no lost data so we can proceed to the next step.
@@ -886,43 +733,43 @@ There are no lost data so we can proceed to the next step.
 ::: {.callout-warning collapse="true"}
 ### Data clear point
 
-We do not need `trips202308` anymore as we will be using `trips_wkdy202308` and `trips_wknd202308` from this point.
+We do not need `trips` anymore as we will be using `trips_wkdy` and `trips_wknd` from this point.
 
 ```{r}
 #| eval: true
-rm(trips202308)
+rm(trips)
 ```
 :::
 
 ## Filling in the all the combos
 
-Now that we have separate data frames for weekday and weekend/holiday, we need to make sure that our data frame as all the combination in `combos`. We can do that by joining `trips_wkxx202308` with `combos`.
+Now that we have separate data frames for weekday and weekend/holiday, we need to make sure that our data frame as all the combination in `combos`. We can do that by joining `trips_wkxx` with `combos`.
 
 ::: panel-tabset
 ### Weekday
 
 ```{r}
-trips_cube_wkdy202308 <- left_join(combos, trips_wkdy202308)
-kable(head(trips_cube_wkdy202308, n = 24))
+trips_cube_wkdy <- left_join(combos, trips_wkdy)
+kable(head(trips_cube_wkdy, n = 24))
 ```
 
 Check if the output has the same rows as `combos`.
 
 ```{r}
-nrow(trips_cube_wkdy202308) == nrow(combos)
+nrow(trips_cube_wkdy) == nrow(combos)
 ```
 
 ### Weekend/Holiday
 
 ```{r}
-trips_cube_wknd202308 <- left_join(combos, trips_wknd202308)
-kable(head(trips_cube_wknd202308, n = 24))
+trips_cube_wknd <- left_join(combos, trips_wknd)
+kable(head(trips_cube_wknd, n = 24))
 ```
 
 Check if the output has the same rows as `combos`.
 
 ```{r}
-nrow(trips_cube_wknd202308) == nrow(combos)
+nrow(trips_cube_wknd) == nrow(combos)
 ```
 :::
 
@@ -937,17 +784,17 @@ The data frames generated violate
 
 > There are **no missing** values in `TRIPS` column
 
-We need to fill in the missing values
+This is because there are some `HOUR_OF_DAY` where the value of `TRIPS` is `NA`. We need to fill in these missing values.
 :::
 
 ::: {.callout-warning collapse="true"}
 ### Data clear point
 
-We do not need `trips_wkxx202308` anymore as we will be using `trips_cube_wkxx202308` from this point on.
+We do not need `trips_wkxx` anymore as we will be using `trips_cube_wkxx` from this point on.
 
 ```{r}
-rm(trips_wkdy202308)
-rm(trips_wknd202308)
+rm(trips_wkdy)
+rm(trips_wknd)
 ```
 :::
 
@@ -959,15 +806,15 @@ Lastly, we need to fill in the missing values in `TRIPS`. This can be done by fi
 ### Weekday
 
 ```{r}
-trips_cube_wkdy202308$TRIPS[is.na(trips_cube_wkdy202308$TRIPS)] <- 0
-kable(head(trips_cube_wkdy202308, n = 24))
+trips_cube_wkdy$TRIPS[is.na(trips_cube_wkdy$TRIPS)] <- 0
+kable(head(trips_cube_wkdy, n = 24))
 ```
 
 ### Weekend/Holiday
 
 ```{r}
-trips_cube_wknd202308$TRIPS[is.na(trips_cube_wknd202308$TRIPS)] <- 0
-kable(head(trips_cube_wknd202308, n = 24))
+trips_cube_wknd$TRIPS[is.na(trips_cube_wknd$TRIPS)] <- 0
+kable(head(trips_cube_wknd, n = 24))
 ```
 :::
 
@@ -979,7 +826,7 @@ Let us check of our data frame can be used to create spacetime cubes.
 #### Weekend
 
 ```{r}
-spacetime(trips_cube_wkdy202308, honeycomb,
+spacetime(trips_cube_wkdy, honeycomb,
           .loc_col = "HEX_ID",
           .time_col = "HOUR_OF_DAY") %>%
   is_spacetime_cube()
@@ -988,7 +835,7 @@ spacetime(trips_cube_wkdy202308, honeycomb,
 #### Weekend/Holiday
 
 ```{r}
-spacetime(trips_cube_wknd202308, honeycomb,
+spacetime(trips_cube_wknd, honeycomb,
           .loc_col = "HEX_ID",
           .time_col = "HOUR_OF_DAY") %>%
   is_spacetime_cube()
@@ -998,252 +845,10 @@ spacetime(trips_cube_wknd202308, honeycomb,
 ::: {.callout-tip collapse="true"}
 ### Save point
 
-`trips_cube_wkxx202308` data is part the [Goal data sets] we need. Hence, we will save them.
+`trips_cube_wkxx` data is part the [Goal data sets] we need. Hence, we will save them.
 
 ```{r}
-write_rds(trips_cube_wkdy202308, "data/rds/trips_cube_wkdy202308.rds")
-write_rds(trips_cube_wknd202308, "data/rds/trips_cube_wknd202308.rds")
-```
-:::
-
-## Processing the September and October data
-
-Now that we have data that can be used for creating time series cube, we will apply the same to the other data
-
-::: {.callout-important appearance="simple"}
-This will do a quick run-through of the code. To understand the thought process, please read from [Generating time series cube-friendly data]
-:::
-
-### September
-
-::: {.callout-note collapse="true"}
-#### Load point
-
-We can run the rest of the document from this point by loading this data.
-
-```{r}
-trips202309 <- read_rds("data/rds/trips202309.rds")
-honeycomb <- read_rds("data/rds/honeycomb.rds")
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Splitting the data
-
-Refer to [Splitting the data] for context behind this code.
-
-::: panel-tabset
-##### Weekday
-
-```{r}
-trips_wkdy202309 <- trips202309 %>%
-  filter(DAY_TYPE == "WEEKDAY") %>%
-  ungroup() %>%
-  select(, -DAY_TYPE)
-kable(trips_wkdy202309[20:29,])
-```
-
-##### Weekend/Holiday
-
-```{r}
-trips_wknd202309 <- trips202309 %>%
-  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
-  ungroup() %>%
-  select(, -DAY_TYPE)
-kable(trips_wknd202309[20:29,])
-```
-:::
-:::
-
-::: {.callout-warning collapse="true"}
-#### Data clear point
-
-Refer to [Data clear point] for context behind this code.
-
-```{r}
-rm(trips202309)
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Filling in all the combos
-
-Refer to [Filling in all the combos] for context behind this code.
-
-::: panel-tabset
-##### Weekday
-
-```{r}
-trips_cube_wkdy202309 <- left_join(combos, trips_wkdy202309)
-kable(head(trips_cube_wkdy202309, n = 24))
-```
-
-##### Weekend/Holiday
-
-```{r}
-trips_cube_wknd202309 <- left_join(combos, trips_wknd202309)
-kable(head(trips_cube_wknd202309, n = 24))
-```
-:::
-:::
-
-::: {.callout-warning collapse="true"}
-#### Data clear point
-
-Refer to [Data clear point] for context behind this code.
-
-```{r}
-rm(trips_wkdy202309)
-rm(trips_wknd202309)
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Filling in missing values
-
-Refer to [Filling in missing values] for context behind this code.
-
-::: panel-tabset
-##### Weekday
-
-```{r}
-trips_cube_wkdy202309$TRIPS[is.na(trips_cube_wkdy202309$TRIPS)] <- 0
-kable(head(trips_cube_wkdy202309, n = 24))
-```
-
-##### Weekend/Holiday
-
-```{r}
-trips_cube_wknd202309$TRIPS[is.na(trips_cube_wknd202309$TRIPS)] <- 0
-kable(head(trips_cube_wknd202309, n = 24))
-```
-:::
-:::
-
-::: {.callout-tip collapse="true"}
-#### Save point
-
-Refer to [Save point] for context behind this code.
-
-```{r}
-write_rds(trips_cube_wkdy202308, "data/rds/trips_cube_wkdy202309.rds")
-write_rds(trips_cube_wknd202308, "data/rds/trips_cube_wknd202309.rds")
-```
-:::
-
-### October
-
-::: {.callout-note collapse="true"}
-#### Load point
-
-We can run the rest of the document from this point by loading this data.
-
-```{r}
-trips202310 <- read_rds("data/rds/trips202310.rds")
-honeycomb <- read_rds("data/rds/honeycomb.rds")
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Splitting the data
-
-Refer to [Splitting the data] for context behind this code.
-
-::: panel-tabset
-##### Weekday
-
-```{r}
-trips_wkdy202310 <- trips202310 %>%
-  filter(DAY_TYPE == "WEEKDAY") %>%
-  ungroup() %>%
-  select(, -DAY_TYPE)
-kable(trips_wkdy202310[20:29,])
-```
-
-##### Weekend/Holiday
-
-```{r}
-trips_wknd202310 <- trips202310 %>%
-  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
-  ungroup() %>%
-  select(, -DAY_TYPE)
-kable(trips_wknd202310[20:29,])
-```
-:::
-:::
-
-::: {.callout-warning collapse="true"}
-#### Data clear point
-
-Refer to [Data clear point] for context behind this code.
-
-```{r}
-rm(trips202310)
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Filling in all the combos
-
-Refer to [Filling in all the combos] for context behind this code.
-
-::: panel-tabset
-##### Weekday
-
-```{r}
-trips_cube_wkdy202310 <- left_join(combos, trips_wkdy202310)
-kable(head(trips_cube_wkdy202310, n = 24))
-```
-
-##### Weekend/Holiday
-
-```{r}
-trips_cube_wknd202310 <- left_join(combos, trips_wknd202310)
-kable(head(trips_cube_wknd202310, n = 24))
-```
-:::
-:::
-
-::: {.callout-warning collapse="true"}
-#### Data clear point
-
-Refer to [Data clear point] for context behind this code.
-
-```{r}
-rm(trips_wkdy202310)
-rm(trips_wknd202310)
-```
-:::
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Filling in missing values
-
-Refer to [Filling in missing values] for context behind this code.
-
-::: panel-tabset
-##### Weekday
-
-```{r}
-trips_cube_wkdy202310$TRIPS[is.na(trips_cube_wkdy202310$TRIPS)] <- 0
-kable(head(trips_cube_wkdy202310, n = 24))
-```
-
-##### Weekend/Holiday
-
-```{r}
-trips_cube_wknd202310$TRIPS[is.na(trips_cube_wknd202310$TRIPS)] <- 0
-kable(head(trips_cube_wknd202310, n = 24))
-```
-:::
-:::
-
-::: {.callout-tip collapse="true"}
-#### Save point
-
-Refer to [Save point] for context behind this code.
-
-```{r}
-write_rds(trips_cube_wkdy202308, "data/rds/trips_cube_wkdy202310.rds")
-write_rds(trips_cube_wknd202308, "data/rds/trips_cube_wknd202310.rds")
+write_rds(trips_cube_wkdy, "data/rds/trips_cube_wkdy202310.rds")
+write_rds(trips_cube_wknd, "data/rds/trips_cube_wknd202310.rds")
 ```
 :::
