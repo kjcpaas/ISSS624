@@ -282,6 +282,16 @@ kable(head(busstops))
 From this initial look in the data, **`BUS_STOP_N`** and **`LOC_DESC`** can potentially be used to match records in the passenger volume data set.
 :::
 
+::: {.callout-note collapse="true" appearance="simple"}
+### Changing columns to factor
+
+`BUS_STOP_N` has a finite set of values that we do not need to process sequentially so we will convert it as *factor* to make it easier to work with.
+
+```{r}
+busstops$BUS_STOP_N <- as.factor(busstops$BUS_STOP_N)
+```
+:::
+
 ## Generating hexagons from Singapore boundary data
 
 Following the steps from <https://urbandatapalette.com/post/2021-08-tessellation-sf/>, we will use [st_make_grid()](https://search.r-project.org/CRAN/refmans/sf/html/st_make_grid.html) to generate the hexagons for analysis.
@@ -441,8 +451,8 @@ This data is still incomplete as we need to associate the hexagons to aspatial d
 For this purpose, we will assign `HEX_ID` with format `H0000`.
 
 ```{r}
-honeycomb$HEX_ID = sprintf("H%04d", seq_len(nrow(honeycomb)))
-kable(head(honeycomb))
+honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb))) %>% as.factor()
+kable(head(honeycomb)) 
 ```
 
 ::: {.callout-tip collapse="true"}
@@ -519,12 +529,15 @@ Before going deep in the wrangling, we will clean up the data so that we are lef
 
 We will also rename the columns to make them more understandable and will make joining with other data sets easier.
 
+Lastly, will also convert `BUS_STOP_N` to *factor* as it has a finite set of values so we can convert it to categorical data to make it easier to work with.
+
 ```{r}
 trips <- odbus %>%
   select(c(ORIGIN_PT_CODE, DAY_TYPE, TIME_PER_HOUR, TOTAL_TRIPS)) %>%
   rename(BUS_STOP_N = ORIGIN_PT_CODE) %>%
   rename(HOUR_OF_DAY = TIME_PER_HOUR) %>%
   rename(TRIPS = TOTAL_TRIPS)
+trips$BUS_STOP_N <- as.factor(trips$BUS_STOP_N)
 kable(head(trips))
 ```
 

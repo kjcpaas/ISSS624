@@ -156,6 +156,16 @@ head(knn6_nb, n = 3)
 `st_knn()` - used to get the k-nearest neighbors
 :::
 
+::: {.callout-tip collapse="true"}
+### Save point
+
+We will save `knn6_nb` to be used as neighbor list for **Emerging Hot Spot Analysis** (EHSA).
+
+```{r}
+write_rds(knn6_nb, "data/rds/knn6_nb202310.rds")
+```
+:::
+
 ```{r}
 wm_knn6 <- peak_trips_sf %>%
   mutate(
