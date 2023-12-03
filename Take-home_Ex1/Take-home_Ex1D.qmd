@@ -370,6 +370,138 @@ gi_st_wknd_pm <- wknd_pm_st %>%
 ```
 :::
 
+# Mann-Kendall Test
+
+By using the Gi\* we just calculated, let us look for notable patterns in the data.
+
+We will plot the Gi\* for 5 hexagons with emerging patterns.
+
+::: panel-tabset
+## Weekday morning
+
+```{r}
+top5_wkdy_am <- gi_st_wkdy_am %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wkdy_am %>%
+    filter(HEX_ID %in% top5_wkdy_am$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekdays (5 - 11 AM)")
+```
+
+The line shows increasing trend, with different slopes. This indicates presence of hot spots. It is most likely that these hexagons are not neighbors as they are not closely associated to each other.
+
+## Weekday evening
+
+```{r}
+top5_wkdy_pm <- gi_st_wkdy_pm %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wkdy_pm %>%
+    filter(HEX_ID %in% top5_wkdy_pm$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekdays (3 - 9 PM)")
+```
+
+Unlike the weekday morning trend line, these lines look very similar to each other. They may be neighbors as they show strong association with it other. It can indicate that we have a cluster of emerging hot spots for weekday evening.
+
+## Weekend morning
+
+```{r}
+top5_wknd_am <- gi_st_wknd_am %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wknd_am %>%
+    filter(HEX_ID %in% top5_wknd_am$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekends/Holidays (9 AM - 3 PM)")
+```
+
+These lines converged to a very close bunch of lines. The `HEX_ID` are also very close to each other, making it likely that they are neighbors. We should expect a hot spot made up of at least 5 hexagons when we plot our map later.
+
+## Weekend evening
+
+```{r}
+top5_wknd_pm <- gi_st_wknd_pm %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wknd_pm %>%
+    filter(HEX_ID %in% top5_wknd_pm$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekends/Holidays (9 AM - 3 PM)")
+```
+
+Unlike the weekend morning graph, we do not see the same clustering of the lines for weekend evening. The hot spot clusters may be smaller than in weekend morning, which can indicate that traffic is **less concentrated**.
+:::
+
 # Emerging Hot Spot Analysis
 
 ## Running the simulations
