@@ -35,14 +35,6 @@ website:
         menu:
           - text: "1: Geospatial Analytics for Public Good (combined)"
             href: Take-home_Ex1/Take-home_Ex1.qmd
-          - text: "1A: Data Wrangling"
-            href: Take-home_Ex1/Take-home_Ex1A.qmd
-          - text: "1B: Geovisualization and Analysis"
-            href: Take-home_Ex1/Take-home_Ex1B.qmd
-          - text: "1C: Spatial Analysis with LISA"
-            href: Take-home_Ex1/Take-home_Ex1C.qmd
-          - text: "1D: Spatio-temporal Analysis with EHSA"
-            href: Take-home_Ex1/Take-home_Ex1D.qmd
     right:
       - href: index.qmd
         text: Home
