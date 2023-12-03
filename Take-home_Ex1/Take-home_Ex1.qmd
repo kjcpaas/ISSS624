@@ -1,0 +1,2865 @@
+---
+title: "Take Home Exercise 1A: Geospatial Analytics for Public Good"
+author: "Kristine Joy Paas"
+date: "24 November 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Overview
+
+The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.
+
+The main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).
+
+In doing these study, we will be looking at bus trips started during the hours below.
+
+| Peak hour period             | Bus tap on time |
+|------------------------------|-----------------|
+| Weekday morning peak         | 6am to 9am      |
+| Weekday evening peak         | 5pm to 8pm      |
+| Weekend/holiday morning peak | 11am to 2pm     |
+| Weekend/holiday evening peak | 4pm to 7pm      |
+
+More details about the study can be found [here](https://isss624-ay2023-24nov.netlify.app/take-home_ex01).
+
+In this part of the study, we will do **data wrangling** on the data sets so that they are transformed into a form that can be used for geovisualization and spatial analysis.
+
+# Setup
+
+## Preparing the data sets
+
+### Geospatial
+
+This data sets are in `shp` format.
+
+-   Bus Stop Locations, available publicly from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html)
+
+### Aspatial
+
+These data sets are in `csv` format.
+
+-   Master Plan 2019 Subzone Boundary (Web), originally from [data.gov.sg](https://data.gov.sg/) but used the one provided on [E-learn](https://elearn.smu.edu.sg/d2l/home/357628).
+-   Passenger Volume By Origin Destination Bus Stops from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API (need to [request for access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html))
+    -   August 2023
+
+    -   September 2023
+
+    -   October 2023 - we will focus on this as the **main data set**
+
+## Preparing the `data/` directory
+
+Before starting our analysis, we have to organize the data sets in a directory.
+
+-   Geospatial data will be located under `data/geospatial`
+
+-   Aspatial data will be located under `data/aspatial`
+
+-   `data/rds` to be created to store data that we can reuse and to make our code reproduceable.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show file structure
+
+``` bash
+Take-home_Ex1
+└── data
+    ├── aspatial
+    │   ├── origin_destination_bus_202308.csv
+    │   ├── origin_destination_bus_202309.csv
+    │   └── origin_destination_bus_202310.csv
+    ├── geospatial
+    │   ├── BusStop.cpg
+    │   ├── BusStop.dbf
+    │   ├── BusStop.lyr
+    │   ├── BusStop.prj
+    │   ├── BusStop.sbn
+    │   ├── BusStop.sbx
+    │   ├── BusStop.shp
+    │   ├── BusStop.shp.xml
+    │   ├── BusStop.shx
+    │   ├── MPSZ-2019.cpg
+    │   ├── MPSZ-2019.dbf
+    │   ├── MPSZ-2019.prj
+    │   ├── MPSZ-2019.qmd
+    │   ├── MPSZ-2019.shp
+    │   └── MPSZ-2019.shx
+    └── rds
+```
+:::
+
+## Setting Up the R Environment
+
+After preparing the data sets, we can finally proceed to load the R packages needed for this study.
+
+::: {.callout-note collapse="true" appearance="simple"}
+### R packages used
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html): for thematic mapping
+
+-   [**sf**](https://cran.r-project.org/web/packages/sf/index.html): for geospatial data handling
+
+-   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
+
+-   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
+
+-   [**sfdep**](https://sfdep.josiahparry.com/): for spatial analysis
+:::
+
+## Environment Settings
+
+We will also set the default settings on for this document
+
+-   `tmap_mode` to **plot**: for plotting simple maps
+
+-   `tmap_style` to **natural**: for my preferred mapping style
+
+-   set **seed** for reproducibility of results
+
+## Running the setup
+
+We will label this code chunk as the setup chunk so the R runs it even after the environment restarts.
+
+```{r}
+#| label: setup
+pacman::p_load(sf, tmap, tidyverse, knitr, sfdep)
+tmap_mode("plot")
+tmap_style("natural")
+set.seed(1234)
+```
+
+# Data wrangling
+
+After setting up the data sets and the R environment, we can finally proceed with data wrangling.
+
+## Goal data sets
+
+To enable the visualization and analysis in latter part of the study, we need to have the following data sets:
+
+-   **Honeycomb** geometry, a tessellation of hexagons covering the bus stops in Singapor
+
+-   **Hourly bus trips started** from each hexagon cell
+
+    -   1 for weekend, 1 for weekend/holidays
+
+    -   Required columns: `HEX_ID`, `HOUR_OF_DAY`, `TRIPS`
+
+    -   Must contain geometry of the hexagon
+
+    -   Can be used to generate a time series cube
+
+## Data management points
+
+As the wrangling process is expected to have a lot of intermediate steps, **Save**, **Load**, and **Data clear** points are available to make our data wrangling more efficient.
+
+::: callout-tip
+### Save point
+
+This is where data is written as `rds` files using `write_rds()` for important data sets that will be used in later analysis. Examples are:
+
+-   The end goal of data wrangling: **Hourly bus trips started** **from each hexagon cell** data sets
+
+-   Critical outputs of expensive calculations
+:::
+
+::: callout-note
+### Load point
+
+This is where data is loaded from `rds` files using `read_rds()`. They were previously generated by the save point.
+
+**TIP**: Skip to the load points to progress without running the code above it
+:::
+
+::: callout-warning
+### Data clear point
+
+This is where data that will not be used anymore are cleared. The data in RStudio environment will pile up and set `#| eval: false` in code chunks if you want skip the clearing. For example, the code below won't be run.
+
+```{r}
+#| eval: false
+message <- "This code chunk executed"
+```
+:::
+
+## Generating hexagons from *BusStop* data
+
+As per the specifications of this study, we must use a honeycomb grid, a tesselation of hexagons to replace the `mpsz` data set.
+
+::: callout-tip
+### Why hexagons?
+
+Some benefits of using a hexagons are:
+
+-   A hexagon is the polygon with the most number of sides that can tessellate (or tile). Hence it is the most "circular" of the polygons that can be tessellated.
+
+-   Distances of the centroid from one hexagon to the next are consistent all around the hexagon, making it easy to find neighbors.
+
+More information about hexagons in the context of spatial analysis can be found in <https://desktop.arcgis.com/en/arcmap/latest/tools/spatial-statistics-toolbox/h-whyhexagons.htm>
+:::
+
+### Importing the Singapore boundary data
+
+We will use the **Master Plan 2019 Subzone Boundary (Web)** data set that has been used in class. This is a `shp` file, that we will import by using `st_read()`. We will use this to **ensure that the bus stops are within Singapore.**
+
+```{r}
+mpsz <- st_read(dsn = "data/geospatial",
+                    layer = "MPSZ-2019")
+```
+
+::: {.callout-caution appearance="simple"}
+#### Correcting the projection
+
+This data frame using the global GPS standard projection, [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We need to convert this to [**SVY21**](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) that is more appropriate for Singapore 🇸🇬 context.
+
+```{r}
+mpsz <- mpsz %>% st_transform(crs=3414)
+```
+:::
+
+::: callout-tip
+#### Save point
+
+Let's save this geometry with corrected projection from plotting purposes.
+
+```{r}
+write_rds(mpsz, "data/rds/mpsz.rds")
+```
+:::
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tmap_style("natural")
+tm_shape(mpsz) +
+  tm_fill("lightgreen", title = "Singapore Boundary") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Map of Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+### Importing the BusStop data set
+
+The `BusStop` data set is a in `shp` format. We can import it by using `st_read()` from the `sf` package.
+
+```{r}
+busstops <- st_read(dsn = "data/geospatial",
+                    layer = "BusStop")
+```
+
+::: {.callout-caution collapse="true" appearance="simple"}
+#### Correcting the projection
+
+We want to use [SVY21](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) as the projection for this study as it is the projection used for local Singaporean context.
+
+After the import, it shows that the **Projected CRS**is **SVY21**. However, checking the CRS with `st_crs()` tells a different story.
+
+```{r}
+st_crs(busstops)
+```
+
+As we can see EPSG value is **9001**, which correspond to [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We have to fix the projection by transforming to EPSG value of **3414**, which corresponds to **SVY21**.
+
+```{r}
+busstops <- st_transform(busstops, crs = 3414)
+```
+:::
+
+Next, let's take a look at the available columns to identify which columns we can use for analysis.
+
+```{r}
+kable(head(busstops))
+```
+
+::: callout-note
+From this initial look in the data, **`BUS_STOP_N`** and **`LOC_DESC`** can potentially be used to match records in the passenger volume data set.
+:::
+
+::: {.callout-note collapse="true" appearance="simple"}
+#### Changing columns to factor
+
+`BUS_STOP_N` has a finite set of values that we do not need to process sequentially so we will convert it as *factor* to make it easier to work with.
+
+```{r}
+busstops$BUS_STOP_N <- as.factor(busstops$BUS_STOP_N)
+```
+:::
+
+### Generating hexagons from Singapore boundary data
+
+Following the steps from <https://urbandatapalette.com/post/2021-08-tessellation-sf/>, we will use [st_make_grid()](https://search.r-project.org/CRAN/refmans/sf/html/st_make_grid.html) to generate the hexagons for analysis.
+
+We need to provide a value for `cellsize` in the function, which is defined as *"for hexagonal cells the distance between opposite edges"*. We need to create hexagons whose apothem is **250m**, resulting in a cell size of **500m**.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Why is cell size 500 m?
+
+[Apothem](https://www.merriam-webster.com/dictionary/apothem) is defined as *the perpendicular from the center of a regular polygon to one of the sides**.***
+
+The specification is this study requires hexagons to be **250 m** from the center of the hexagon to the center of one of it's edge.
+
+![](images/apothem.png){fig-align="center"}
+
+As such, this corresponds to the length of 2 opposite apothems, which is **500 m.**
+
+The edge length is **not** the same as apothem. It is **288.675**m.
+
+$$
+250m/cos(30) = 288.675m
+$$
+:::
+
+We will use the `mpsz` data to ensure that the honeycomb grid perfectly covers the Singapore boundaries
+
+```{r}
+honeycomb <-
+  st_make_grid(mpsz,
+               cellsize = 500,
+               what = "polygon",
+               square = FALSE) %>%
+  st_sf()
+```
+
+::: {.callout-caution appearance="minimal"}
+We have to use `st_sf()` to convert the result to a data frame that can be used for the succeeding steps.
+:::
+
+Checking the generated hexagons reveals that it covers all the bus stops.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(honeycomb) +
+  tm_fill(col = "white", title = "Hexagons") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Singapore with honeycomb grid",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.005, title = "Bus Stops")
+```
+
+::: {.callout-tip appearance="minimal"}
+Checking the scale reveals that the generated hexagons are of the expected size, **500 m from one edge to the opposite edge** as there are **10 hexagons within a 5 km** **distance**.
+:::
+
+::: {.callout-important appearance="simple" collapse="true"}
+#### About those points outside Singapore
+
+The map shows that there are bus stops in our data set that our outside Singapore bounds (green area). We can remove these points from our `busstops` data by following the filtering steps from <https://urbandatapalette.com/post/2021-08-tessellation-sf/>.
+
+We will `st_intersects()` to see which points in `busstops` intersect with `mpsz`, and filter those that intersect.
+
+```{r}
+busstops$n_collisions = lengths(st_intersects(busstops, mpsz))
+busstops <-
+  filter(busstops, n_collisions > 0) %>%
+  select(, -n_collisions) # Remove n_collisions as we do not need it anymore
+```
+
+Plotting again shows that all bus stops are now within Singapore bounds.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(honeycomb) +
+  tm_fill(col = "white", title = "Hexagons") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Honeycomb grid without bus stops outside of Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.005, title = "Bus Stops")
+```
+:::
+
+### Filtering hexagons with bus stops
+
+The honeycomb grid generated from \[###Generating hexagons from Singapore boundary data\] need to be filtered such that the hexagons remaining correspond to only those with bus stops.
+
+We can do this by following the filtering steps from <https://urbandatapalette.com/post/2021-08-tessellation-sf/>. We will use `st_intersects()` to identify **which hexagons intersect with bus stop locations**.
+
+```{r}
+honeycomb$n_collisions = lengths(st_intersects(honeycomb, busstops))
+honeycomb <- filter(honeycomb, n_collisions > 0)
+```
+
+Let's generate the map again to check if we have the hexagons that correspond to bus stop locations.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_fill(col = "white", title = "Hexagons", alpha = 1) +
+  tm_borders(alpha = 0.2) +
+  tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.001, title = "Bus Stops") +
+  tm_grid(alpha = 0.2)
+```
+
+### Assigning ids to each hexagon
+
+Here is the structure of our honeycomb data:
+
+```{r}
+kable(head(honeycomb, n=3))
+```
+
+::: {.callout-caution collapse="true" appearance="simple"}
+#### Remove n-collisions
+
+We do not need `n-collisions` anymore so we can remove it.
+
+```{r}
+honeycomb <- honeycomb %>% select(, -n_collisions)
+```
+:::
+
+This data is still incomplete as we need to associate the hexagons to aspatial data, which is critical to the next steps in our data wrangling.
+
+For this purpose, we will assign `HEX_ID` with format `H0000`.
+
+```{r}
+honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb))) %>% as.factor()
+kable(head(honeycomb)) 
+```
+
+::: {.callout-tip collapse="true"}
+### Save point
+
+`honeycomb` is the **geometry** that we will use for analysis. It will be used for tasks such as identifying neighbors and calculating spatial weights.
+
+Is it also one of the [Goal data sets] we need. Hence, we will save it.
+
+```{r}
+write_rds(honeycomb, "data/rds/honeycomb202310.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We do not need `mpsz` anymore as we have generated hexagons already. For further analysis, we will overlay the hexagons to the Singapore map with `tmap_mode("plot")` to use interactive maps for closer inspection.
+
+```{r}
+#| eval: true
+rm(mpsz)
+```
+:::
+
+## Extracting Hourly \# of Bus Trips Originating from Hexagons
+
+The goal for this part of data wrangling is to have information on **how many trips started from each hexagon for every given hour of the day**.
+
+We will use the *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API for the months of **August, September, October 2023**.
+
+::: {.callout-note appearance="simple"}
+For demonstrating the steps, we will use the **October 2023** data set. The same steps will be applied to the other data sets later on.
+
+If you want to run the code for **August 2023** and **September 2023**, replace *202310*, with *202308* or *202309**.*** Our code can be used to analyze this dataset from any month.
+:::
+
+### Importing the data set
+
+The data set is an aspatial data in `csv` format so we will use `read_csv()` to import the data.
+
+```{r}
+odbus <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
+kable(head(odbus))
+```
+
+::: {.callout-note appearance="simple"}
+The relevant columns for our data study are **`DAY_TYPE`**, **`TIME_PER_HOUR`**, **`ORIGIN_PT_CODE`**, `TOTAL_TRIPS`
+
+We do not need the **`DESTINATION_PT_CODE`** as we are only interested on **when passengers get on the bus**.
+
+Furthermore, the **`ORIGIN_PT_CODE`** can be correlated to the `BUS_STOP_N` column of `busstops` data.
+:::
+
+::: {.callout-note collapse="true" appearance="simple"}
+#### Recap of `busstops` data
+
+```{r}
+kable(head(busstops))
+```
+:::
+
+### Cleaning the data
+
+Before going deep in the wrangling, we will clean up the data so that we are left with a lightweight data set that R can process more easily. We will retain and rename columns below to make them more understandable and easier to join with other data sets.
+
+-   `DAY_TYPE`
+
+-   `TIME_PER_HOUR` -\> `HOUR_OF_DAY`
+
+-   `ORIGIN_PT_CODE` -\> `BUS_STOP_N`
+
+-   `TOTAL_TRIPS` -\> `TRIPS`
+
+We will also rename the columns to make them more understandable and will make joining with other data sets easier.
+
+Lastly, will also convert `BUS_STOP_N` to *factor* as it has a finite set of values so we can convert it to categorical data to make it easier to work with.
+
+```{r}
+trips <- odbus %>%
+  select(c(ORIGIN_PT_CODE, DAY_TYPE, TIME_PER_HOUR, TOTAL_TRIPS)) %>%
+  rename(BUS_STOP_N = ORIGIN_PT_CODE) %>%
+  rename(HOUR_OF_DAY = TIME_PER_HOUR) %>%
+  rename(TRIPS = TOTAL_TRIPS)
+trips$BUS_STOP_N <- as.factor(trips$BUS_STOP_N)
+kable(head(trips))
+```
+
+::: {.callout-note appearance="minimal"}
+`select()` is used to select the columns we need.
+
+`rename()` is used to rename the columns.
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need `odbus` anymore as we will be working with the more lightweight `trips` from this point on.
+
+```{r}
+#| eval: true
+rm(odbus)
+```
+:::
+
+### Mapping the bus stops to hexagon
+
+In \[###Filtering hexagons with bus stops\] we were able to overlay the bus locations to our generated hexagon. While this is enough for visualization, it is **not enough for the rest of the data processing** we need.
+
+From \[###Cleaning the data\], we have the `BUS_STOP_N` in the that we can use to associate with `busstops`.
+
+We need to create an **aspatial** table that contain `BUS_STOP_N` and `HEX_ID` of the hexagon containing them. We will use `st_intersection()`.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Why aspatial?
+
+We want to use generate a simple mapping here as this table will serve as a "glue" between the other aspatial data sets and our geospatial data, `honeycomb`.
+:::
+
+```{r}
+bs_hex <- st_intersection(busstops, honeycomb) %>%
+  st_drop_geometry() %>%
+  select(c(BUS_STOP_N, HEX_ID))
+kable(head(bs_hex))
+```
+
+::: {.callout-note appearance="minimal"}
+`st_intersection()` - find which hexagon contains the bus stop
+
+`st_drop_geometry()` - to make data aspatial
+
+`select()` - to retain only the relevant columns: `BUS_STOP_N` and `HEX_ID`
+:::
+
+### Adding `HEX_ID` information to bus `trips` data
+
+To achieve our goal of having the hourly \# of bus trips per location, we need to add `HEX_ID` to `trips` data. This is so we can answer, *how many bus trip originate from a certain hexagon?*
+
+To do this, we will do an `inner_join()` to join the `trips` data with `bs_hex`.
+
+::: {.callout-tip collapse="true"}
+#### Why \`inner_join()\` instead of \`left_join()\`?
+
+We will use `inner_join` as there are `BUS_STOP_N` values in `trips` data that are not in `bs_hex`.
+
+```{r}
+trips$BUS_STOP_N[!(trips$BUS_STOP_N %in% bs_hex$BUS_STOP_N)] %>%
+  unique() %>% length()
+```
+
+There are **57** bus stops in `trips` that are not in `bs_hex`. **5** of this can be attributed the bus stops we removed in \[####About those points outside Singapore\]. Others may be due to the *BusStops* data set not having complete information.
+
+Nonetheless, we have to **remove** these bus stops from our analysis as **we do not have geospatial data** to associate to the hexagons.
+
+Therefore, we will use `inner_join` to keep only the observations in `trips` with the matching bus stops in `bs_hex`.
+:::
+
+```{r}
+trips <- inner_join(trips, bs_hex)
+kable(head(trips))
+```
+
+### Aggregating `TRIPS` based on `HEX_ID`
+
+Next, we will add the `TRIPS` for all the bus stops within a hexagon. We will group via `HEX_ID`, `DAY_TYPE`, and `HOUR_OF_DAY`.
+
+```{r}
+trips <- trips %>%
+  group_by(
+    HEX_ID,
+    DAY_TYPE,
+    HOUR_OF_DAY) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(trips))
+```
+
+::: {.callout-tip collapse="true"}
+### Save point
+
+`trips` was processed from *Passenger Volume By Origin Destination Bus Stops*, which has almost **6 million** observations.
+
+We now have a more lightweight dataset with almost **60,000** observations, which is about **100x smaller**.
+
+Let's save this data as an `rds` file so we don't need to reprocess again later on.
+
+```{r}
+write_rds(trips, "data/rds/trips202310.rds")
+```
+:::
+
+## Generating time series cube-friendly data
+
+::: {.callout-note collapse="true"}
+### Load point
+
+We can run the rest of the document from this point by loading this data.
+
+```{r}
+trips <- read_rds("data/rds/trips202310.rds")
+honeycomb <- read_rds("data/rds/honeycomb202310.rds")
+```
+:::
+
+When doing **Emerging Hotspot Analysis** (EHSA), we need to create a time series cube. To do that we must pass the following criteria:
+
+-   It must have a row for each combination of `HEX_ID` (location) and `HOUR_OF_DAY` (time)
+
+-   There are **no missing** values in `TRIPS` column
+
+::: {.callout-important collapse="true" appearance="simple"}
+### Is our *trips* **data time series cube-friendly? The answer is NO.**
+
+```{r}
+spacetime(trips, honeycomb,
+          .loc_col = "HEX_ID",
+          .time_col = "HOUR_OF_DAY") %>%
+  is_spacetime_cube()
+```
+
+We do not pass the first requirement for generating a time series cube
+
+> It must have a row for each combination of `HEX_ID` (location) and `HOUR_OF_DAY` (time)
+:::
+
+### Generating the combinations
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### How many combinations are there? The answer is 36,456.
+
+To satisfy the requirement of:
+
+> It must have a row for each combination of `HEX_ID` (location) and `HOUR_OF_DAY` (time)
+
+We need to find out how many such combinations exist.
+
+-   There are **1519** **hexagons** in our `honeycomb`
+
+-   There are **24 hours** in a day
+
+Therefore, there are $1519 \times 24 = 36,456$ combinations. We will use this value to verify if we have the correct space time cube.
+:::
+
+To generate the combinations, we will use `expand.grid()` and for us to provide the list possible values for `HEX_ID` and `HOUR_OF_DAY`.
+
+```{r}
+combos <- expand_grid(
+  HEX_ID = honeycomb$HEX_ID,
+  HOUR_OF_DAY = 0:23
+)
+kable(combos[20:29,])
+```
+
+`combos` also has **36,456** rows, aligned with our expectations.
+
+```{r}
+nrow(combos)
+```
+
+With this generated, we can use this as a glue to generate our time series cube.
+
+### Splitting the data
+
+As we want to do separate analysis for weekdays and weekends, we will split the data. We will also remove the `DAY_TYPE` column as we do not need it anymore. To do this, we have to `ungroup()` before removing as we use `DAY_TYPE` as filter.
+
+::: panel-tabset
+#### Weekday
+
+```{r}
+trips_wkdy <- trips %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  ungroup() %>%
+  select(, -DAY_TYPE)
+kable(trips_wkdy[20:29,])
+```
+
+#### Weekend/Holidays
+
+```{r}
+trips_wknd <- trips %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  ungroup() %>%
+  select(, -DAY_TYPE)
+kable(trips_wknd[20:29,])
+```
+:::
+
+::: {.callout-note collapse="true"}
+#### Checking if split covers the full data
+
+Let's check the total rows in `trips_wkdy` and `trips_wknd` add up to the number of rows in `trips`.
+
+```{r}
+nrow(trips_wkdy) + nrow(trips_wknd) == nrow(trips)
+```
+
+There are no lost data so we can proceed to the next step.
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need `trips` anymore as we will be using `trips_wkdy` and `trips_wknd` from this point.
+
+```{r}
+#| eval: true
+rm(trips)
+```
+:::
+
+### Filling in the all the combos
+
+Now that we have separate data frames for weekday and weekend/holiday, we need to make sure that our data frame as all the combination in `combos`. We can do that by joining `trips_wkxx` with `combos`.
+
+::: panel-tabset
+#### Weekday
+
+```{r}
+trips_cube_wkdy <- left_join(combos, trips_wkdy)
+kable(head(trips_cube_wkdy, n = 24))
+```
+
+Check if the output has the same rows as `combos`.
+
+```{r}
+nrow(trips_cube_wkdy) == nrow(combos)
+```
+
+#### Weekend/Holiday
+
+```{r}
+trips_cube_wknd <- left_join(combos, trips_wknd)
+kable(head(trips_cube_wknd, n = 24))
+```
+
+Check if the output has the same rows as `combos`.
+
+```{r}
+nrow(trips_cube_wknd) == nrow(combos)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+The data frames generated now passes
+
+> It must have a row for each combination of `HEX_ID` (location) and `HOUR_OF_DAY` (time)
+:::
+
+::: {.callout-important appearance="simple"}
+The data frames generated violate
+
+> There are **no missing** values in `TRIPS` column
+
+This is because there are some `HOUR_OF_DAY` where the value of `TRIPS` is `NA`. We need to fill in these missing values.
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need `trips_wkxx` anymore as we will be using `trips_cube_wkxx` from this point on.
+
+```{r}
+rm(trips_wkdy)
+rm(trips_wknd)
+```
+:::
+
+### Filling in missing values
+
+Lastly, we need to fill in the missing values in `TRIPS`. This can be done by filtering the rows with `NA` and setting those to **0**.
+
+::: panel-tabset
+#### Weekday
+
+```{r}
+trips_cube_wkdy$TRIPS[is.na(trips_cube_wkdy$TRIPS)] <- 0
+kable(head(trips_cube_wkdy, n = 24))
+```
+
+#### Weekend/Holiday
+
+```{r}
+trips_cube_wknd$TRIPS[is.na(trips_cube_wknd$TRIPS)] <- 0
+kable(head(trips_cube_wknd, n = 24))
+```
+:::
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Is our data frame **time series cube-friendly? The answer is YES.**
+
+Let us check of our data frame can be used to create spacetime cubes.
+
+##### Weekend
+
+```{r}
+spacetime(trips_cube_wkdy, honeycomb,
+          .loc_col = "HEX_ID",
+          .time_col = "HOUR_OF_DAY") %>%
+  is_spacetime_cube()
+```
+
+##### Weekend/Holiday
+
+```{r}
+spacetime(trips_cube_wknd, honeycomb,
+          .loc_col = "HEX_ID",
+          .time_col = "HOUR_OF_DAY") %>%
+  is_spacetime_cube()
+```
+:::
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+`trips_cube_wkxx` data is part the [Goal data sets] we need. Hence, we will save them.
+
+```{r}
+write_rds(trips_cube_wkdy, "data/rds/trips_cube_wkdy202310.rds")
+write_rds(trips_cube_wknd, "data/rds/trips_cube_wknd202310.rds")
+```
+:::
+
+# Visualizing peak period bus trips
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can run the rest of the document from this point by loading these data.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb202310.rds")
+trips_cube_wkdy <- read_rds("data/rds/trips_cube_wkdy202310.rds")
+trips_cube_wknd <- read_rds("data/rds/trips_cube_wknd202310.rds")
+```
+
+-   `mpsz` - contains Singapore subzone boundaries, will be used for visualizatios
+
+-   `honeycomb` - contains the geometry for the honeycomb grid
+
+-   `trips_cube_wkdy` - hourly number bus trips originating from hexagons during weekday
+
+-   `trips_cube_wknd` - hourly number bus trips originating from hexagons during weekend
+:::
+
+## Creating spatial data for peak period traffic
+
+As we want to study the data for peak times, we have to extract and aggregate the data for those times.
+
+We will create a geospatial object with columns for peak_period trips and join them with the aggregation data.
+
+```{r}
+peak_trips_sf <- honeycomb
+```
+
+We will need filter the data from relevant hours using `filter()`. We also need to aggregate the data to get the total number of trips per hexagon, using `group_by(HEX_ID)` and `summarise()`.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### How to filter data by *HOUR_OF_DAY*
+
+The `HOUR_OF_DAY` in data set covers the data from the start to the end of the hour in **24-hour format**, i.e. when `HOUR_OF_DAY = 16`, this means bus taps from `4:00 PM` ton`4:59:59PM`.
+
+Hence, if we want to get 6 to 9am data, we will filter by:
+
+```         
+HOUR_DAY >= 6 & HOUR_OF_DAY < 9
+```
+:::
+
+::: panel-tabset
+### Weekday AM (6 - 9 AM)
+
+```{r}
+peak_trips_sf <- trips_cube_wkdy %>%
+  filter(
+    HOUR_OF_DAY >= 6 &
+      HOUR_OF_DAY < 9
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(WEEKDAY_AM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
+```
+
+### Weekday PM (5 - 8 PM)
+
+```{r}
+peak_trips_sf <- trips_cube_wkdy %>%
+  filter(
+    HOUR_OF_DAY >= 17 &
+      HOUR_OF_DAY < 20
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(WEEKDAY_PM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
+```
+
+### Weekend AM (11 AM - 2 PM)
+
+```{r}
+peak_trips_sf <- trips_cube_wknd %>%
+  filter(
+    HOUR_OF_DAY >= 11 &
+      HOUR_OF_DAY < 14
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(WEEKEND_AM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
+```
+
+### Weekend PM (4 - 7 PM) {#weekend-pm-4---7-pm}
+
+```{r}
+peak_trips_sf <- trips_cube_wknd %>%
+  filter(
+    HOUR_OF_DAY >= 16 &
+      HOUR_OF_DAY < 19
+  ) %>%
+  group_by(HEX_ID) %>%
+  summarise(WEEKEND_PM_TRIPS = sum(TRIPS)) %>%
+  right_join(peak_trips_sf)
+kable(head(peak_trips_sf))
+```
+:::
+
+::: {.callout-important collapse="true" appearance="simple"}
+### Converting back to sf data type
+
+Since we used `right_join()`, `peak_trips_sf` became a `tbl_df` data type.
+
+We need convert the `peak_trips_sf` back to `sf` data type so it can be processed as a spatial data.
+
+```{r}
+peak_trips_sf <- peak_trips_sf %>% st_sf()
+```
+:::
+
+## Visualizing the data
+
+### Initial look at the data
+
+Let us plot maps for each peak period. I'm using **tabsets** for this so we can see the differences in data when switching from 1 tab to the other
+
+::: panel-tabset
+#### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_AM_TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+#### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_PM_TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+#### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_AM_TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+#### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_PM_TRIPS",
+    style = "quantile",
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+The visualizations above are satisfactory **if we look at them individually** as we can see which areas are busier than the others.
+
+However, comparing the commuter patterns from a peak period to another can be **misleading**.
+
+To illustrate, consider the values of the **darkest red** on **weekends**. Hexagons with **6000** trips already are dark red on weekend maps. However, these values fall under the middle category, visualized as **orange,** on **weekdays**.
+
+Due to this, one might misinterpret that an area is **busier on certain peak periods** due to the difference in colors when in fact, they are actually **as busy or even less busy**. Colors are powerful and easier to interpret than looking at the categories in the legend.
+
+As it is, we are comparing apples to oranges. We need a way to compare these maps apples to apples.
+:::
+
+### Deriving the break points
+
+To compare the maps apples to apples, we need to calculate the break points that our maps can use. When `tmap` uses `style = quantile`, it calculates the styles depending on the number of categories.
+
+We can replicate this by using `quantile()` and using the **full range of data** from all the peak periods. To see the differences in more detail, we will use **8 categories** instead of the default 5 categories.
+
+::: {.callout-note collapse="true" appearance="simple"}
+#### How to calculate *probs*?
+
+Since we want 8 categories, we will divide 100 by 8.
+
+$$
+\frac{100}{8} = 12.5
+$$
+
+Hence, we will supply multiples of `0.125` as `probs`, e.g. `0`, `0.125`, `0.25`, ... `1`
+:::
+
+```{r}
+quantile(
+  c(
+    peak_trips_sf$WEEKDAY_AM_TRIPS,
+    peak_trips_sf$WEEKDAY_PM_TRIPS,
+    peak_trips_sf$WEEKEND_AM_TRIPS,
+    peak_trips_sf$WEEKEND_PM_TRIPS
+  ),
+  probs = c(0, 0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1)
+)
+```
+
+With this result, instead of using `style = quantile` in our maps, we can specify these values to `breaks`.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Why not just use summary()?
+
+`summary()` uses quartiles or every **25th quantile**. This results in only **4 categories**. This is not enough for the level detail we want to present so it's better to use `quantile()` to generate more categories ourselves.
+:::
+
+### Remapping with the breaks
+
+We will supply the values generated (rounded to the nearest integer) to `breaks`, instead of `style = "quantile"`.
+
+``` r
+breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160)
+```
+
+::: panel-tabset
+#### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_AM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+There is a stark difference is colors in this map, showing a concentration of places with the darkest reds, along with areas of lighter colors.
+
+We may infer that this concentration could be from residential areas due to **people leaving their homes** for their daily activities like work or school.
+
+#### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_PM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+This peak period looks busiest because it looks reddest. However we must **take some caution** on this interpretation as the reds are more scattered so our brains may interpret this as red all throughout, compared to clusters of red and white.
+
+This peak period is when workers and student most likely go home so it may look more scattered as workplaces or schools may be more scattered compared to residential areas.
+
+#### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_AM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+This map looks a lot paler compared to the weekday maps. This could be because it there is no work or school, people tend to stay home.
+
+However, while paler, people going out should still come from their homes so this should just look like the lighter weekday morning map. We will explore this later when we compare these 2 peak periods.
+
+#### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_PM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+This map also looks lighter due to it being a weekend and people staying home. However, another possible explanation is that **people have more freedom to schedule** their activities on weekends or holidays so the traffic may be more scattered throughout the day.
+
+A spatio-temporal analysis may reveal more information that can validate this inference.
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+Doing the adjustments made it **much easier** to compare peak hours compared to the others.
+
+For example, we are able to see that **weekdays are** **indeed generally busier than weekends** due to the weekends due to the maps **looking darker**.
+
+We can also observe that the West and Northwest parts of Singapore has less bus trips compared to the rest of Singapore. The cause could be fewer residents in that area, sparse distribution of the population, or people preferring to use other modes of transportation (e.g., MRT, cars).
+
+However, **some details were lost** with this adjustment. For example, we are not able to see what is the **highest and lowest number of trips for each peak period**. If this is the intention or the narrative we want, the previous **unadjusted visualizations** are more effective for these purposes.
+
+For our analysis, we want to **compare** the number of bus trips from one peak period to the other so making the adjustment in the break points is very helpful for this purpose.
+:::
+
+### Comparing peak periods
+
+Now that our maps can be compared apples to apples, we will compare 2 peak periods side by side.
+
+::: {.callout-tip appearance="simple"}
+To compare each pair of maps more easily, we will use **tabs** so we can just switch between them to see how the patterns change from one map to the other.
+:::
+
+#### Weekday peak periods
+
+::: panel-tabset
+##### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_AM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+##### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_PM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+##### Insights
+
+An interesting observation is that when switch from **weekend AM to weekend PM** map, there is perceived **outward scattering** from the darker areas to the neighboring areas.
+
+Switching to **weekend PM to weekend AM** shows the **reds converging** to the darker points.
+
+This is consistent with real world pattern of people **going out of their homes for their daily activities** in the morning and **going home** in the evening.
+
+However, what cannot be verified from this comparison is whether people really going to work or school in places close to their homes, as suggested by **outside scattering**. This may not be necessarily true as people from different areas of Singapore may travel long distances or so to their places of work and school, not the neighboring areas. A flow analysis will give us better insights about this.
+:::
+
+#### Weekend peak periods
+
+::: {.callout-important collapse="true" appearance="simple"}
+##### Adjusting the break points
+
+For this comparison, we adjusted the break points using the same method as in [Deriving the break points]. This is because the traffic is much less over the weekend so we are not able to use the full range of categories we previously derived.
+
+See the maps below.
+
+::: panel-tabset
+###### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_AM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+###### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_PM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+Hence, we couldn't get insights to the same level of details as the other comparisons. We will use the following breaks for this comparison:
+
+```{r}
+quantile(
+  c(
+    peak_trips_sf$WEEKEND_AM_TRIPS,
+    peak_trips_sf$WEEKEND_PM_TRIPS
+  ),
+  probs = c(0, 0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1)
+)
+```
+
+With this change, we have shifted **7786** from the **6th to 8th** category, providing us with the better level of detail on values **between 0 to 7786**.
+
+This just shows that the breaks we calculated before is **not appropriate** for all comparisons. We still need to apply the scale appropriate to the data we have,
+:::
+
+::: panel-tabset
+##### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_AM_TRIPS",
+    breaks = c(0, 113, 382, 855, 1686, 2862, 4616, 7785, 111171),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+##### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_PM_TRIPS",
+    breaks = c(0, 113, 382, 855, 1686, 2862, 4616, 7785, 111171),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+##### Insights
+
+Like the weekday comparison, there is a slight scattering observed, although not as stark. The difference is not as big despite [Adjusting the break points].
+
+This very small shift could be because people are coming out of their homes throughout the day as they are free to schedule their activities throughout the day on weekends or holidays.
+
+This is consistent with the insights in [Weekend PM (4 - 7 PM)](#weekend-pm-4---7-pm). Again, a spatio-temporal analysis may provide us more information to verify this inference.
+:::
+
+#### Morning peaks
+
+::: panel-tabset
+##### Weekday AM (6 - 9 AM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_AM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 6 - 9 AM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+##### Weekend AM (11 AM - 2 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_AM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 11 AM - 2 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+##### Insights
+
+The weekend map generally looks like a **lighter version** of the weekday map. This may mean that **less people** go out of their homes on weekends.
+
+However, there are some notable things that can be observed.
+
+-   Some busy areas on the West during weekdays have low bus trips on weekends
+
+    -   This area corresponds to what seems to be an industrial area near the Tuas checkpoint.
+
+    -   This looks strange to me as it **contradicts** our hypothesis that morning bus rides are mostly due to people commuting from their home.
+
+-   Locations that coincide with bus interchanges are constantly busy
+
+    -   There are multiple bus lines originating from these interchanges so they are expected to have constant flow of commuters.
+
+-   The bus stops for international travel are constantly busy
+
+    -   Examples are those in Woodlands Checkpoint, Kranji Station, Changi Airport bus stops
+
+    -   These are popular for tourists and locals alike as Sinagapore is a business and tourism hub in Asia. Workers also commute regularly between Johor Bahru and Singapore, while locals visit Johor Bahru for weekend recreation.
+
+-   The bus stops to areas popular to tourists are constantly busy
+
+    -   Some examples are the Vivo City bus stops and the bus stop near Singapore Zoo (North of Central Water Catchment). Tourists come to this places throughout the week, and locals also go too these places for recreation.
+:::
+
+#### Evening peaks
+
+::: panel-tabset
+##### Weekday PM (5 - 8 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKDAY_PM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekdays 5 - 8 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+##### Weekend PM (4 - 7 PM)
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col= "green") +
+  tm_borders(alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_polygons(
+    "WEEKEND_PM_TRIPS",
+    breaks = c(0, 165, 632, 1545, 2985, 5276, 9180, 17851, 462160),
+    palette = "YlOrRd",
+    title = "## of trips"
+  ) +
+  tm_layout(
+    main.title = "Bus Trips Originating from Each Location (Weekends/Holidays 4 - 7 PM)",
+    main.title.position = "center",
+    main.title.size = 1,
+    legend.height = 0.35, 
+    legend.width = 0.25,
+    legend.position = c("right", "bottom")
+  )+
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+##### Insights
+
+There is not much difference in insights compared to [Morning peaks] aside from the **active bus stop near Tuas Checkpoint on weekday mornings** is not active in the evenings.
+
+This is an interesting observation that is difficult to explain. One possible explanations is because of its **relative proximity to Nanyang Technological University**, students commuting to NTU transfer via these bus stops going to school. However, we may not see the same pattern during weekday evening peak period because university students have different schedules so their time leaving the university may be **more scattered throughout the day**.
+
+A flow analysis with information on the destination bus stop may reveal more information about this.
+:::
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Why do we seem notice the busiest areas first?
+
+Another interesting insight about these visualizations is that we seem **notice the busy areas in the map** more easily than the areas that have low traffic.
+
+Interestingly, our biology may play into this as [our eyes have more cones that are sensitive to red light than any other type](https://www.londonvisionclinic.com/these-are-the-colours-your-eyes-cant-see/). As we use [**red**]{style="color:red;"} to visualized the busiest areas in our map, they are the ones that catches our eye first.
+
+If we had reversed our color scheme, perhaps we would have noticed the least busy areas first.
+
+However, we have to look into more reliable scientific and psychology sources to verify if this phenomenon is true.
+:::
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+We will use `peak_trips_sf` for **Local Indicators of Spatial Association** (LISA) analysis.
+
+```{r}
+write_rds(peak_trips_sf, "data/rds/peak_trips_sf202310.rds")
+```
+:::
+
+# Geospatial Autocorrelation with LISA
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can run the rest of the document from this point by loading these data.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb202310.rds")
+peak_trips_sf <- read_rds("data/rds/peak_trips_sf202310.rds")
+```
+
+-   `mpsz` - contains Singapore subzone boundaries, will be used for visualizatios
+
+-   `honeycomb` - contains the geometry for the honeycomb grid
+
+-   `peak_trips_sf` - contains number of bus trips originating from each hexagon for each peak period
+:::
+
+## Computing adaptive distance weights matrix
+
+Before getting Moran's I, we need to get the spatial weights first. We will use **adaptive distance-based weights** for this, which uses the **k-nearest neighbors**.
+
+::: {.callout-note collapse="true" appearance="simple"}
+### Why not contiguity weights?
+
+Visualizing the honeycomb grid reveals that there are **hexagon islands**, or **hexagons without contiguity neighbors**.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(peak_trips_sf) +
+  tm_fill(col = "white", title = "Hexagons", alpha = 1) +
+  tm_borders(alpha = 0.2) +
+  tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2)
+```
+
+Some of these are at the **East side of Singapore**, around **Changi Airport**.
+
+We cannot associate them to another hexagon if we use contiguity neighbors so it will be difficult to do the analysis. With that, we will use distance-based weights to **ensure that all hexagons have neighbors**.
+:::
+
+As we are working with hexagons, which has **6 sides**, it is logical to get the **6 nearest neighbors** and use it for our analysis.
+
+```{r}
+knn6_nb <- peak_trips_sf %>% st_centroid() %>% st_knn(k=6)
+head(knn6_nb, n = 3)
+```
+
+::: {.callout-note appearance="minimal"}
+`st_centroid()` - used to get the centroids of each hexagon, which is required for `st_knn()`
+
+`st_knn()` - used to get the k-nearest neighbors
+:::
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+We will save `knn6_nb` to be used as neighbor list for **Emerging Hot Spot Analysis** (EHSA).
+
+```{r}
+write_rds(knn6_nb, "data/rds/knn6_nb202310.rds")
+```
+:::
+
+```{r}
+wm_knn6 <- peak_trips_sf %>%
+  mutate(
+    nb = knn6_nb,
+    #wt = st_weights(nb, style = "W")
+    wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1)
+    )
+```
+
+## Calculating Global Moran's I
+
+To check for signs of clustering, we will first calculate the global Moran's I value.
+
+-   When $I > 0$, observations are similar (sign of clustering)
+
+-   When $I < 0$, observations are dissimilar (low indication of clustering)
+
+-   If $p < \alpha$ (**0.05**)**,** the result is significant and **did not happen by chance**
+
+We will do this for all peak periods.
+
+To perform the permutation test, we will use `global_moran_perm()` to perform Monte-Carlo simulations.
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+global_moran_perm(
+  wm_knn6$WEEKDAY_AM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
+```
+
+-   $0.21487 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
+
+### Weekday evening
+
+```{r}
+global_moran_perm(
+  wm_knn6$WEEKDAY_PM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
+```
+
+-   $0.057327 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
+
+### Weekend morning
+
+```{r}
+global_moran_perm(
+  wm_knn6$WEEKEND_AM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
+```
+
+-   $0.15955 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
+
+### Weekend evening
+
+```{r}
+global_moran_perm(
+  wm_knn6$WEEKEND_PM_TRIPS,
+  wm_knn6$nb,
+  wm_knn6$wt,
+  nsim = 99
+)
+```
+
+-   $0.10265 > 0$ means there are signs of clustering
+
+-   $p-value < 2.2\times10^{-16} < 0.05$ means the result is significant
+:::
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+In all peak periods, $I > 0$ and $p < \alpha$ (**0.05**) so **there are signs of geospatial clustering** in the data.
+:::
+
+## Calculating Local Moran's I
+
+As we have verified the existence of clusters, we can now proceed to looking for those clusters.
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+lmi_wkdy_am <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+### Weekday evening
+
+```{r}
+lmi_wkdy_pm <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_PM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+### Weekend morning
+
+```{r}
+lmi_wknd_am <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+### Weekend evening
+
+```{r}
+lmi_wknd_pm <- wm_knn6 %>% 
+  mutate(local_moran = local_moran(
+    WEEKDAY_AM_TRIPS, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+:::
+
+## Plotting Local Moran's I and p-value
+
+::: {.callout-note collapse="true" appearance="simple"}
+### Function for plotting *ii* and *p_ii_sim* maps side by side
+
+We will create a function to plot the local Moran's I and p-values side by side. This will allow for easy comparison of the 2 maps.
+
+```{r}
+plot_lmi_pv <- function(lmi) {
+  tmap_arrange(
+    tm_shape(mpsz) +
+      tm_fill(col="green") +
+      tm_borders(alpha = 0.5) +
+      tm_shape(lmi) +
+      tm_polygons("ii"),
+    tm_shape(mpsz) +
+      tm_fill(col="green") +
+      tm_borders(alpha = 0.5) +
+      tm_shape(lmi) +
+      tm_polygons("p_ii_sim",
+              breaks = c(0, 0.001, 0.01, 0.05, 1),
+              labels = c("0.001", "0.01", "0.05", "Not sig"),
+              palette = "YlOrRd"
+              ),
+    ncol = 2
+  )
+}
+```
+:::
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+plot_lmi_pv(lmi_wkdy_am)
+```
+
+### Weekday evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+plot_lmi_pv(lmi_wkdy_pm)
+```
+
+### Weekend morning
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+plot_lmi_pv(lmi_wkdy_pm)
+```
+
+### Weekend evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+plot_lmi_pv(lmi_wkdy_pm)
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+Big part of the maps show that most of the hexagons' p-values resulted into **insignificant values**. This means that those areas in red **do not have clusters**.
+
+Visually, they all look similar. However, we can see the clusters and outliers more clearly once we plot the LISA maps.
+:::
+
+## Plotting LISA Maps
+
+We will plot the Local Indicator of Spatial Association (LISA) maps to pinpoint where the clusters and outliers are.
+
+To do that, we will only include those hexagons for which the results are significant, or `p_ii_sim` is less than our $\alpha$ of **0.05**.
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
+tm_shape(mpsz) +
+  tm_fill(col="white")+
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wkdy_am %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
+  tm_layout(
+    main.title = "LISA for Weekday 6 - 9 AM",
+    main.title.position = "center",
+    main.title.size = 1
+  )
+```
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+High-high areas can be observed at the **Causeway** bus stops. This can be attributed to **workers living in Johor Bahru commuting to Singapore for work** causing this bus stops to be busy in the mornings**.** Larger **high-high clusters** during this peak period. Most of them seem to correspond to **bus interchanges**.
+
+Some high-low bus stops are can also be observed at the **West**. This could be key transfer points in these areas for people going to work or school.
+:::
+
+### Weekday evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
+tm_shape(mpsz) +
+  tm_fill(col="white")+
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wkdy_pm %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
+  tm_layout(
+    main.title = "LISA for Weekday 5 - 8 PM",
+    main.title.position = "center",
+    main.title.size = 1
+  )
+```
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+Compared to weekday mornings, there are **smaller clusters in the Central** part of Singapore. This could indicate that traffic is more distributed in this area and people riding buses are **more spread out**.
+
+One surprising observation is that the **Causeway bus stops** are not in a cluster during this peak period. It could indicate either lower traffic or more spread out traffic. One reason could be there are less people coming into the country during this time period.
+:::
+
+### Weekend morning
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+
+tm_shape(mpsz) +
+  tm_fill(col="white")+
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wknd_am %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
+  tm_layout(
+    main.title = "LISA for Weekend/Holiday 11 AM - 2 PM",
+    main.title.position = "center",
+    main.title.size = 1
+  )
+```
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+The clusters here coincide the most with **weekday morning** clusters. This could indicate that people are riding the bus from the same place, like their home.
+
+Some notable differences are there is no cluster on the **Causeway bus stops** (less workers coming in to Singapore), and a **high-low outlier** in the **Southern** part. It is in close proximity to **NUS Hospital and Kent Ridge Park**. so perhaps people go for their morning run or visit the hospital.
+:::
+
+### Weekend evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill(col="white")+
+  tm_borders(alpha = 0.5) +
+  tm_shape(lmi_wknd_pm %>% filter(p_ii_sim < 0.05)) +
+  tm_polygons("mean") + 
+  tm_layout(
+    main.title = "LISA for Weekend/Holiday 4- 7 PM",
+    main.title.position = "center",
+    main.title.size = 1
+  )
+```
+
+::: {.callout-tip appearance="simple"}
+The **high-low** outlier in the South part of Singapore that is present in **weekend morning** is also present here. This is a potential recreation area or a destination for weekend errands/
+
+Another key feature is the **triangle of high-low outliers** **in the West** (around Tuas and Jurong area). This pattern is also present in **weekday morning,** and **weekend morning** peak hours. These strongly supports the idea that these bus stops could be key transfer bus stops in this area.
+
+In addition, **high-high clusters of 3 or more hexagons** are present in the same areas but are not present in the **weekday evening** peak hours. This can indicate similar behavior of people commuting from their homes.
+
+Lastly, the **Causeway bus stops** are in a **high-high cluster** again, same as in **weekday morning**. This can indicate people coming back to Singapore after a short trip to Malaysia over the weekend.
+:::
+:::
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+There are low-low clusters in the **West and Northwest** parts of the country. This is consistent with the previous observations that these areas have less traffic. In addition, other low-low clusters were also observed at the edges of Singapore like in the East and South. This could suggest that people in these areas **use alternative modes of transportation** like the MRT.
+
+Another key observation is that the **low-high clusters** are in close proximity to the **high-high clusters**. On the other hand, **high-low** clusters are usually on their own. This could indicate that the bus stops in the low-high cluster are **under-utilized** because people prefer to use the bus stops in the nearby **high-high areas** there are **less bus routes** passing through these stops.
+:::
+
+# Emerging Hotspot Analysis
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can run the rest of the document from this point by loading these data.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb202310.rds")
+knn6_nb <- read_rds("data/rds/knn6_nb202310.rds")
+trips_cube_wkdy <- read_rds("data/rds/trips_cube_wkdy202310.rds")
+trips_cube_wknd <- read_rds("data/rds/trips_cube_wknd202310.rds")
+```
+
+-   `mpsz` - Singapore boundary map for visualization
+-   `honeycomb` - honeycomb grid containing bus stops in Singapore
+-   `trips_cube_wkdy` - hourly bus commuter trips data for weekdays
+-   `trips_cube_wknd` - hourly bus commuter trips data for weekend
+-   `knn6_nb` - Nearest 6 neighbors of each hexagon. Will be used as neighbor list for EHSA
+:::
+
+## Selecting time period to study
+
+To perform the **Emerging Hot Spot Analysis** (EHSA), we will select **6-hour** periods that covers each of the peak periods.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Why we need to select a 6 hour period
+
+As much as we want to do the test for the whole 24 hours, doing `emerging_hotspot_analysis()` is an expensive operation.
+
+Mann-Kendall numbers are calculated based on the number of elements in the spacetime cube.
+
+The cube has $n_{location}\times t$ items, which is in this case **36456**. Furthermore, comparing items to other items has a complexity $O(n^2)$ of. Hence, `emerging_hotspot_analysis()` is an $O(n_{location}^2t^2)$ operation.
+
+If we compare a **24-hr** period to processing a **6-hr** period:
+
+$$
+n_{location}^2t_{24hr}^2 = n_{location}^2(4t_{6hr})^2 = 16n_{location}^2t_{6hr}^2
+$$
+
+Calculating the full 24-hr period can take **16x** longer that doing the same operation for a 6-hour time period.
+
+Is such, we will select **2 6-hr periods** each for weekday and weekend data sets, covering the peak hours.
+:::
+
+### Inspecting the hourly trip data
+
+To help us select the time periods to study, let us take a look a the hourly distribution of the data.
+
+From the results below, the **median trips** for `1 <= HOUR_OF_DAY < 5` is 0. This means that most bus routes are **not in service**. So we will exclude them from the study.
+
+::: panel-tabset
+#### Weekday
+
+```{r}
+kable(head(
+  trips_cube_wkdy %>%
+    group_by(HOUR_OF_DAY) %>%
+    summarise(
+      min = min(TRIPS),
+      median = median(TRIPS),
+      max = max(TRIPS)
+  ), n = 24))
+```
+
+Morningpeak: **5 - 11AM**, covers the peak period of 5 - 9AM
+
+Evening peak: **3 - 9PM**, covers the peak period of 5 - 8PM
+
+#### Weekend
+
+```{r}
+kable(head(
+  trips_cube_wknd %>%
+    group_by(HOUR_OF_DAY) %>%
+    summarise(
+      min = min(TRIPS),
+      median = median(TRIPS),
+      max = max(TRIPS)
+  ), n = 24))
+```
+
+::: panel-tabset
+Morning peak: **9AM - 3PM**, covers the peak period of 11AM - 2PM
+
+Evening peak: **3 - 9PM**, covers the peak period of 4 - 7PM
+:::
+:::
+
+## Creating spacetime cube for the peak periods
+
+### Extracting data for the peak periods
+
+Now that we have selected the periods we are interested in, we will extract data needed for those by using `filter()`. We will then use these for creating the spacetime cube.
+
+::: panel-tabset
+#### Weekday
+
+```{r}
+trips_cube_wkdy_am <- trips_cube_wkdy %>%
+  filter(HOUR_OF_DAY >= 5 &
+           HOUR_OF_DAY < 11)
+
+trips_cube_wkdy_pm <- trips_cube_wkdy %>%
+  filter(HOUR_OF_DAY >= 15 &
+           HOUR_OF_DAY < 21)
+```
+
+#### Weekend
+
+```{r}
+trips_cube_wknd_am <- trips_cube_wknd %>%
+  filter(HOUR_OF_DAY >= 9 &
+           HOUR_OF_DAY < 15)
+
+trips_cube_wknd_pm <- trips_cube_wknd %>%
+  filter(HOUR_OF_DAY >= 15 &
+           HOUR_OF_DAY < 21)
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need `trips_cube_wkdy` and `trips_cube_wknd` anymore so we can remove them from the environment.
+
+```{r}
+rm(trips_cube_wkdy)
+rm(trips_cube_wknd)
+```
+:::
+
+### Building the spacetime cubes
+
+From the extracted peak period data, we will create the spacetime cubes using `spacetime`. We will use `HEX_ID` as the `time` parameter, and `HOUR_OF_DAY` as the `location` parameter.
+
+Next, the function needs a geometry to be passed along the aspatial data. We will use `honeycomb` for this.
+
+Lastly, we will use `is_spacetime_cube()` to check the validity of the generated spacetime cube.
+
+::: panel-tabset
+#### Weekday morning
+
+```{r}
+wkdy_am_st <- spacetime(trips_cube_wkdy_am, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wkdy_am_st)
+```
+
+#### Weekday evening
+
+```{r}
+wkdy_pm_st <- spacetime(trips_cube_wkdy_pm, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wkdy_pm_st)
+```
+
+#### Weekend morning
+
+```{r}
+wknd_am_st <- spacetime(trips_cube_wknd_am, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wknd_am_st)
+```
+
+#### Weekend evening
+
+```{r}
+wknd_pm_st <- spacetime(trips_cube_wknd_pm, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wknd_pm_st)
+```
+:::
+
+## Computing local Gi\*
+
+Before performing the EHSA, we will need to calculate the local Gi\* values first. This will help us associating hexagons to their respective neighbors, which is critical for the analysis.
+
+### Calculating inverse distance weights
+
+In performing any geospatial analysis, we need to calculate spatial weights. We will use the neighbor list we generated from LISA analysis, which used k-near neighbors, with **k=6**. Inverse distance weights will also be used so that the association between regions is stronger the closer they are.
+
+::: {.callout-note appearance="simple"}
+We will use `include_self()` in neighbor list as we are calculating Gi\* values.
+
+We will calculate this individually for each spacetime cube as in [Running the simulations], the neighbors and weights must be in the *geometry* context of the spacetime cube.
+:::
+
+::: panel-tabset
+#### Weekday morning
+
+```{r}
+wkdy_am_st <- wkdy_am_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(knn6_nb),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+kable(tail(wkdy_am_st, n = 3))
+```
+
+#### Weekday evening
+
+```{r}
+wkdy_pm_st <- wkdy_pm_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(knn6_nb),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+kable(tail(wkdy_pm_st, n = 3))
+```
+
+#### Weekend morning
+
+```{r}
+wknd_am_st <- wknd_am_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(knn6_nb),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+kable(tail(wknd_am_st, n = 3))
+```
+
+#### Weekend evening
+
+```{r}
+wknd_pm_st <- wknd_pm_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(knn6_nb),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+kable(tail(wknd_pm_st, n = 3))
+```
+:::
+
+### Calculating local Gi\* using *local_gstar_perm*
+
+As we included the hexagons themselves in their own neighbor list in [Calculating inverse distance weights], we can proceed with calculating the local GI\*.
+
+::: panel-tabset
+#### Weekday morning
+
+```{r}
+gi_st_wkdy_am <- wkdy_am_st %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
+```
+
+#### Weekday evening
+
+```{r}
+gi_st_wkdy_pm <- wkdy_pm_st %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
+```
+
+#### Weekend morning
+
+```{r}
+gi_st_wknd_am <- wknd_am_st %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
+```
+
+#### Weekend evening
+
+```{r}
+gi_st_wknd_pm <- wknd_pm_st %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
+```
+:::
+
+## Mann-Kendall Test
+
+By using the Gi\* we just calculated, let us look for notable patterns in the data.
+
+We will plot the Gi\* for 5 hexagons with emerging patterns.
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+top5_wkdy_am <- gi_st_wkdy_am %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wkdy_am %>%
+    filter(HEX_ID %in% top5_wkdy_am$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekdays (5 - 11 AM)")
+```
+
+The line shows increasing trend, with different slopes. This indicates presence of hot spots. It is most likely that these hexagons are not neighbors as they are not closely associated to each other.
+
+### Weekday evening
+
+```{r}
+top5_wkdy_pm <- gi_st_wkdy_pm %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wkdy_pm %>%
+    filter(HEX_ID %in% top5_wkdy_pm$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekdays (3 - 9 PM)")
+```
+
+Unlike the weekday morning trend line, these lines look very similar to each other. They may be neighbors as they show strong association with it other. It can indicate that we have a cluster of emerging hot spots for weekday evening.
+
+### Weekend morning
+
+```{r}
+top5_wknd_am <- gi_st_wknd_am %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wknd_am %>%
+    filter(HEX_ID %in% top5_wknd_am$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekends/Holidays (9 AM - 3 PM)")
+```
+
+These lines converged to a very close bunch of lines. The `HEX_ID` are also very close to each other, making it likely that they are neighbors. We should expect a hot spot made up of at least 5 hexagons when we plot our map later.
+
+### Weekend evening
+
+```{r}
+top5_wknd_pm <- gi_st_wknd_pm %>%
+  group_by(HEX_ID) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk) %>%
+  arrange(sl, abs(tau)) %>%
+  head()
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(
+  data = gi_st_wknd_pm %>%
+    filter(HEX_ID %in% top5_wknd_pm$HEX_ID),
+  aes(x = HOUR_OF_DAY, 
+      y = gi_star,
+      group = HEX_ID)) +
+  geom_line(
+    aes(color=HEX_ID),
+    size = 1) +
+  theme_light() +
+  labs(title = "Gi* for Weekends/Holidays (9 AM - 3 PM)")
+```
+
+Unlike the weekend morning graph, we do not see the same clustering of the lines for weekend evening. The hot spot clusters may be smaller than in weekend morning, which can indicate that traffic is **less concentrated**.
+:::
+
+## Emerging Hot Spot Analysis
+
+### Running the simulations
+
+We will now perform the Emerging Hot Spot Analysis with Monte-Carlo simulations using `emerging_hotspot_analysis()`.
+
+::: {.callout-note appearance="simple"}
+We will specify the `nb_col` and `wt_col` to the ones we used when calculating the spatial weights.
+
+This is because `emerging_hotspot_analysis()` uses **contiguity** **neighbors** and **standard weights**. We used **k-nearest neighbors with k = 6** to generate the neighbor list so we will retain this for consistency.
+:::
+
+::: {.callout-warning collapse="true"}
+#### Warning: This is a relatively expensive calculation
+
+This code chunk takes a relatively long time to run so it is set not to run with `eval: false` by default. We will also save it to an `rds` file so we do not need to recalculate the result all the time.
+
+The file size is small, **87.9KB**, so saving this file is a great way to cache the result for this expensive calculation.
+
+Please set code chunks to run with `eval: true`, or manually trigger the run on Rstudio if running for the first time.
+:::
+
+::: panel-tabset
+#### Weekday morning
+
+```{r}
+#| eval: false
+ehsa_wkdy_am <- emerging_hotspot_analysis(
+  x = wkdy_am_st, 
+  .var = "TRIPS", 
+  k = 1, 
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
+)
+write_rds(ehsa_wkdy_am, "data/rds/ehsa_wkdy_am202310.rds")
+```
+
+#### Weekday evening
+
+```{r}
+#| eval: false
+ehsa_wkdy_pm <- emerging_hotspot_analysis(
+  x = wkdy_pm_st, 
+  .var = "TRIPS", 
+  k = 1, 
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
+)
+write_rds(ehsa_wkdy_pm, "data/rds/ehsa_wkdy_pm202310.rds")
+```
+
+#### Weekend morning
+
+```{r}
+#| eval: false
+ehsa_wknd_am <- emerging_hotspot_analysis(
+  x = wknd_am_st, 
+  .var = "TRIPS", 
+  k = 1, 
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
+)
+write_rds(ehsa_wknd_am, "data/rds/ehsa_wknd_am202310.rds")
+```
+
+#### Weekend evening
+
+```{r}
+#| eval: false
+ehsa_wknd_pm <- emerging_hotspot_analysis(
+  x = wknd_pm_st, 
+  .var = "TRIPS", 
+  k = 1, 
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
+)
+write_rds(ehsa_wknd_pm, "data/rds/ehsa_wknd_pm202310.rds")
+```
+:::
+
+::: callout-note
+### Load point
+
+We will reload the previously generated `ehsa_wk*_*` data.
+
+```{r}
+ehsa_wkdy_am <- read_rds("data/rds/ehsa_wkdy_am202310.rds")
+ehsa_wkdy_pm <- read_rds("data/rds/ehsa_wkdy_pm202310.rds")
+ehsa_wknd_am <- read_rds("data/rds/ehsa_wknd_am202310.rds")
+ehsa_wknd_pm <- read_rds("data/rds/ehsa_wknd_pm202310.rds")
+```
+:::
+
+### Visualizing EHSA
+
+We will now visualize the results by plotting the categories for the areas where significant trends are detected.
+
+As our $\alpha$ is **0.05**, we will be filtering the values for which the **p-value \< 0.05** as it is for these areas where the trends observed where significant and did not happen by chance.
+
+Next, we will join the filtered values with `honeycomb` and transforming it to a `sf` object for it to be processed as a geospatial data.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Addressing the palette
+
+To show the EHSA classes as **reds for hot spots** and **blues for cold spots**, we will assign numbers to each category. This way the palette will identify the number values instead of sorting the categories alphabetically.
+
+*Reference for the categories:* <https://www.azavea.com/blog/2017/08/15/emerging-hot-spot-spatial-statistics/>
+
+```{r}
+ehsa_colors <- data.frame(
+  CLASS = c(
+      "persistent coldspot", "consecutive coldspot", "intensifying coldspot",
+      "sporadic coldspot", "new coldspot", "oscillating coldspot",
+      "historical coldspot", "diminishing coldspot",
+      "no pattern detected",
+      "diminishing hotspot", "historical hotspot",
+      "oscillating hotspot", "new hotspot", "sporadic hotspot",
+      "intensifying hotspot", "consecutive hotspot", "persistent hotspot"
+    ),
+  LEVEL = -8:8
+)
+```
+
+We will use this table to join with the EHSA plot to visualize the hot spots and cold spots appropriately.
+:::
+
+::: panel-tabset
+#### Weekday morning
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ehsa_sig_wkdy_am <- ehsa_wkdy_am %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
+    st_sf()
+
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wkdy_am) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekdays 5AM - 11PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
+```
+
+On weekday mornings, hot spots can be observed in residential areas like **Clementi** (with the biggest cluster of hot spots), **Queenstown**, **Bukit Merah**, and **Toa Payoh**. This aligns with our other observations as people are expected to come out of their homes to go to work or school in the morning.
+
+On the other hand, cold spots are observed in other residential areas like **Punggol**, **Jurong,** and **Choa Chu Kang** areas. A possible explanation is that alternative modes of transportation like the MRT or cars is preferred by people living in these areas.
+
+#### Weekday evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ehsa_sig_wkdy_pm <- ehsa_wkdy_pm %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
+    st_sf()
+  
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wkdy_pm) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekdays 3 - 9PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
+```
+
+Interestingly, the trend is reversed on weekday evenings. There are hot spots in the residential areas that were cold spots in the morning --- **Punggol**, **Jurong,** and **Choa Chu Kang** areas. Other notable additions to these hot spots are **Woodlands** and **Yishun**, other residential areas.
+
+This may mean that people in the area take the **MRT in the morning** going to office or work, but **take the bus home** in the evening.
+
+#### Weekend morning
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ehsa_sig_wknd_am <- ehsa_wknd_am %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
+    st_sf()
+  
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wknd_am) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekends/Holidays 9AM - 3PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
+```
+
+On weekend mornings, there are notable hot spots on many residential hubs like **Jurong**, **Tampines**, **Woodlands**, **Bedok**, etc.
+
+This can indicate consistent activity of people going out of their houses on weekend mornings. Having a lot of **persistent hot spots** indicate that this high activity is consistent throughout the morning.
+
+Another thing of note is the big hot spot in the Central area. This coincides with the **Orchard** area, which is a very popular are for recreation.
+
+#### Weekend evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ehsa_sig_wknd_pm <- ehsa_wknd_pm %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
+    st_sf()
+  
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wknd_pm) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekends 3PM - 9PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
+```
+
+There are less hot spots compared to weekend mornings. Some residential areas are busier than others, notably **Woodlands** and **Jurong** areas.
+
+Another key observation is the **Causeway** area in Woodlands are also hot spots, which indicate an influx of people coming into Singapore after spending the weekend in Malaysia.
+:::
