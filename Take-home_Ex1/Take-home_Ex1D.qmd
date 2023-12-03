@@ -14,7 +14,7 @@ execute:
 
 The aim of this study is to uncover spatial and spatio-temporal mobility patterns of public bus passengers in Singapore.
 
-The main modes of analysis to be used here are Local Indicators of Spatial Association (GLISA) and Emerging Hot Spot Analysis (EHSA).
+The main modes of analysis to be used here are Local Indicators of Spatial Association (LISA) and Emerging Hot Spot Analysis (EHSA).
 
 In doing these study, we will be looking at bus trips started during the hours below.
 
@@ -64,6 +64,7 @@ We will also set the default settings on for this document
 -   set **seed** for reproducibility of results
 
 ```{r}
+tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
 ```
@@ -77,180 +78,406 @@ Before running this part, please run all the code chunks in [Data Wrangling](/Ta
 Use `read_rds()` to load the `rds` data needed for geovisualization and analysis.
 
 ```{r}
-sg_honeycomb <- read_rds("data/rds/sg_honeycomb_with_num_busstops.rds")
-hourly_from_hex <- read_rds("data/rds/hourly_from_hex202310.rds")
-busstop_hc <- sg_honeycomb %>% filter(NUM_BUS_STOPS > 0)
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb202310.rds")
+knn6_nb <- read_rds("data/rds/knn6_nb202310.rds")
+trips_cube_wkdy <- read_rds("data/rds/trips_cube_wkdy202310.rds")
+trips_cube_wknd <- read_rds("data/rds/trips_cube_wknd202310.rds")
 ```
 
--   `sg_honeycomb` - contains the honeycomb grid that covers Singapore boundaries
--   `hourly_from_hex` - hourly bus commuter traffic data for **October 2023**
+-   `mpsz` - Singapore boundary map for visualization
+-   `honeycomb` - honeycomb grid containing bus stops in Singapore
+-   `trips_cube_wkdy` - hourly bus commuter trips data for weekdays
+-   `trips_cube_wknd` - hourly bus commuter trips data for weekend
+-   `knn6_nb` - Nearest 6 neighbors of each hexagon. Will be used as neighbor list for EHSA
 
-# Creating space-time cube
+# Selecting time period to study
 
-## First attempt
+To perform the **Emerging Hot Spot Analysis** (EHSA), we will select **6-hour** periods that covers each of the peak periods.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Why we need to select a 6 hour period
+
+As much as we want to do the test for the whole 24 hours, doing `emerging_hotspot_analysis()` is an expensive operation.
+
+Mann-Kendall numbers are calculated based on the number of elements in the spacetime cube.
+
+The cube has $n_{location}\times t$ items, which is in this case **36456**. Furthermore, comparing items to other items has a complexity $O(n^2)$ of. Hence, `emerging_hotspot_analysis()` is an $O(n_{location}^2t^2)$ operation.
+
+If we compare a **24-hr** period to processing a **6-hr** period:
+
+$$
+n_{location}^2t_{24hr}^2 = n_{location}^2(4t_{6hr})^2 = 16n_{location}^2t_{6hr}^2
+$$
+
+Calculating the full 24-hr period can take **16x** longer that doing the same operation for a 6-hour time period.
+
+Is such, we will select **2 6-hr periods** each for weekday and weekend data sets, covering the peak hours.
+:::
+
+## Inspecting the hourly trip data
+
+To help us select the time periods to study, let us take a look a the hourly distribution of the data.
+
+From the results below, the **median trips** for `1 <= HOUR_OF_DAY < 5` is 0. This means that most bus routes are **not in service**. So we will exclude them from the study.
+
+::: panel-tabset
+### Weekday
 
 ```{r}
-weekday_hourly_sf <-
-  hourly_from_hex %>%
-  filter(DAY_TYPE == "WEEKDAY") %>%
-  ungroup() %>%
-  select(c(1, 3, 4))
+kable(head(
+  trips_cube_wkdy %>%
+    group_by(HOUR_OF_DAY) %>%
+    summarise(
+      min = min(TRIPS),
+      median = median(TRIPS),
+      max = max(TRIPS)
+  ), n = 24))
 ```
 
-```{r}
-weekday_st <- spacetime(weekday_hourly_sf, busstop_hc,
-                        .loc_col = "HEXAGON_ID",
-                        .time_col = "HOUR_OF_DAY")
-is_spacetime_cube(weekday_st)
-```
+Morningpeak: **5 - 11AM**, covers the peak period of 5 - 9AM
 
-## Filling the gaps
+Evening peak: **3 - 9PM**, covers the peak period of 5 - 8PM
 
-Attempt was successful because we are missing some **time-location** combinations.
-
-As we have **1519** hexagons and **24** hours in a day, the `sf` must have $1519 \times 24$ or **36456** rows.
+### Weekend
 
 ```{r}
-full_combo <-
-  expand.grid(
-    HEXAGON_ID = unique(busstop_hc$HEXAGON_ID),
-    HOUR_OF_DAY = 0:23
-  )
-nrow(full_combo)
-```
-
-```{r}
-weekday_hourly_sf <- full_join(weekday_hourly_sf, full_combo)
-weekday_hourly_sf$TRIPS[is.na(weekday_hourly_sf$TRIPS)] <- 0
-weekday_hourly_sf <- weekday_hourly_sf %>% filter(HOUR_OF_DAY >= 6 & HOUR_OF_DAY < 14)
-weekday_hourly_sf <- weekday_hourly_sf %>%
-  left_join(busstop_hc) %>% st_sf()
+kable(head(
+  trips_cube_wknd %>%
+    group_by(HOUR_OF_DAY) %>%
+    summarise(
+      min = min(TRIPS),
+      median = median(TRIPS),
+      max = max(TRIPS)
+  ), n = 24))
 ```
 
 ::: panel-tabset
-## Weekday
+Morningpeak: **9AM - 3PM**, covers the peak period of 11AM - 2PM
 
-```{r}
-weekday_st <- spacetime(weekday_hourly_sf, busstop_hc,
-                        .loc_col = "HEXAGON_ID",
-                        .time_col = "HOUR_OF_DAY")
-is_spacetime_cube(weekday_st)
-```
-
-## Weekend/Holidays
+Evening peak: **3 - 9PM**, covers the peak period of 4 - 7PM
+:::
 :::
 
-# Deriving spatial weights
+# Creating spacetime cube for the peak periods
+
+## Extracting data for the peak periods
+
+Now that we have selected the periods we are interested in, we will extract data needed for those by using `filter()`. We will then use these for creating the spacetime cube.
+
+::: panel-tabset
+### Weekday
 
 ```{r}
-weekday_nb <-
-  weekday_st %>%
+trips_cube_wkdy_am <- trips_cube_wkdy %>%
+  filter(HOUR_OF_DAY >= 5 &
+           HOUR_OF_DAY < 11)
+
+trips_cube_wkdy_pm <- trips_cube_wkdy %>%
+  filter(HOUR_OF_DAY >= 15 &
+           HOUR_OF_DAY < 21)
+```
+
+### Weekend
+
+```{r}
+trips_cube_wknd_am <- trips_cube_wknd %>%
+  filter(HOUR_OF_DAY >= 9 &
+           HOUR_OF_DAY < 15)
+
+trips_cube_wknd_pm <- trips_cube_wknd %>%
+  filter(HOUR_OF_DAY >= 15 &
+           HOUR_OF_DAY < 21)
+```
+:::
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We do not need `trips_cube_wkdy` and `trips_cube_wknd` anymore so we can remove them from the environment.
+
+```{r}
+rm(trips_cube_wkdy)
+rm(trips_cube_wknd)
+```
+:::
+
+## Building the spacetime cubes
+
+From the extracted peak period data, we will create the spacetime cubes using `spacetime`. We will use `HEX_ID` as the `time` parameter, and `HOUR_OF_DAY` as the `location` parameter.
+
+Next, the function needs a geometry to be passed along the aspatial data. We will use `honeycomb` for this.
+
+Lastly, we will use `is_spacetime_cube()` to check the validity of the generated spacetime cube.
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+wkdy_am_st <- spacetime(trips_cube_wkdy_am, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wkdy_am_st)
+```
+
+### Weekday evening
+
+```{r}
+wkdy_pm_st <- spacetime(trips_cube_wkdy_pm, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wkdy_pm_st)
+```
+
+### Weekend morning
+
+```{r}
+wknd_am_st <- spacetime(trips_cube_wknd_am, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wknd_am_st)
+```
+
+### Weekend evening
+
+```{r}
+wknd_pm_st <- spacetime(trips_cube_wknd_pm, honeycomb,
+                        .loc_col = "HEX_ID",
+                        .time_col = "HOUR_OF_DAY")
+is_spacetime_cube(wknd_pm_st)
+```
+:::
+
+# Computing local Gi\*
+
+Before performing the EHSA, we will need to calculate the local Gi\* values first. This will help us associating hexagons to their respective neighbors, which is critical for the analysis.
+
+## Calculating inverse distance weights
+
+In performing any geospatial analysis, we need to calculate spatial weights. We will use the neighbor list we generated from LISA analysis, which used k-near neighbors, with **k=6**. Inverse distance weights is used so that the association between 2 regions is stronger the closer they are.
+
+::: {.callout-note appearance="simple"}
+We will use `include_self()` in neighbor list as we are calculating Gi\* values.
+:::
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+idw_wkdy_am <- wkdy_am_st %>%
   activate("geometry") %>%
-  mutate(nb = include_self(st_contiguity(geometry)),
+  mutate(nb = include_self(knn6_nb),
          wt = st_inverse_distance(nb, geometry,
                                   scale = 1,
                                   alpha = 1),
          .before = 1) %>%
   set_nbs("nb") %>%
   set_wts("wt")
+kable(tail(idw_wkdy_am, n = 3))
 ```
 
-# Computing local Gi\*
+### Weekday evening
 
 ```{r}
-gi_stars <- weekday_nb %>% 
+idw_wkdy_pm <- wkdy_pm_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(knn6_nb),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+kable(tail(idw_wkdy_pm, n = 3))
+```
+
+### Weekend morning
+
+```{r}
+idw_wknd_am <- wknd_am_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(knn6_nb),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+kable(tail(idw_wknd_am, n = 3))
+```
+
+### Weekend evening
+
+```{r}
+idw_wknd_pm <- wknd_pm_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(knn6_nb),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+kable(tail(idw_wknd_pm, n = 3))
+```
+:::
+
+## Calculating local Gi\* using *local_gstar_perm*
+
+As we included the hexagons themselves in their own neighbor list in [Calculating inverse distance weights], we can proceed with calculating the local GI\*.
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+gi_st_wkdy_am <- idw_wkdy_am %>% 
   group_by(HOUR_OF_DAY) %>% 
   mutate(gi_star = local_gstar_perm(
     TRIPS, nb, wt)) %>% 
   unnest(gi_star)
 ```
 
-# Mann-Kendall
+### Weekday evening
 
 ```{r}
-weekday_cbg <- gi_stars %>% 
-  ungroup() %>% 
-  filter(HEXAGON_ID == "48") %>%
-  select(HEXAGON_ID, HOUR_OF_DAY, gi_star)
+gi_st_wkdy_pm <- idw_wkdy_pm %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
 ```
 
-## Plot
+### Weekend morning
 
 ```{r}
-p <- ggplot(data = weekday_cbg, 
-       aes(x = HOUR_OF_DAY, 
-           y = gi_star)) +
-  geom_line() +
-  theme_light()
-
-ggplotly(p)
+gi_st_wknd_am <- idw_wknd_am %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
 ```
+
+### Weekend evening
 
 ```{r}
-weekday_cbg %>%
-  summarise(mk = list(
-    unclass(
-      Kendall::MannKendall(gi_star)))) %>% 
-  unnest_wider(mk)
+gi_st_wknd_pm <- idw_wknd_pm %>% 
+  group_by(HOUR_OF_DAY) %>% 
+  mutate(gi_star = local_gstar_perm(
+    TRIPS, nb, wt)) %>% 
+  unnest(gi_star)
 ```
+:::
 
-# EHSA
+# Emerging Hot Spot Analysis
+
+## Running the simulations
+
+We will now perform the Emerging Hot Spot Analysis with Monte-Carlo simulations using `emerging_hotspot_analysis`.
+
+::: {.callout-warning collapse="true"}
+### Warning: This is a relatively expensive calculation
+
+This code chunk takes a relatively long time to run so it is set not to run with `eval: false` by default. We will also save it to an `rds` file so we do not need to recalculate the result all the time.
+
+The file size is small, **87.9KB**, so saving this file is a great way to cache the result for this expensive calculation.
+
+Please set code chunks to run with `eval: true`, or manually trigger the run on Rstudio if running for the first time.
+:::
+
+::: panel-tabset
+### Weekday morning
 
 ```{r}
-ehsa <- gi_stars %>%
-  group_by(HEXAGON_ID) %>%
-  summarise(mk = list(
-    unclass(
-      Kendall::MannKendall(gi_star)))) %>%
-  unnest_wider(mk)
-```
-
-```{r}
-ehsa %>% 
-  arrange(sl, abs(tau)) %>% head()
-```
-
-These are the emerging hot spots and cold spots
-
-# Emerging Hotspot Analysis
-
-```{r eval = FALSE}
-ehsa2 <- emerging_hotspot_analysis(
-  x = weekday_st, 
+#| eval: false
+ehsa_wkdy_am <- emerging_hotspot_analysis(
+  x = wkdy_am_st, 
   .var = "TRIPS", 
   k = 1, 
-  nsim = 99,
+  nsim = 99
 )
+write_rds(ehsa_wkdy_am, "data/rds/ehsa_wkdy_am202310.rds")
 ```
+
+### Weekday evening
 
 ```{r}
-#write_rds(ehsa2, "data/rds/weekday_ehsa.rds")
-ehsa2 <- read_rds("data/rds/weekday_ehsa.rds")
+#| eval: false
+ehsa_wkdy_pm <- emerging_hotspot_analysis(
+  x = wkdy_pm_st, 
+  .var = "TRIPS", 
+  k = 1, 
+  nsim = 99
+)
+write_rds(ehsa_wkdy_pm, "data/rds/ehsa_wkdy_pm202310.rds")
 ```
 
-## Visualization the distribution of EHSA classes
+### Weekend morning
 
 ```{r}
-ggplot(data = ehsa2,
-       aes(x = classification)) +
-  geom_bar()
+#| eval: false
+ehsa_wknd_am <- emerging_hotspot_analysis(
+  x = wknd_am_st, 
+  .var = "TRIPS", 
+  k = 1, 
+  nsim = 99
+)
+write_rds(ehsa_wknd_am, "data/rds/ehsa_wknd_am202310.rds")
 ```
+
+### Weekend evening
 
 ```{r}
-weekday_hourly_ehsa <- weekday_hourly_sf %>%
-  left_join(ehsa2,
-            by = join_by(HEXAGON_ID == location))
+#| eval: false
+ehsa_wknd_pm <- emerging_hotspot_analysis(
+  x = wknd_pm_st, 
+  .var = "TRIPS", 
+  k = 1,
+  nsim = 99
+)
+write_rds(ehsa_wknd_pm, "data/rds/ehsa_wknd_pm202310.rds")
 ```
+:::
+
+::: callout-note
+## Load point
+
+We will reload the previously generated `ehsa_wk*_*` data.
 
 ```{r}
-ehsa_sig <- weekday_hourly_ehsa  %>%
-  filter(p_value < 0.05)
-
-tmap_mode("plot")
-tm_shape(sg_honeycomb) +
-  tm_fill(col="white") +
-  tm_borders(alpha = 0.5) +
-tm_shape(ehsa_sig) +
-  tm_fill("classification") + 
-  tm_borders(alpha = 0.4)
+ehsa_wkdy_am <- read_rds("data/rds/ehsa_wkdy_am202310.rds")
+ehsa_wkdy_pm <- read_rds("data/rds/ehsa_wkdy_pm202310.rds")
+ehsa_wknd_am <- read_rds("data/rds/ehsa_wknd_am202310.rds")
+ehsa_wknd_pm <- read_rds("data/rds/ehsa_wknd_pm202310.rds")
 ```
+:::
+
+## Visualizing EHSA
+
+We will now visualize the results by plotting the categories for the areas where significant trends are detected.
+
+As our $\alpha$ is **0.05**, we will be filtering the values for which the **p-value \< 0.05** as it is for these areas where the trends observed where significant and did not happen by chance.
+
+Next, we will join the filtered values with `honeycomb` and transforming it to a `sf` object for it to be processed as a geospatial data.
+
+::: panel-tabset
+### Weekday morning
+
+```{r}
+ehsa_sig_wkdy_am <- ehsa_wkdy_am %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    st_sf()
+  
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wkdy_am) +
+  tm_polygons("classification", palette = "Paired")
+```
+
+### Weekday evening
+
+### Weekend morning
+
+### Weekend evening
+:::

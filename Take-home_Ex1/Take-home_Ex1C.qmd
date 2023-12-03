@@ -112,7 +112,7 @@ For all analysis in this study, we will set the significance level, or $\alpha$ 
 
 # Computing adaptive distance weights matrix
 
-Before getting Moran's I, we need to get the spatial weights first. We will use **adptive distance-based weights** for this, which uses the **k-nearest neighbors**.
+Before getting Moran's I, we need to get the spatial weights first. We will use **adaptive distance-based weights** for this, which uses the **k-nearest neighbors**.
 
 ::: {.callout-note collapse="true" appearance="simple"}
 ## Why not contiguity weights?
@@ -170,7 +170,10 @@ write_rds(knn6_nb, "data/rds/knn6_nb202310.rds")
 wm_knn6 <- peak_trips_sf %>%
   mutate(
     nb = knn6_nb,
-    wt = st_weights(nb, style = "W")
+    #wt = st_weights(nb, style = "W")
+    wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1)
     )
 ```
 
@@ -317,7 +320,6 @@ plot_lmi_pv <- function(lmi) {
       tm_borders(alpha = 0.5) +
       tm_shape(lmi) +
       tm_polygons("ii") + 
-      tm_borders(alpha = 0.5),
     tm_shape(mpsz) +
       tm_fill(col="green") +
       tm_borders(alpha = 0.5) +
@@ -326,8 +328,7 @@ plot_lmi_pv <- function(lmi) {
               breaks = c(0, 0.001, 0.01, 0.05, 1),
               labels = c("0.001", "0.01", "0.05", "Not sig"),
               palette = "YlOrRd"
-              ) + 
-      tm_borders(alpha = 0.5),
+              ),
     ncol = 2
   )
 }
