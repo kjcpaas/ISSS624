@@ -153,7 +153,7 @@ kable(head(
 ```
 
 ::: panel-tabset
-Morningpeak: **9AM - 3PM**, covers the peak period of 11AM - 2PM
+Morning peak: **9AM - 3PM**, covers the peak period of 11AM - 2PM
 
 Evening peak: **3 - 9PM**, covers the peak period of 4 - 7PM
 :::
@@ -254,17 +254,19 @@ Before performing the EHSA, we will need to calculate the local Gi\* values firs
 
 ## Calculating inverse distance weights
 
-In performing any geospatial analysis, we need to calculate spatial weights. We will use the neighbor list we generated from LISA analysis, which used k-near neighbors, with **k=6**. Inverse distance weights is used so that the association between 2 regions is stronger the closer they are.
+In performing any geospatial analysis, we need to calculate spatial weights. We will use the neighbor list we generated from LISA analysis, which used k-near neighbors, with **k=6**. Inverse distance weights will also be used so that the association between regions is stronger the closer they are.
 
 ::: {.callout-note appearance="simple"}
 We will use `include_self()` in neighbor list as we are calculating Gi\* values.
+
+We will calculate this individually for each spacetime cube as in [Running the simulations], the neighbors and weights must be in the *geometry* context of the spacetime cube.
 :::
 
 ::: panel-tabset
 ### Weekday morning
 
 ```{r}
-idw_wkdy_am <- wkdy_am_st %>%
+wkdy_am_st <- wkdy_am_st %>%
   activate("geometry") %>%
   mutate(nb = include_self(knn6_nb),
          wt = st_inverse_distance(nb, geometry,
@@ -273,13 +275,13 @@ idw_wkdy_am <- wkdy_am_st %>%
          .before = 1) %>%
   set_nbs("nb") %>%
   set_wts("wt")
-kable(tail(idw_wkdy_am, n = 3))
+kable(tail(wkdy_am_st, n = 3))
 ```
 
 ### Weekday evening
 
 ```{r}
-idw_wkdy_pm <- wkdy_pm_st %>%
+wkdy_pm_st <- wkdy_pm_st %>%
   activate("geometry") %>%
   mutate(nb = include_self(knn6_nb),
          wt = st_inverse_distance(nb, geometry,
@@ -288,13 +290,13 @@ idw_wkdy_pm <- wkdy_pm_st %>%
          .before = 1) %>%
   set_nbs("nb") %>%
   set_wts("wt")
-kable(tail(idw_wkdy_pm, n = 3))
+kable(tail(wkdy_pm_st, n = 3))
 ```
 
 ### Weekend morning
 
 ```{r}
-idw_wknd_am <- wknd_am_st %>%
+wknd_am_st <- wknd_am_st %>%
   activate("geometry") %>%
   mutate(nb = include_self(knn6_nb),
          wt = st_inverse_distance(nb, geometry,
@@ -303,13 +305,13 @@ idw_wknd_am <- wknd_am_st %>%
          .before = 1) %>%
   set_nbs("nb") %>%
   set_wts("wt")
-kable(tail(idw_wknd_am, n = 3))
+kable(tail(wknd_am_st, n = 3))
 ```
 
 ### Weekend evening
 
 ```{r}
-idw_wknd_pm <- wknd_pm_st %>%
+wknd_pm_st <- wknd_pm_st %>%
   activate("geometry") %>%
   mutate(nb = include_self(knn6_nb),
          wt = st_inverse_distance(nb, geometry,
@@ -318,7 +320,7 @@ idw_wknd_pm <- wknd_pm_st %>%
          .before = 1) %>%
   set_nbs("nb") %>%
   set_wts("wt")
-kable(tail(idw_wknd_pm, n = 3))
+kable(tail(wknd_pm_st, n = 3))
 ```
 :::
 
@@ -330,7 +332,7 @@ As we included the hexagons themselves in their own neighbor list in [Calculatin
 ### Weekday morning
 
 ```{r}
-gi_st_wkdy_am <- idw_wkdy_am %>% 
+gi_st_wkdy_am <- wkdy_am_st %>% 
   group_by(HOUR_OF_DAY) %>% 
   mutate(gi_star = local_gstar_perm(
     TRIPS, nb, wt)) %>% 
@@ -340,7 +342,7 @@ gi_st_wkdy_am <- idw_wkdy_am %>%
 ### Weekday evening
 
 ```{r}
-gi_st_wkdy_pm <- idw_wkdy_pm %>% 
+gi_st_wkdy_pm <- wkdy_pm_st %>% 
   group_by(HOUR_OF_DAY) %>% 
   mutate(gi_star = local_gstar_perm(
     TRIPS, nb, wt)) %>% 
@@ -350,7 +352,7 @@ gi_st_wkdy_pm <- idw_wkdy_pm %>%
 ### Weekend morning
 
 ```{r}
-gi_st_wknd_am <- idw_wknd_am %>% 
+gi_st_wknd_am <- wknd_am_st %>% 
   group_by(HOUR_OF_DAY) %>% 
   mutate(gi_star = local_gstar_perm(
     TRIPS, nb, wt)) %>% 
@@ -360,7 +362,7 @@ gi_st_wknd_am <- idw_wknd_am %>%
 ### Weekend evening
 
 ```{r}
-gi_st_wknd_pm <- idw_wknd_pm %>% 
+gi_st_wknd_pm <- wknd_pm_st %>% 
   group_by(HOUR_OF_DAY) %>% 
   mutate(gi_star = local_gstar_perm(
     TRIPS, nb, wt)) %>% 
@@ -372,7 +374,13 @@ gi_st_wknd_pm <- idw_wknd_pm %>%
 
 ## Running the simulations
 
-We will now perform the Emerging Hot Spot Analysis with Monte-Carlo simulations using `emerging_hotspot_analysis`.
+We will now perform the Emerging Hot Spot Analysis with Monte-Carlo simulations using `emerging_hotspot_analysis()`.
+
+::: {.callout-note appearance="simple"}
+We will specify the `nb_col` and `wt_col` to the ones we used when calculating the spatial weights.
+
+This is because `emerging_hotspot_analysis()` uses **contiguity** **neighbors** and **standard weights**. We used **k-nearest neighbors with k = 6** to generate the neighbor list so we will retain this for consistency.
+:::
 
 ::: {.callout-warning collapse="true"}
 ### Warning: This is a relatively expensive calculation
@@ -393,7 +401,9 @@ ehsa_wkdy_am <- emerging_hotspot_analysis(
   x = wkdy_am_st, 
   .var = "TRIPS", 
   k = 1, 
-  nsim = 99
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
 )
 write_rds(ehsa_wkdy_am, "data/rds/ehsa_wkdy_am202310.rds")
 ```
@@ -406,7 +416,9 @@ ehsa_wkdy_pm <- emerging_hotspot_analysis(
   x = wkdy_pm_st, 
   .var = "TRIPS", 
   k = 1, 
-  nsim = 99
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
 )
 write_rds(ehsa_wkdy_pm, "data/rds/ehsa_wkdy_pm202310.rds")
 ```
@@ -419,7 +431,9 @@ ehsa_wknd_am <- emerging_hotspot_analysis(
   x = wknd_am_st, 
   .var = "TRIPS", 
   k = 1, 
-  nsim = 99
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
 )
 write_rds(ehsa_wknd_am, "data/rds/ehsa_wknd_am202310.rds")
 ```
@@ -431,8 +445,10 @@ write_rds(ehsa_wknd_am, "data/rds/ehsa_wknd_am202310.rds")
 ehsa_wknd_pm <- emerging_hotspot_analysis(
   x = wknd_pm_st, 
   .var = "TRIPS", 
-  k = 1,
-  nsim = 99
+  k = 1, 
+  nsim = 99,
+  nb_col = "nb",
+  wt_col = "wt"
 )
 write_rds(ehsa_wknd_pm, "data/rds/ehsa_wknd_pm202310.rds")
 ```
@@ -459,25 +475,191 @@ As our $\alpha$ is **0.05**, we will be filtering the values for which the **p-v
 
 Next, we will join the filtered values with `honeycomb` and transforming it to a `sf` object for it to be processed as a geospatial data.
 
+::: {.callout-tip collapse="true" appearance="simple"}
+## Addressing the palette
+
+To show the EHSA classes as **reds for hot spots** and **blues for cold spots**, we will assign numbers to each category. This way the palette will identify the number values instead of sorting the categories alphabetically.
+
+*Reference for the categories:* <https://www.azavea.com/blog/2017/08/15/emerging-hot-spot-spatial-statistics/>
+
+```{r}
+ehsa_colors <- data.frame(
+  CLASS = c(
+      "persistent coldspot", "consecutive coldspot", "intensifying coldspot",
+      "sporadic coldspot", "new coldspot", "oscillating coldspot",
+      "historical coldspot", "diminishing coldspot",
+      "no pattern detected",
+      "diminishing hotspot", "historical hotspot",
+      "oscillating hotspot", "new hotspot", "sporadic hotspot",
+      "intensifying hotspot", "consecutive hotspot", "persistent hotspot"
+    ),
+  LEVEL = -8:8
+)
+```
+
+We will use this table to join with the EHSA plot to visualize the hot spots and cold spots appropriately.
+:::
+
 ::: panel-tabset
 ### Weekday morning
 
 ```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
 ehsa_sig_wkdy_am <- ehsa_wkdy_am %>%
     filter(p_value < 0.05) %>%
     left_join(honeycomb,
               by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
+    st_sf()
+
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wkdy_am) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekdays 5AM - 11PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
+```
+
+On weekday mornings, hot spots can be observed in residential areas like **Clementi** (with the biggest cluster of hot spots), **Queenstown**, **Bukit Merah**, and **Toa Payoh**. This aligns with our other observations as people are expected to come out of their homes to go to work or school in the morning.
+
+On the other hand, cold spots are observed in other residential areas like **Punggol**, **Jurong,** and **Choa Chu Kang** areas. A possible explanation is that alternative modes of transportation like the MRT or cars is preferred by people living in these areas.
+
+### Weekday evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ehsa_sig_wkdy_pm <- ehsa_wkdy_pm %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
     st_sf()
   
 tm_shape(mpsz) +
   tm_polygons(col = "white") +
-tm_shape(ehsa_sig_wkdy_am) +
-  tm_polygons("classification", palette = "Paired")
+tm_shape(ehsa_sig_wkdy_pm) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekdays 3 - 9PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
 ```
 
-### Weekday evening
+Interestingly, the trend is reversed on weekday evenings. There are hot spots in the residential areas that were cold spots in the morning --- **Punggol**, **Jurong,** and **Choa Chu Kang** areas. Other notable additions to these hot spots are **Woodlands** and **Yishun**, other residential areas.
+
+This may mean that people in the area take the **MRT in the morning** going to office or work, but **take the bus home** in the evening.
 
 ### Weekend morning
 
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ehsa_sig_wknd_am <- ehsa_wknd_am %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
+    st_sf()
+  
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wknd_am) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekends/Holidays 9AM - 3PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
+```
+
+On weekend mornings, there are notable hot spots on many residential hubs like **Jurong**, **Tampines**, **Woodlands**, **Bedok**, etc.
+
+This can indicate consistent activity of people going out of their houses on weekend mornings. Having a lot of **persistent hot spots** indicate that this high activity is consistent throughout the morning.
+
+Another thing of note is the big hot spot in the Central area. This coincides with the **Orchard** area, which is a very popular are for recreation.
+
 ### Weekend evening
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ehsa_sig_wknd_pm <- ehsa_wknd_pm %>%
+    filter(p_value < 0.05) %>%
+    left_join(honeycomb,
+              by = join_by(location == HEX_ID)) %>%
+    left_join(ehsa_colors,
+              by = join_by(classification == CLASS)) %>%
+    st_sf()
+  
+tm_shape(mpsz) +
+  tm_polygons(col = "white") +
+tm_shape(ehsa_sig_wknd_pm) +
+  tm_polygons(
+    "LEVEL",
+    palette = "-Spectral",
+    breaks = -8:9,
+    labels = ehsa_colors$CLASS,
+    title = "Legend"
+  ) +
+  tm_layout(main.title = "Hot Spots and Cold Spots (Weekends 3PM - 9PM)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.4, 
+            legend.width = 0.4,
+            legend.bg.color = "white",
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(bg.color = "white") +
+  tm_grid(alpha = 0.2)
+
+```
+
+There are less hot spots compared to weekend mornings. Some residential areas are busier than others, notably **Woodlands** and **Jurong** areas.
+
+Another key observation is the **Causeway** area in Woodlands are also hot spots, which indicate an influx of people coming into Singapore after spending the weekend in Malaysia.
 :::
