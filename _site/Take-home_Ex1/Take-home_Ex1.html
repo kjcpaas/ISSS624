@@ -9,7 +9,7 @@
 <meta name="author" content="Kristine Joy Paas">
 <meta name="dcterms.date" content="2023-11-24">
 
-<title>ISSS624 - Take Home Exercise 1A: Geospatial Analytics for Public Good</title>
+<title>ISSS624 - Take Home Exercise 1: Geospatial Analytics for Public Good</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -183,8 +183,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-take-home-exercises">    
         <li>
-    <a class="dropdown-item" href="../Take-home_Ex1/Take-home_Ex1.html" rel="" target="">
- <span class="dropdown-text">1: Geospatial Analytics for Public Good (combined)</span></a>
+    <a class="dropdown-item" href="../Take-home_Ex1/Take-home_Ex1." rel="" target="">
+ <span class="dropdown-text">1: Geospatial Analytics for Public Good</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Take-home_Ex2/Take-home_Ex2.html" rel="" target="">
+ <span class="dropdown-text">2: Applied Spatial Interaction Models</span></a>
   </li>  
     </ul>
   </li>
@@ -301,7 +305,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Take Home Exercise 1A: Geospatial Analytics for Public Good</h1>
+<h1 class="title">Take Home Exercise 1: Geospatial Analytics for Public Good</h1>
 </div>
 
 
@@ -325,7 +329,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">December 4, 2023</p>
+      <p class="date-modified">December 6, 2023</p>
     </div>
   </div>
     
@@ -1515,7 +1519,7 @@ Why `inner_join()` instead of `left_join()`?
 <pre><code>[1] 63</code></pre>
 </div>
 </div>
-<p>There are <strong>57</strong> bus stops in <code>trips</code> that are not in <code>bs_hex</code>. <strong>5</strong> of this can be attributed the bus stops we removed in [####About those points outside Singapore]. Others may be due to the <em>BusStops</em> data set not having complete information.</p>
+<p>There are <strong>63</strong> bus stops in <code>trips</code> that are not in <code>bs_hex</code>. <strong>5</strong> of this can be attributed the bus stops we removed in [####About those points outside Singapore]. Others may be due to the <em>BusStops</em> data set not having complete information.</p>
 <p>Nonetheless, we have to <strong>remove</strong> these bus stops from our analysis as <strong>we do not have geospatial data</strong> to associate to the hexagons.</p>
 <p>Therefore, we will use <code>inner_join</code> to keep only the observations in <code>trips</code> with the matching bus stops in <code>bs_hex</code>.</p>
 </div>

@@ -1,5 +1,5 @@
 ---
-title: "Take Home Exercise 1A: Geospatial Analytics for Public Good"
+title: "Take Home Exercise 1: Geospatial Analytics for Public Good"
 author: "Kristine Joy Paas"
 date: "24 November 2023"
 date-modified: "last-modified"
@@ -605,7 +605,7 @@ trips$BUS_STOP_N[!(trips$BUS_STOP_N %in% bs_hex$BUS_STOP_N)] %>%
   unique() %>% length()
 ```
 
-There are **57** bus stops in `trips` that are not in `bs_hex`. **5** of this can be attributed the bus stops we removed in \[####About those points outside Singapore\]. Others may be due to the *BusStops* data set not having complete information.
+There are **63** bus stops in `trips` that are not in `bs_hex`. **5** of this can be attributed the bus stops we removed in \[####About those points outside Singapore\]. Others may be due to the *BusStops* data set not having complete information.
 
 Nonetheless, we have to **remove** these bus stops from our analysis as **we do not have geospatial data** to associate to the hexagons.
 

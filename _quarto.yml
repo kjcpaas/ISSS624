@@ -33,8 +33,10 @@ website:
             href: In-class_Ex3/In-class_Ex3.qmd
       - text: Take-home Exercises
         menu:
-          - text: "1: Geospatial Analytics for Public Good (combined)"
-            href: Take-home_Ex1/Take-home_Ex1.qmd
+          - text: "1: Geospatial Analytics for Public Good"
+            href: Take-home_Ex1/Take-home_Ex1.
+          - text: "2: Applied Spatial Interaction Models"
+            href: Take-home_Ex2/Take-home_Ex2.qmd
     right:
       - href: index.qmd
         text: Home
