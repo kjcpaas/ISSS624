@@ -133,4 +133,58 @@ kable(head(bs_hex))
 
 What if bus stop is in 2 hexagons?
 
-## Import aspatial data
+### A bus stop is included in 2 hexagons
+
+We have to remove one of them.
+
+```{r}
+kable(head(bs_hex))
+```
+
+```{r}
+tm_shape(honeycomb[1:10,]) +
+  tm_fill(col = "white", title = "Hexagons", alpha = 1) +
+  tm_text("HEX_ID", size = 0.8) +
+  tm_borders(alpha = 0.2) +
+  tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5, position = c("left", "top")) +
+  tm_shape(busstops %>% filter(BUS_STOP_N == "25059")) +
+  tm_dots(col = "red", size = 0.05, title = "Bus Stops") +
+  tm_grid(alpha = 0.2)
+```
+
+The bus stop is right on the boundary of H0001 and H0002. If we remove H0002, H0001 will be an island so let us remove H0001. This way, H0002 is still connected to another hexagon. Let's also re-assign the ids of the hexagon.
+
+```{r}
+honeycomb <- honeycomb %>% filter(HEX_ID != "H0001")
+honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb))) %>% as.factor()
+```
+
+```{r}
+tm_shape(honeycomb[1:10,]) +
+  tm_fill(col = "white", title = "Hexagons", alpha = 1) +
+  tm_text("HEX_ID", size = 0.8) +
+  tm_borders(alpha = 0.2) +
+  tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5, position = c("left", "top")) +
+  tm_shape(busstops %>% filter(BUS_STOP_N == "25059")) +
+  tm_dots(col = "red", size = 0.05, title = "Bus Stops") +
+  tm_grid(alpha = 0.2)
+```
+
+```{r}
+bs_hex <- st_intersection(busstops, honeycomb) %>%
+  st_drop_geometry() %>%
+  select(c(BUS_STOP_N, HEX_ID))
+kable(head(bs_hex))
+```
