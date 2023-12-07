@@ -122,7 +122,20 @@ honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb))) %>% as.factor()
 write_rds(honeycomb, "data/rds/honeycomb.rds")
 ```
 
-## Mapping Bus Stop to Hexagon
+## Generating Origin and Destination Data by Hexagon
+
+## Importing Bus Passenger data
+
+The data set is an aspatial data in `csv` format so we will use `read_csv()` to import the data.
+
+```{r}
+odbus <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
+kable(head(odbus))
+```
+
+### Filtering the study interest
+
+### Mapping Bus Stop to Hexagon
 
 ```{r}
 bs_hex <- st_intersection(busstops, honeycomb) %>%
@@ -133,7 +146,7 @@ kable(head(bs_hex))
 
 What if bus stop is in 2 hexagons?
 
-### A bus stop is included in 2 hexagons
+#### A bus stop is included in 2 hexagons
 
 We have to remove one of them.
 
@@ -187,4 +200,34 @@ bs_hex <- st_intersection(busstops, honeycomb) %>%
   st_drop_geometry() %>%
   select(c(BUS_STOP_N, HEX_ID))
 kable(head(bs_hex))
+```
+
+### Adding hexagon information to bus passenger data
+
+```{r}
+odbushex <- odbus %>% left_join(bs_hex,
+                                by = c("ORIGIN_PT_CODE" = "BUS_STOP_N")) %>%
+  rename(ORIG_HEX_ID = HEX_ID) %>% 
+  left_join(bs_hex,
+            by = c("DESTINATION_PT_CODE" = "BUS_STOP_N")) %>%
+  rename(DEST_HEX_ID = HEX_ID) %>% 
+  rename(HOUR_OF_DAY = TIME_PER_HOUR)
+```
+
+## Aggregating trips based on origin and destination
+
+```{r}
+odtrips <- odbushex %>% group_by(
+    ORIG_HEX_ID,
+    DEST_HEX_ID,
+    DAY_TYPE,
+    HOUR_OF_DAY) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS))
+kable(head(odtrips))
+```
+
+```{r}
+rm(busstops)
+rm(odbus)
+rm(odbushex)
 ```
