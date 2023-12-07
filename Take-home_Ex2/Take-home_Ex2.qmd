@@ -14,7 +14,7 @@ execute:
 
 ```{r}
 #| label: setup
-pacman::p_load(sf, tmap, tidyverse, knitr, sfdep)
+pacman::p_load(sf, tmap, tidyverse, knitr, sfdep, stplanr)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
@@ -38,7 +38,6 @@ kable(head(busstops))
 ```{r}
 #| code-fold: true
 #| code-summary: "**Show the code**"
-tmap_style("natural")
 tm_shape(mpsz) +
   tm_fill("lightgreen", title = "Singapore Boundary") +
   tm_borders(alpha = 0.5) +
@@ -169,7 +168,7 @@ tm_shape(honeycomb[1:10,]) +
   tm_fill(col = "white", title = "Hexagons", alpha = 1) +
   tm_text("HEX_ID", size = 0.8) +
   tm_borders(alpha = 0.2) +
-  tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
+  tm_layout(main.title = "Map showing bus stops in 2 hexagons",
             main.title.position = "center",
             main.title.size = 1.0,
             legend.height = 0.35, 
@@ -214,11 +213,13 @@ kable(head(bs_hex))
 
 ### Adding hexagon information to bus passenger data
 
+`inner_join()` as some bus stops in `odbus` do not have point data.
+
 ```{r}
-odbushex <- odbus %>% left_join(bs_hex,
+odbushex <- odbus %>% inner_join(bs_hex,
                                 by = c("ORIGIN_PT_CODE" = "BUS_STOP_N")) %>%
   rename(ORIG_HEX_ID = HEX_ID) %>% 
-  left_join(bs_hex,
+  inner_join(bs_hex,
             by = c("DESTINATION_PT_CODE" = "BUS_STOP_N")) %>%
   rename(DEST_HEX_ID = HEX_ID) %>% 
   rename(HOUR_OF_DAY = TIME_PER_HOUR)
@@ -238,4 +239,50 @@ kable(head(odtrips))
 rm(busstops)
 rm(odbus)
 rm(odbushex)
+```
+
+# Visualizing Flow Patterns
+
+```{r}
+flowline <- odtrips[odtrips$ORIG_HEX_ID != odtrips$DEST_HEX_ID,] %>% od2line(
+  honeycomb,
+  zone_code = "HEX_ID")
+
+```
+
+## Choosing visualization interval
+
+```{r}
+quantile(
+  flowline$TRIPS,
+  probs = c(0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 1))
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_fill("lightgreen", title = "Singapore Boundary") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Map of bus stops in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_shape(honeycomb) +
+  tm_fill(col = "white", title = "Hexagons", alpha = 1) +
+  tm_borders(alpha = 0.2) +
+  
+  tm_shape(flowline[flowline$TRIPS > 1179,]) +
+  tm_lines(lwd = "TRIPS",
+           col = "red",
+           style = "quantile",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           n = 6,
+           alpha = 0.3) +
+  
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
 ```
