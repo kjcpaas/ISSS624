@@ -135,6 +135,16 @@ kable(head(odbus))
 
 ### Filtering the study interest
 
+Weekend morning
+
+```{r}
+odbus <- odbus %>% filter(
+  DAY_TYPE == "WEEKENDS/HOLIDAY" &
+    TIME_PER_HOUR >= 11 &
+    TIME_PER_HOUR < 14
+)
+```
+
 ### Mapping Bus Stop to Hexagon
 
 ```{r}
@@ -219,9 +229,7 @@ odbushex <- odbus %>% left_join(bs_hex,
 ```{r}
 odtrips <- odbushex %>% group_by(
     ORIG_HEX_ID,
-    DEST_HEX_ID,
-    DAY_TYPE,
-    HOUR_OF_DAY) %>%
+    DEST_HEX_ID) %>%
   summarise(TRIPS = sum(TOTAL_TRIPS))
 kable(head(odtrips))
 ```
