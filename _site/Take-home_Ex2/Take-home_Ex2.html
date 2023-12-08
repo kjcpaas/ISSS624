@@ -230,6 +230,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#choosing-visualization-interval" id="toc-choosing-visualization-interval" class="nav-link" data-scroll-target="#choosing-visualization-interval">Choosing visualization interval</a></li>
   </ul></li>
+  <li><a href="#propulsive-and-attractiveness-variables" id="toc-propulsive-and-attractiveness-variables" class="nav-link" data-scroll-target="#propulsive-and-attractiveness-variables">Propulsive and Attractiveness Variables</a></li>
+  <li><a href="#calculating-distance-matrix" id="toc-calculating-distance-matrix" class="nav-link" data-scroll-target="#calculating-distance-matrix">Calculating Distance Matrix</a>
+  <ul class="collapse">
+  <li><a href="#converting-honeycomb-to-spatialpolygonsdataframe" id="toc-converting-honeycomb-to-spatialpolygonsdataframe" class="nav-link" data-scroll-target="#converting-honeycomb-to-spatialpolygonsdataframe">Converting <em>honeycomb to</em> <strong>SpatialPolygonsDataFrame</strong></a></li>
+  <li><a href="#generating-distance-matrix" id="toc-generating-distance-matrix" class="nav-link" data-scroll-target="#generating-distance-matrix">Generating distance matrix</a></li>
+  <li><a href="#creating-pivot-table" id="toc-creating-pivot-table" class="nav-link" data-scroll-target="#creating-pivot-table">Creating pivot table</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -262,7 +269,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">December 7, 2023</p>
+      <p class="date-modified">December 9, 2023</p>
     </div>
   </div>
     
@@ -274,7 +281,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup" class="level1">
 <h1>Setup</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, tmap, tidyverse, knitr, sfdep, stplanr)</span>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_style</span>(<span class="st">"natural"</span>)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -879,6 +886,245 @@ Projected CRS: SVY21</code></pre>
 </details>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="propulsive-and-attractiveness-variables" class="level1">
+<h1>Propulsive and Attractiveness Variables</h1>
+</section>
+<section id="calculating-distance-matrix" class="level1">
+<h1>Calculating Distance Matrix</h1>
+<section id="converting-honeycomb-to-spatialpolygonsdataframe" class="level2">
+<h2 class="anchored" data-anchor-id="converting-honeycomb-to-spatialpolygonsdataframe">Converting <em>honeycomb to</em> <strong>SpatialPolygonsDataFrame</strong></h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>honeycomb_sp <span class="ot">&lt;-</span> <span class="fu">as</span>(honeycomb, <span class="st">"Spatial"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="generating-distance-matrix" class="level2">
+<h2 class="anchored" data-anchor-id="generating-distance-matrix">Generating distance matrix</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>dist_mat <span class="ot">&lt;-</span> <span class="fu">spDists</span>(honeycomb_sp,</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">longlat =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dist_mat) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(honeycomb<span class="sc">$</span>HEX_ID)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(dist_mat) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(honeycomb<span class="sc">$</span>HEX_ID)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(dist_mat, <span class="at">n=</span><span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">10</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">H0001</th>
+<th style="text-align: right;">H0002</th>
+<th style="text-align: right;">H0003</th>
+<th style="text-align: right;">H0004</th>
+<th style="text-align: right;">H0005</th>
+<th style="text-align: right;">H0006</th>
+<th style="text-align: right;">H0007</th>
+<th style="text-align: right;">H0008</th>
+<th style="text-align: right;">H0009</th>
+<th style="text-align: right;">H0010</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2251.666</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">2833.284</td>
+<td style="text-align: right;">3953.796</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">2343.608</td>
+<td style="text-align: right;">4550.000</td>
+<td style="text-align: right;">1950.000</td>
+<td style="text-align: right;">2978.674</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">2251.666</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">2343.608</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">1125.833</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2251.666</td>
+<td style="text-align: right;">3377.499</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">3953.796</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">2343.608</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">2833.284</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">2251.666</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">650.000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">3953.796</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">3377.499</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2833.284</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">2343.608</td>
+<td style="text-align: right;">1300.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">2833.284</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">3377.499</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0007</td>
+<td style="text-align: right;">2343.608</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2251.666</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">650.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0008</td>
+<td style="text-align: right;">4550.000</td>
+<td style="text-align: right;">2343.608</td>
+<td style="text-align: right;">3953.796</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">3377.499</td>
+<td style="text-align: right;">2251.666</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2833.284</td>
+<td style="text-align: right;">1719.738</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0009</td>
+<td style="text-align: right;">1950.000</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">2343.608</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">2833.284</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1125.833</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0010</td>
+<td style="text-align: right;">2978.674</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">2343.608</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1300.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">650.000</td>
+<td style="text-align: right;">1719.738</td>
+<td style="text-align: right;">1125.833</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="creating-pivot-table" class="level2">
+<h2 class="anchored" data-anchor-id="creating-pivot-table">Creating pivot table</h2>
+<p>300 because of hexagon dimensions</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>dist_tbl <span class="ot">&lt;-</span> <span class="fu">melt</span>(dist_mat) <span class="sc">%&gt;%</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">distance =</span> value)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>dist_tbl<span class="sc">$</span>distance[dist_tbl<span class="sc">$</span>distance <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">300</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(dist_tbl))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Var1</th>
+<th style="text-align: left;">Var2</th>
+<th style="text-align: right;">distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0001</td>
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">300.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">2251.666</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">650.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">2833.284</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">3953.796</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">1300.000</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 

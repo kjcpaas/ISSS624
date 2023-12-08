@@ -795,7 +795,7 @@
     "href": "Take-home_Ex2/Take-home_Ex2.html",
     "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
     "section": "",
-    "text": "pacman::p_load(sf, tmap, tidyverse, knitr, sfdep, stplanr)\ntmap_mode(\"plot\")\ntmap_style(\"natural\")\nset.seed(1234)"
+    "text": "pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)\ntmap_mode(\"plot\")\ntmap_style(\"natural\")\nset.seed(1234)"
   },
   {
     "objectID": "Take-home_Ex2/Take-home_Ex2.html#import-geospatial-data",
@@ -1587,5 +1587,26 @@
     "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
     "section": "Choosing visualization interval",
     "text": "Choosing visualization interval\n\nquantile(\n  flowline$TRIPS,\n  probs = c(0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 1))\n\n       0%       25%       50%       75%       90%       95%       99%     99.9% \n    1.000     3.000    10.000    39.000   138.000   296.000  1179.720  4037.008 \n     100% \n12392.000 \n\n\n\n\nShow the code\ntm_shape(mpsz) +\n  tm_fill(\"lightgreen\", title = \"Singapore Boundary\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Map of bus stops in Singapore\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_shape(honeycomb) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_borders(alpha = 0.2) +\n  \n  tm_shape(flowline[flowline$TRIPS &gt; 1179,]) +\n  tm_lines(lwd = \"TRIPS\",\n           col = \"red\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.3) +\n  \n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha = 0.2)"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#converting-honeycomb-to-spatialpolygonsdataframe",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#converting-honeycomb-to-spatialpolygonsdataframe",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Converting honeycomb to SpatialPolygonsDataFrame",
+    "text": "Converting honeycomb to SpatialPolygonsDataFrame\n\nhoneycomb_sp &lt;- as(honeycomb, \"Spatial\")"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#generating-distance-matrix",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#generating-distance-matrix",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Generating distance matrix",
+    "text": "Generating distance matrix\n\ndist_mat &lt;- spDists(honeycomb_sp,\n                    longlat = FALSE)\ncolnames(dist_mat) &lt;- paste0(honeycomb$HEX_ID)\nrownames(dist_mat) &lt;- paste0(honeycomb$HEX_ID)\nkable(head(dist_mat, n=c(10, 10)))\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nH0001\nH0002\nH0003\nH0004\nH0005\nH0006\nH0007\nH0008\nH0009\nH0010\n\n\n\n\nH0001\n0.000\n2251.666\n650.000\n2833.284\n3953.796\n1300.000\n2343.608\n4550.000\n1950.000\n2978.674\n\n\nH0002\n2251.666\n0.000\n1719.738\n650.000\n1719.738\n1300.000\n650.000\n2343.608\n1125.833\n1125.833\n\n\nH0003\n650.000\n1719.738\n0.000\n2251.666\n3377.499\n650.000\n1719.738\n3953.796\n1300.000\n2343.608\n\n\nH0004\n2833.284\n650.000\n2251.666\n0.000\n1125.833\n1719.738\n650.000\n1719.738\n1300.000\n650.000\n\n\nH0005\n3953.796\n1719.738\n3377.499\n1125.833\n0.000\n2833.284\n1719.738\n650.000\n2343.608\n1300.000\n\n\nH0006\n1300.000\n1300.000\n650.000\n1719.738\n2833.284\n0.000\n1125.833\n3377.499\n650.000\n1719.738\n\n\nH0007\n2343.608\n650.000\n1719.738\n650.000\n1719.738\n1125.833\n0.000\n2251.666\n650.000\n650.000\n\n\nH0008\n4550.000\n2343.608\n3953.796\n1719.738\n650.000\n3377.499\n2251.666\n0.000\n2833.284\n1719.738\n\n\nH0009\n1950.000\n1125.833\n1300.000\n1300.000\n2343.608\n650.000\n650.000\n2833.284\n0.000\n1125.833\n\n\nH0010\n2978.674\n1125.833\n2343.608\n650.000\n1300.000\n1719.738\n650.000\n1719.738\n1125.833\n0.000"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#creating-pivot-table",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#creating-pivot-table",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Creating pivot table",
+    "text": "Creating pivot table\n300 because of hexagon dimensions\n\ndist_tbl &lt;- melt(dist_mat) %&gt;%\n  rename(distance = value)\ndist_tbl$distance[dist_tbl$distance == 0] &lt;- 300\nkable(head(dist_tbl))\n\n\n\n\nVar1\nVar2\ndistance\n\n\n\n\nH0001\nH0001\n300.000\n\n\nH0002\nH0001\n2251.666\n\n\nH0003\nH0001\n650.000\n\n\nH0004\nH0001\n2833.284\n\n\nH0005\nH0001\n3953.796\n\n\nH0006\nH0001\n1300.000"
   }
 ]

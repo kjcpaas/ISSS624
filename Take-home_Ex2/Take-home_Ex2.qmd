@@ -14,7 +14,7 @@ execute:
 
 ```{r}
 #| label: setup
-pacman::p_load(sf, tmap, tidyverse, knitr, sfdep, stplanr)
+pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
@@ -285,4 +285,35 @@ tm_shape(mpsz) +
   tm_compass(type="8star", size = 2) +
   tm_scale_bar() +
   tm_grid(alpha = 0.2)
+```
+
+# Propulsive and Attractiveness Variables
+
+# Calculating Distance Matrix
+
+## Converting *honeycomb to* **SpatialPolygonsDataFrame**
+
+```{r}
+honeycomb_sp <- as(honeycomb, "Spatial")
+```
+
+## Generating distance matrix
+
+```{r}
+dist_mat <- spDists(honeycomb_sp,
+                    longlat = FALSE)
+colnames(dist_mat) <- paste0(honeycomb$HEX_ID)
+rownames(dist_mat) <- paste0(honeycomb$HEX_ID)
+kable(head(dist_mat, n=c(10, 10)))
+```
+
+## Creating pivot table
+
+300 because of hexagon dimensions
+
+```{r}
+dist_tbl <- melt(dist_mat) %>%
+  rename(distance = value)
+dist_tbl$distance[dist_tbl$distance == 0] <- 300
+kable(head(dist_tbl))
 ```
