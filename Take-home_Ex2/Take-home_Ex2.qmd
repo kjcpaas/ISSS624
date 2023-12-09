@@ -289,6 +289,10 @@ tm_shape(mpsz) +
 
 # Propulsive and Attractiveness Variables
 
+::: {.callout-note appearance="simple"}
+Check HDB and MRT locations for propulsive and attractiveness variables
+:::
+
 # Calculating Distance Matrix
 
 ## Converting *honeycomb to* **SpatialPolygonsDataFrame**

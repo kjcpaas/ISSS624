@@ -700,179 +700,11 @@
     "text": "Visualising fitted\nUnconstrained\n\ndf &lt;- as.data.frame(uncSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(uncTRIPS = \"uncSIM$fitted.values\")\n\nOrigin constrained\n\ndf &lt;- as.data.frame(orcSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(orcTRIPS = \"orcSIM$fitted.values\")\n\nDestination constrained\n\ndf &lt;- as.data.frame(decSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(decTRIPS = \"decSIM$fitted.values\")\n\nDoubly constrained\n\ndf &lt;- as.data.frame(dbcSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(dbcTRIPS = \"dbcSIM$fitted.values\")\n\nGenerating plots\n\nunc_p &lt;- ggplot(data = SIM_data,\n                aes(x = uncTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\norc_p &lt;- ggplot(data = SIM_data,\n                aes(x = orcTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\ndec_p &lt;- ggplot(data = SIM_data,\n                aes(x = decTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\ndbc_p &lt;- ggplot(data = SIM_data,\n                aes(x = dbcTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\nggarrange(unc_p, orc_p, dec_p, dbc_p,\n          ncol = 2,\n          nrow = 2)\n\n\n\n\nDouble constrained looks less scattered and more fitted to the line, consistent with RMSE results"
   },
   {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "",
-    "text": "This hands-on exercise covers Chapter 2: Choropleth Mapping with R.\nI learned about the following:\n\nCreating thematic/choropleth maps with tmap\nQuantile and equal classification"
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#preparing-the-datasets",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#preparing-the-datasets",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Preparing the datasets",
-    "text": "Preparing the datasets\n\nGeospatial\n\nMaster Plan 2014 Subzone Boundary (Web) from data.gov.sg\n\n\n\nAspatial\n\nSingapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling, June 2011-2020 from Department of Statistics, Singapore\n\nNext, is putting them under the Hands-on_Ex1 directory, with the following file structure:\nHands-on_Ex1\n└── data\n    ├── aspatial\n    │   └── respopagesextod2011to2020.csv\n    └── geospatial\n        ├── MP14_SUBZONE_WEB_PL.dbf\n        ├── MP14_SUBZONE_WEB_PL.prj\n        ├── MP14_SUBZONE_WEB_PL.sbn\n        ├── MP14_SUBZONE_WEB_PL.sbx\n        ├── MP14_SUBZONE_WEB_PL.shp\n        ├── MP14_SUBZONE_WEB_PL.shp.xml\n        └── MP14_SUBZONE_WEB_PL.shx"
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#installing-r-packages",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#installing-r-packages",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Installing R packages",
-    "text": "Installing R packages\nI used the code below to install the R packages used in the exercise:\n\npacman::p_load(sf, tidyverse, tmap)"
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-geospatial-data",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-geospatial-data",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Importing geospatial data",
-    "text": "Importing geospatial data\nTo import the MPSZ data set to RStudio, I used the same code chunk in the previous exercise.\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\", layer = \"MP14_SUBZONE_WEB_PL\")\n\nReading layer `MP14_SUBZONE_WEB_PL' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Hands-on_Ex1/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 323 features and 15 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 2667.538 ymin: 15748.72 xmax: 56396.44 ymax: 50256.33\nProjected CRS: SVY21"
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-aspatial-data",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-aspatial-data",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Importing aspatial data",
-    "text": "Importing aspatial data\nThe csv data is an aspatial data so read_csv() must be used instead of st_read():\n\npopdata &lt;- read_csv(\"data/aspatial/respopagesextod2011to2020.csv\")"
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#data-preparation",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#data-preparation",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Data preparation",
-    "text": "Data preparation\n\npopdata2020 &lt;- popdata %&gt;%\n  filter(Time == 2020) %&gt;%\n  group_by(PA, SZ, AG) %&gt;%\n  summarise(`POP` = sum(`Pop`)) %&gt;%\n  ungroup()%&gt;%\n  pivot_wider(names_from=AG, \n              values_from=POP) %&gt;%\n  mutate(YOUNG = rowSums(.[3:6])\n         +rowSums(.[12])) %&gt;%\nmutate(`ECONOMY ACTIVE` = rowSums(.[7:11])+\nrowSums(.[13:15]))%&gt;%\nmutate(`AGED`=rowSums(.[16:21])) %&gt;%\nmutate(`TOTAL`=rowSums(.[3:21])) %&gt;%  \nmutate(`DEPENDENCY` = (`YOUNG` + `AGED`)\n/`ECONOMY ACTIVE`) %&gt;%\n  select(`PA`, `SZ`, `YOUNG`, \n       `ECONOMY ACTIVE`, `AGED`, \n       `TOTAL`, `DEPENDENCY`)\n\nI don’t fully understand this entire code chunk yet but I know it filtered for data from 2020 only and did some aggregations based on the age groups, PA, and AZ. New fields like YOUNG and AGED .\nNext, I joined this data with the mpsz data via SZ. However, we still need to make sure that the SZ values are uppercase to match mpsz’s SUBZONE_N.\n\npopdata2020 &lt;- popdata2020 %&gt;%\n  mutate_at(.vars = vars(PA, SZ), \n          .funs = list(toupper)) %&gt;%\n  filter(`ECONOMY ACTIVE` &gt; 0)\n\nThen the 2 data sets can be joined.\n\nmpsz_pop2020 &lt;- left_join(mpsz, popdata2020,\n                          by = c(\"SUBZONE_N\" = \"SZ\"))\n\nLastly, write the rds of the combined data set.\n\nwrite_rds(mpsz_pop2020, \"data/rds/mpszpop2020.rds\")\n\n\n⚠️ This failed on the first try so I had to create the rds directory under data/ before trying again."
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#using-qtm",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#using-qtm",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Using qtm()",
-    "text": "Using qtm()\n\ntmap_mode(\"plot\")\nqtm(mpsz_pop2020, \n    fill = \"DEPENDENCY\")\n\n\n\n\nI tried to create an interactive map by using view instead of plot but an error about invalid polygons was returned."
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#using-tmap-elements",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#using-tmap-elements",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Using tmap() elements",
-    "text": "Using tmap() elements\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\", \n          style = \"quantile\", \n          palette = \"Blues\",\n          title = \"Dependency ratio\") +\n  tm_layout(main.title = \"Distribution of Dependency Ratio by planning subzone\",\n            main.title.position = \"center\",\n            main.title.size = 1.2,\n            legend.height = 0.45, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_borders(alpha = 0.5) +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha =0.2) +\n  tm_credits(\"Source: Planning Sub-zone boundary from Urban Redevelopment Authorithy (URA)\\n and Population data from Department of Statistics DOS\", \n             position = c(\"left\", \"bottom\"))\n\n\n\n\nFrom this part, I saw that with tm_shape as base, thematic maps can be created by doing + with the tmap actions. I will explore this later but I found a good reference on where to start: https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html."
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#classification-methods",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#classification-methods",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Classification methods",
-    "text": "Classification methods\n\nQuantile\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\",\n          n = 5,\n          style = \"jenks\") +\n  tm_borders(alpha = 0.5)\n\n\n\n\n\n\nEqual\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\",\n          n = 5,\n          style = \"equal\") +\n  tm_borders(alpha = 0.5)\n\n\n\n\nMy main takeaway for this is that the quantile classification deals with outliers better. In this data set, there is an outlier subzone. If we use equal classification, the map looks homogeneous and does not provide much information as it cannot be seen how the values from one subzone to the other differ.\nWith quantile classification, these differences can be seen more easily despite the outlier value."
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#color-scheme",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#color-scheme",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Color Scheme",
-    "text": "Color Scheme\nThe color scheme can be changed by specifying the palette in tm_fill() like below:\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\",\n          n = 6,\n          style = \"quantile\",\n          palette = \"Blues\") +\n  tm_borders(alpha = 0.5)\n\n\n\n\nMore colors can be found when running tmaptools::palette_explorer() in the console. However, it requires shiny and shinyjs to work. This is a wonderful tool as it can also simulate how the color schemes look from the perspective of people with color blindness. As these maps aim to communicate, it is important for the color schemes chosen to not just be beautiful, but also inclusive."
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#map-layouts",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#map-layouts",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Map Layouts",
-    "text": "Map Layouts\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\", \n          style = \"jenks\", \n          palette = \"Blues\", \n          legend.hist = TRUE, \n          legend.is.portrait = TRUE,\n          legend.hist.z = 0.1) +\n  tm_layout(main.title = \"Distribution of Dependency Ratio by planning subzone \\n(Jenks classification)\",\n            main.title.position = \"center\",\n            main.title.size = 1,\n            legend.height = 0.45, \n            legend.width = 0.35,\n            legend.outside = FALSE,\n            legend.position = c(\"right\", \"bottom\"),\n            frame = FALSE) +\n  tm_borders(alpha = 0.5)\n\n\n\n\nAdding legends to maps is very useful as it provides additional information. However, this feature should not be abused to add multiple visualizations as legend as it can cause more confusion if there is too much information to present.\nMap style can also be changed and it is useful to enhance the visual presentation. After doing some research, I found the other available styles in https://cran.r-project.org/web/packages/tmap/vignettes/tmap-changes.html.\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\", \n          style = \"quantile\", \n          palette = \"-Greens\") +\n  tm_borders(alpha = 0.5) +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar(width = 0.15) +\n  tm_grid(lwd = 0.1, alpha = 0.2) +\n  tmap_style(\"natural\")\n\n\n\n\nIn this example, I used the natural style to make it look like the map is surrounded by water (as it is naturally). Adding “furnitures” like compass and scale can also provide more perspective."
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#smaller-maps",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#smaller-maps",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Smaller Maps",
-    "text": "Smaller Maps\n\ntm_shape(mpsz_pop2020)+ \n  tm_polygons(c(\"DEPENDENCY\",\"AGED\"),\n          style = c(\"equal\", \"quantile\"), \n          palette = list(\"Blues\",\"Greens\")) +\n  tm_layout(legend.position = c(\"right\", \"bottom\"))\n\n\n\n\nI don’t find this very useful as the maps rendered might be too small to inspect. However, the facets with the region can be useful to see the data based on region.\n\ntm_shape(mpsz_pop2020) +\n  tm_fill(\"DEPENDENCY\",\n          style = \"quantile\",\n          palette = \"Greens\",\n          thres.poly = 0) + \n  tm_facets(by=\"REGION_N\", \n            free.coords=TRUE, \n            drop.shapes=TRUE) +\n  tm_layout(legend.show = FALSE,\n            title.position = c(\"center\", \"center\"), \n            title.size = 20) +\n  tm_borders(alpha = 0.5)"
-  },
-  {
-    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#mapping-according-to-criterion",
-    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#mapping-according-to-criterion",
-    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
-    "section": "Mapping According to Criterion",
-    "text": "Mapping According to Criterion\n\ntm_shape(mpsz_pop2020[mpsz_pop2020$REGION_N==\"CENTRAL REGION\", ])+\n  tm_fill(\"DEPENDENCY\", \n          style = \"quantile\", \n          palette = \"Greens\", \n          legend.hist = TRUE, \n          legend.is.portrait = TRUE,\n          legend.hist.z = 0.1) +\n  tm_layout(legend.outside = TRUE,\n            legend.height = 0.45, \n            legend.width = 5.0,\n            legend.position = c(\"right\", \"bottom\"),\n            frame = FALSE) +\n  tm_borders(alpha = 0.5)\n\n\n\n\nI find this very useful especially if we just want to map a subset of the data. This can be used when we want to highlight information on certain regions."
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html",
-    "href": "Take-home_Ex2/Take-home_Ex2.html",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "",
-    "text": "pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)\ntmap_mode(\"plot\")\ntmap_style(\"natural\")\nset.seed(1234)"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#import-geospatial-data",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#import-geospatial-data",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Import Geospatial Data",
-    "text": "Import Geospatial Data\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\",\n                layer = \"MPSZ-2019\") %&gt;% st_transform(crs=3414)\n\nReading layer `MPSZ-2019' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 332 features and 6 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 103.6057 ymin: 1.158699 xmax: 104.0885 ymax: 1.470775\nGeodetic CRS:  WGS 84\n\n\n\nbusstops &lt;- st_read(dsn = \"data/geospatial\",\n                    layer = \"BusStop\") %&gt;% st_transform(crs=3414)\n\nReading layer `BusStop' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 5161 features and 3 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 3970.122 ymin: 26482.1 xmax: 48284.56 ymax: 52983.82\nProjected CRS: SVY21\n\nkable(head(busstops))\n\n\n\n\n\n\n\n\n\n\nBUS_STOP_N\nBUS_ROOF_N\nLOC_DESC\ngeometry\n\n\n\n\n22069\nB06\nOPP CEVA LOGISTICS\nPOINT (13576.31 32883.65)\n\n\n32071\nB23\nAFT TRACK 13\nPOINT (13228.59 44206.38)\n\n\n44331\nB01\nBLK 239\nPOINT (21045.1 40242.08)\n\n\n96081\nB05\nGRACE INDEPENDENT CH\nPOINT (41603.76 35413.11)\n\n\n11561\nB05\nBLK 166\nPOINT (24568.74 30391.85)\n\n\n66191\nB03\nAFT CORFE PL\nPOINT (30951.58 38079.61)\n\n\n\n\n\n\n\nShow the code\ntm_shape(mpsz) +\n  tm_fill(\"lightgreen\", title = \"Singapore Boundary\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Map of bus stops in Singapore\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_shape(busstops) +\n  tm_dots(col = \"red\", size = 0.005, title = \"Bus Stops\") +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\nFilter those only within Singapore\n\nbusstops &lt;- busstops %&gt;% st_intersection(mpsz) %&gt;% select(BUS_STOP_N, )\n\n\n\nShow the code\ntmap_style(\"natural\")\ntm_shape(mpsz) +\n  tm_fill(\"lightgreen\", title = \"Singapore Boundary\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Map of bus stops in Singapore\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_shape(busstops) +\n  tm_dots(col = \"red\", size = 0.005, title = \"Bus Stops\") +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha = 0.2)"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#create-hexagon",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#create-hexagon",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Create Hexagon",
-    "text": "Create Hexagon\n\nhoneycomb &lt;- busstops %&gt;% st_make_grid(cellsize = 650,\n                                       what=\"polygons\",\n                                       square = FALSE) %&gt;%\n  st_sf() %&gt;%\n  filter(lengths(st_intersects(geometry, busstops)) &gt; 0)\n\n\n\nShow the code\ntm_shape(mpsz) +\n  tm_fill(\"green\", title = \"Singapore Boundary\", alpha = 0.5) +\n  tm_shape(honeycomb) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_borders(alpha = 0.2) +\n  tm_layout(main.title = \"Honeycomb grid corresponding to Singapore bus stops\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_compass(type=\"8star\", size = 2, bg.color = \"white\", bg.alpha = 0.5) +\n  tm_scale_bar(bg.color = \"white\", bg.alpha = 0.5) +\n  tm_shape(busstops) +\n  tm_dots(col = \"red\", size = 0.001, title = \"Bus Stops\") +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\nAssign id\n\nhoneycomb$HEX_ID &lt;- sprintf(\"H%04d\", seq_len(nrow(honeycomb))) %&gt;% as.factor()\n\n\nwrite_rds(honeycomb, \"data/rds/honeycomb.rds\")"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#generating-origin-and-destination-data-by-hexagon",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#generating-origin-and-destination-data-by-hexagon",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Generating Origin and Destination Data by Hexagon",
-    "text": "Generating Origin and Destination Data by Hexagon"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#importing-bus-passenger-data",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#importing-bus-passenger-data",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Importing Bus Passenger data",
-    "text": "Importing Bus Passenger data\nThe data set is an aspatial data in csv format so we will use read_csv() to import the data.\n\nodbus &lt;- read_csv(\"data/aspatial/origin_destination_bus_202310.csv\")\nkable(head(odbus))\n\n\n\n\n\n\n\n\n\n\n\n\n\nYEAR_MONTH\nDAY_TYPE\nTIME_PER_HOUR\nPT_TYPE\nORIGIN_PT_CODE\nDESTINATION_PT_CODE\nTOTAL_TRIPS\n\n\n\n\n2023-10\nWEEKENDS/HOLIDAY\n16\nBUS\n04168\n10051\n3\n\n\n2023-10\nWEEKDAY\n16\nBUS\n04168\n10051\n5\n\n\n2023-10\nWEEKENDS/HOLIDAY\n14\nBUS\n80119\n90079\n3\n\n\n2023-10\nWEEKDAY\n14\nBUS\n80119\n90079\n5\n\n\n2023-10\nWEEKDAY\n17\nBUS\n44069\n17229\n4\n\n\n2023-10\nWEEKENDS/HOLIDAY\n17\nBUS\n20281\n20141\n1\n\n\n\n\n\n\nFiltering the study interest\nWeekend morning\n\nodbus &lt;- odbus %&gt;% filter(\n  DAY_TYPE == \"WEEKENDS/HOLIDAY\" &\n    TIME_PER_HOUR &gt;= 11 &\n    TIME_PER_HOUR &lt; 14\n)\n\n\n\nMapping Bus Stop to Hexagon\n\nbs_hex &lt;- st_intersection(busstops, honeycomb) %&gt;%\n  st_drop_geometry() %&gt;%\n  select(c(BUS_STOP_N, HEX_ID))\nkable(head(bs_hex))\n\n\n\n\n\nBUS_STOP_N\nHEX_ID\n\n\n\n\n3269\n25059\nH0001\n\n\n3269.1\n25059\nH0002\n\n\n254\n26379\nH0003\n\n\n2570\n25751\nH0004\n\n\n2897\n25761\nH0004\n\n\n2403\n26369\nH0005\n\n\n\n\n\nWhat if bus stop is in 2 hexagons?\n\nA bus stop is included in 2 hexagons\nWe have to remove one of them.\n\nkable(head(bs_hex))\n\n\n\n\n\nBUS_STOP_N\nHEX_ID\n\n\n\n\n3269\n25059\nH0001\n\n\n3269.1\n25059\nH0002\n\n\n254\n26379\nH0003\n\n\n2570\n25751\nH0004\n\n\n2897\n25761\nH0004\n\n\n2403\n26369\nH0005\n\n\n\n\n\n\ntm_shape(honeycomb[1:10,]) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_text(\"HEX_ID\", size = 0.8) +\n  tm_borders(alpha = 0.2) +\n  tm_layout(main.title = \"Map showing bus stops in 2 hexagons\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_scale_bar(bg.color = \"white\", bg.alpha = 0.5, position = c(\"left\", \"top\")) +\n  tm_shape(busstops %&gt;% filter(BUS_STOP_N == \"25059\")) +\n  tm_dots(col = \"red\", size = 0.05, title = \"Bus Stops\") +\n  tm_grid(alpha = 0.2)\n\n\n\n\nThe bus stop is right on the boundary of H0001 and H0002. If we remove H0002, H0001 will be an island so let us remove H0001. This way, H0002 is still connected to another hexagon. Let’s also re-assign the ids of the hexagon.\n\nhoneycomb &lt;- honeycomb %&gt;% filter(HEX_ID != \"H0001\")\nhoneycomb$HEX_ID &lt;- sprintf(\"H%04d\", seq_len(nrow(honeycomb))) %&gt;% as.factor()\n\n\ntm_shape(honeycomb[1:10,]) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_text(\"HEX_ID\", size = 0.8) +\n  tm_borders(alpha = 0.2) +\n  tm_layout(main.title = \"Honeycomb grid corresponding to Singapore bus stops\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_scale_bar(bg.color = \"white\", bg.alpha = 0.5, position = c(\"left\", \"top\")) +\n  tm_shape(busstops %&gt;% filter(BUS_STOP_N == \"25059\")) +\n  tm_dots(col = \"red\", size = 0.05, title = \"Bus Stops\") +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\nbs_hex &lt;- st_intersection(busstops, honeycomb) %&gt;%\n  st_drop_geometry() %&gt;%\n  select(c(BUS_STOP_N, HEX_ID))\nkable(head(bs_hex))\n\n\n\n\n\nBUS_STOP_N\nHEX_ID\n\n\n\n\n3269\n25059\nH0001\n\n\n254\n26379\nH0002\n\n\n2570\n25751\nH0003\n\n\n2897\n25761\nH0003\n\n\n2403\n26369\nH0004\n\n\n1565\n26299\nH0005\n\n\n\n\n\n\n\n\nAdding hexagon information to bus passenger data\ninner_join() as some bus stops in odbus do not have point data.\n\nodbushex &lt;- odbus %&gt;% inner_join(bs_hex,\n                                by = c(\"ORIGIN_PT_CODE\" = \"BUS_STOP_N\")) %&gt;%\n  rename(ORIG_HEX_ID = HEX_ID) %&gt;% \n  inner_join(bs_hex,\n            by = c(\"DESTINATION_PT_CODE\" = \"BUS_STOP_N\")) %&gt;%\n  rename(DEST_HEX_ID = HEX_ID) %&gt;% \n  rename(HOUR_OF_DAY = TIME_PER_HOUR)"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#aggregating-trips-based-on-origin-and-destination",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#aggregating-trips-based-on-origin-and-destination",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Aggregating trips based on origin and destination",
-    "text": "Aggregating trips based on origin and destination\n\nodtrips &lt;- odbushex %&gt;% group_by(\n    ORIG_HEX_ID,\n    DEST_HEX_ID) %&gt;%\n  summarise(TRIPS = sum(TOTAL_TRIPS))\nkable(head(odtrips))\n\n\n\n\nORIG_HEX_ID\nDEST_HEX_ID\nTRIPS\n\n\n\n\nH0002\nH0025\n2\n\n\nH0002\nH0032\n27\n\n\nH0002\nH0076\n12\n\n\nH0003\nH0007\n4\n\n\nH0003\nH0010\n12\n\n\nH0003\nH0019\n2\n\n\n\n\n\n\nrm(busstops)\nrm(odbus)\nrm(odbushex)"
-  },
-  {
-    "objectID": "In-class_Ex1/data/geospatial/MPSZ-2019.html",
-    "href": "In-class_Ex1/data/geospatial/MPSZ-2019.html",
+    "objectID": "index.html",
+    "href": "index.html",
     "title": "ISSS624",
     "section": "",
-    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
-  },
-  {
-    "objectID": "In-class_Ex1/In-class_Ex1.html",
-    "href": "In-class_Ex1/In-class_Ex1.html",
-    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
-    "section": "",
-    "text": "In this exercise, we will learn how to create choropleth map from bus data and commuter data."
-  },
-  {
-    "objectID": "In-class_Ex1/In-class_Ex1.html#importing-the-origin-and-destination-data",
-    "href": "In-class_Ex1/In-class_Ex1.html#importing-the-origin-and-destination-data",
-    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
-    "section": "Importing the origin and destination data",
-    "text": "Importing the origin and destination data\nFirstly, we will import the Passenger Volume By Origin Destination Bust Stops data set from LTA Data Mall by using read_csv .\n\nodbus &lt;- read_csv(\"data/aspatial/origin_destination_bus_202308.csv\")\n\nTo make it easier to process the PT codes, we will convert the origin and destination PT codes to factor data type.\n\nodbus$ORIGIN_PT_CODE &lt;- as.factor(odbus$ORIGIN_PT_CODE)\nodbus$DESTINATION_PT_CODE &lt;- as.factor(odbus$DESTINATION_PT_CODE)\n\nNext, I want to investigate the commuter flows between 7-10am on weekdays.\n\n\n\n\n\n\nTip\n\n\n\nWe need to use the interval 7 &lt;= time &lt;= 9 as the data with time = 9 contains data from 9am to just before 10am.\n\n\n\norigin7_9 &lt;- odbus %&gt;%\n  filter(DAY_TYPE == \"WEEKDAY\") %&gt;%\n  filter(TIME_PER_HOUR &gt;= 7 &\n           TIME_PER_HOUR &lt;= 9) %&gt;%\n  group_by(ORIGIN_PT_CODE) %&gt;%\n  summarise(TRIPS = sum(TOTAL_TRIPS))\n\nNext, we save the data in rds format for future use.\n\n\n\n\n\n\nImportant\n\n\n\nIn order for the code below to work, we need to create the rds/ directory under data/.\n\n\n\nwrite_rds(origin7_9, \"data/rds/origin7_9.rds\")\n\nIt can be imported back later on with read_rds().\n\norigin7_9 &lt;- read_rds(\"data/rds/origin7_9.rds\")"
-  },
-  {
-    "objectID": "In-class_Ex1/In-class_Ex1.html#importing-geospatial-data",
-    "href": "In-class_Ex1/In-class_Ex1.html#importing-geospatial-data",
-    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
-    "section": "Importing geospatial data",
-    "text": "Importing geospatial data\nNext we need to import the bus stop locations so that we can correlate them from the PT codes from the origin and destination data from before.\n\nbusstop &lt;- st_read(dsn = \"data/geospatial\",\n                  layer = \"BusStop\") %&gt;%\n  st_transform(crs=3414)\n\nReading layer `BusStop' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex1/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 5161 features and 3 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 3970.122 ymin: 26482.1 xmax: 48284.56 ymax: 52983.82\nProjected CRS: SVY21\n\n\nSince these are just points, we also need some polygon data to figure out where in the Singapore map the bus locations correspond to:\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\",\n                layer = \"MPSZ-2019\") %&gt;%\n  st_transform(crs = 3414)\n\nReading layer `MPSZ-2019' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex1/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 332 features and 6 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 103.6057 ymin: 1.158699 xmax: 104.0885 ymax: 1.470775\nGeodetic CRS:  WGS 84"
-  },
-  {
-    "objectID": "In-class_Ex1/In-class_Ex1.html#combining-busstop-and-mpsz",
-    "href": "In-class_Ex1/In-class_Ex1.html#combining-busstop-and-mpsz",
-    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
-    "section": "Combining busstop and mpsz",
-    "text": "Combining busstop and mpsz\nWe first combine that 2 data frames by figuring out which polygon in mpsz each points in busstop are contained in.\n\nbusstop_mpsz &lt;- st_intersection(busstop, mpsz) %&gt;%\n  select(BUS_STOP_N, SUBZONE_C) %&gt;%\n  st_drop_geometry()\nglimpse(busstop_mpsz)\n\nRows: 5,156\nColumns: 2\n$ BUS_STOP_N &lt;chr&gt; \"13099\", \"13089\", \"06151\", \"13211\", \"13139\", \"13109\", \"1311…\n$ SUBZONE_C  &lt;chr&gt; \"RVSZ05\", \"RVSZ05\", \"SRSZ01\", \"SRSZ01\", \"SRSZ01\", \"SRSZ01\",…\n\n\n\n\n\n\n\n\nNote\n\n\n\n\nst_intersection() is used to perform point and polygon overly and the output will be in point sf object.\nselect() of dplyr package is then use to retain only BUS_STOP_N and SUBZONE_C in the busstop_mpsz sf data frame.\nst_drop_geometry() removes the geometry from the data frame, making the data aspatial.\n\n\n\n\n\n\n\n\n\nTip\n\n\n\nbusstop_mpsz has 5 less items than busstop. This is because these bus stops are outside of Singapore 🇸🇬 border.\nFor example, some bus routes start/end in Johor Bahru in Malaysia 🇲🇾.\n\n\nFinally, we now now which subzone each bus stop is located in.\nBefore proceeding, we should save the busstop_mpsz so we won’t need to recalculate it later on.\n\nwrite_rds(busstop_mpsz, \"data/rds/busstop_mpsz.csv\")\n\nNext is to join the busstop_mpsz data with origin7_9.\n\norigin_data &lt;- left_join(origin7_9 , busstop_mpsz,\n            by = c(\"ORIGIN_PT_CODE\" = \"BUS_STOP_N\")) %&gt;%\n  rename(ORIGIN_BS = ORIGIN_PT_CODE,\n         ORIGIN_SZ = SUBZONE_C)\n\nNext is to check for duplicate records.\n\nduplicate &lt;- origin_data %&gt;%\n  group_by_all() %&gt;%\n  filter(n()&gt;1) %&gt;%\n  ungroup()\nglimpse(duplicate)\n\nRows: 26\nColumns: 3\n$ ORIGIN_BS &lt;chr&gt; \"11009\", \"11009\", \"22501\", \"22501\", \"43709\", \"43709\", \"47201…\n$ TRIPS     &lt;dbl&gt; 13826, 13826, 9743, 9743, 1118, 1118, 23998, 23998, 6218, 62…\n$ ORIGIN_SZ &lt;chr&gt; \"QTSZ01\", \"QTSZ01\", \"JWSZ09\", \"JWSZ09\", \"BKSZ07\", \"BKSZ07\", …\n\n\nIn this case, there are some duplicates so we need to clean it up further. This can be done using unique().\n\norigin_data &lt;- unique(origin_data)\n\nLet’s check if the duplicates have been removed.\n\nduplicate &lt;- origin_data %&gt;%\n  group_by_all() %&gt;%\n  filter(n()&gt;1) %&gt;%\n  ungroup()\nglimpse(duplicate)\n\nRows: 0\nColumns: 3\n$ ORIGIN_BS &lt;chr&gt; \n$ TRIPS     &lt;dbl&gt; \n$ ORIGIN_SZ &lt;chr&gt; \n\n\nThe duplicates have been removed so we can proceed with merging origin_data with mpsz to figure out the subzone names on the bus stop locations.\n\nmpsz_origtrip &lt;- left_join(mpsz, \n                           origin_data,\n                           by = c(\"SUBZONE_C\" = \"ORIGIN_SZ\"))\n\nBefore proceeding, let’s save this data as rds.\n\nwrite_rds(origin7_9, \"data/rds/origin7_9.rds\")"
-  },
-  {
-    "objectID": "Take-home_Ex2/data/geospatial/MPSZ-2019.html",
-    "href": "Take-home_Ex2/data/geospatial/MPSZ-2019.html",
-    "title": "ISSS624",
-    "section": "",
-    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
+    "text": "Welcome to ISSS624 Geospatial Analytics Applications!\nI am Kristine Joy Paas, or Joy for short.\nIn this webpage, I am going to share with you my learning journey of geospatial analytics.\nNetlify link: https://isss624-kjcpaas.netlify.app/\nGithub repo: https://github.com/kjcpaas/ISSS624"
   },
   {
     "objectID": "Hands-on_Ex1/Hands-on_Ex1A.html",
@@ -994,11 +826,256 @@
     "text": "Issues with using Github on Rstudio\nIt was recommended to name the project with the convention &lt;github_username&gt;/ISSS624. However, due to restrictions on my machine, I had to deviate from this and create my project elsewhere.\nHence, I couldn’t use usethis::use_github() to setup my Github repository. However, as I use git Github intensively in my job, I did the setup manually myself to use the git functions on RStudio.\nI used these steps for the manual setup.\n\nCreate the repo manually on Github on https://github.com/kjcpaas/ISSS624\nAdd the Github remote on RStudio project\n&gt; git remote add origin git@github.com:kjcpaas/ISSS624.git\n&gt; git remote -v\norigin  git@github.com:kjcpaas/ISSS624.git (fetch)\norigin  git@github.com:kjcpaas/ISSS624.git (push)\nSet remote for head\n&gt; git remote set-head origin --auto\n&gt; git gc\n\nAfter all these, I was able to use the git functions on RStudio."
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
+    "objectID": "Take-home_Ex2/data/geospatial/Business.html",
+    "href": "Take-home_Ex2/data/geospatial/Business.html",
     "title": "ISSS624",
     "section": "",
-    "text": "Welcome to ISSS624 Geospatial Analytics Applications!\nI am Kristine Joy Paas, or Joy for short.\nIn this webpage, I am going to share with you my learning journey of geospatial analytics.\nNetlify link: https://isss624-kjcpaas.netlify.app/\nGithub repo: https://github.com/kjcpaas/ISSS624"
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“WGS 84”,ENSEMBLE[“World Geodetic System 1984 ensemble”,MEMBER[“World Geodetic System 1984 (Transit)”],MEMBER[“World Geodetic System 1984 (G730)”],MEMBER[“World Geodetic System 1984 (G873)”],MEMBER[“World Geodetic System 1984 (G1150)”],MEMBER[“World Geodetic System 1984 (G1674)”],MEMBER[“World Geodetic System 1984 (G1762)”],MEMBER[“World Geodetic System 1984 (G2139)”],ELLIPSOID[“WGS 84”,6378137,298.257223563,LENGTHUNIT[“metre”,1]],ENSEMBLEACCURACY[2.0]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“World.”],BBOX[-90,-180,90,180]],ID[“EPSG”,4326]] +proj=longlat +datum=WGS84 +no_defs 3452 4326 EPSG:4326 WGS 84 longlat EPSG:7030 true"
+  },
+  {
+    "objectID": "Take-home_Ex2/data/geospatial/Retails.html",
+    "href": "Take-home_Ex2/data/geospatial/Retails.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“WGS 84”,ENSEMBLE[“World Geodetic System 1984 ensemble”,MEMBER[“World Geodetic System 1984 (Transit)”],MEMBER[“World Geodetic System 1984 (G730)”],MEMBER[“World Geodetic System 1984 (G873)”],MEMBER[“World Geodetic System 1984 (G1150)”],MEMBER[“World Geodetic System 1984 (G1674)”],MEMBER[“World Geodetic System 1984 (G1762)”],MEMBER[“World Geodetic System 1984 (G2139)”],ELLIPSOID[“WGS 84”,6378137,298.257223563,LENGTHUNIT[“metre”,1]],ENSEMBLEACCURACY[2.0]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“World.”],BBOX[-90,-180,90,180]],ID[“EPSG”,4326]] +proj=longlat +datum=WGS84 +no_defs 3452 4326 EPSG:4326 WGS 84 longlat EPSG:7030 true"
+  },
+  {
+    "objectID": "Take-home_Ex2/data/geospatial/MPSZ-2019.html",
+    "href": "Take-home_Ex2/data/geospatial/MPSZ-2019.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
+  },
+  {
+    "objectID": "Take-home_Ex2/data/geospatial/F&B.html",
+    "href": "Take-home_Ex2/data/geospatial/F&B.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“WGS 84”,ENSEMBLE[“World Geodetic System 1984 ensemble”,MEMBER[“World Geodetic System 1984 (Transit)”],MEMBER[“World Geodetic System 1984 (G730)”],MEMBER[“World Geodetic System 1984 (G873)”],MEMBER[“World Geodetic System 1984 (G1150)”],MEMBER[“World Geodetic System 1984 (G1674)”],MEMBER[“World Geodetic System 1984 (G1762)”],MEMBER[“World Geodetic System 1984 (G2139)”],ELLIPSOID[“WGS 84”,6378137,298.257223563,LENGTHUNIT[“metre”,1]],ENSEMBLEACCURACY[2.0]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“World.”],BBOX[-90,-180,90,180]],ID[“EPSG”,4326]] +proj=longlat +datum=WGS84 +no_defs 3452 4326 EPSG:4326 WGS 84 longlat EPSG:7030 true"
+  },
+  {
+    "objectID": "In-class_Ex1/In-class_Ex1.html",
+    "href": "In-class_Ex1/In-class_Ex1.html",
+    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
+    "section": "",
+    "text": "In this exercise, we will learn how to create choropleth map from bus data and commuter data."
+  },
+  {
+    "objectID": "In-class_Ex1/In-class_Ex1.html#importing-the-origin-and-destination-data",
+    "href": "In-class_Ex1/In-class_Ex1.html#importing-the-origin-and-destination-data",
+    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
+    "section": "Importing the origin and destination data",
+    "text": "Importing the origin and destination data\nFirstly, we will import the Passenger Volume By Origin Destination Bust Stops data set from LTA Data Mall by using read_csv .\n\nodbus &lt;- read_csv(\"data/aspatial/origin_destination_bus_202308.csv\")\n\nTo make it easier to process the PT codes, we will convert the origin and destination PT codes to factor data type.\n\nodbus$ORIGIN_PT_CODE &lt;- as.factor(odbus$ORIGIN_PT_CODE)\nodbus$DESTINATION_PT_CODE &lt;- as.factor(odbus$DESTINATION_PT_CODE)\n\nNext, I want to investigate the commuter flows between 7-10am on weekdays.\n\n\n\n\n\n\nTip\n\n\n\nWe need to use the interval 7 &lt;= time &lt;= 9 as the data with time = 9 contains data from 9am to just before 10am.\n\n\n\norigin7_9 &lt;- odbus %&gt;%\n  filter(DAY_TYPE == \"WEEKDAY\") %&gt;%\n  filter(TIME_PER_HOUR &gt;= 7 &\n           TIME_PER_HOUR &lt;= 9) %&gt;%\n  group_by(ORIGIN_PT_CODE) %&gt;%\n  summarise(TRIPS = sum(TOTAL_TRIPS))\n\nNext, we save the data in rds format for future use.\n\n\n\n\n\n\nImportant\n\n\n\nIn order for the code below to work, we need to create the rds/ directory under data/.\n\n\n\nwrite_rds(origin7_9, \"data/rds/origin7_9.rds\")\n\nIt can be imported back later on with read_rds().\n\norigin7_9 &lt;- read_rds(\"data/rds/origin7_9.rds\")"
+  },
+  {
+    "objectID": "In-class_Ex1/In-class_Ex1.html#importing-geospatial-data",
+    "href": "In-class_Ex1/In-class_Ex1.html#importing-geospatial-data",
+    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
+    "section": "Importing geospatial data",
+    "text": "Importing geospatial data\nNext we need to import the bus stop locations so that we can correlate them from the PT codes from the origin and destination data from before.\n\nbusstop &lt;- st_read(dsn = \"data/geospatial\",\n                  layer = \"BusStop\") %&gt;%\n  st_transform(crs=3414)\n\nReading layer `BusStop' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex1/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 5161 features and 3 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 3970.122 ymin: 26482.1 xmax: 48284.56 ymax: 52983.82\nProjected CRS: SVY21\n\n\nSince these are just points, we also need some polygon data to figure out where in the Singapore map the bus locations correspond to:\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\",\n                layer = \"MPSZ-2019\") %&gt;%\n  st_transform(crs = 3414)\n\nReading layer `MPSZ-2019' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex1/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 332 features and 6 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 103.6057 ymin: 1.158699 xmax: 104.0885 ymax: 1.470775\nGeodetic CRS:  WGS 84"
+  },
+  {
+    "objectID": "In-class_Ex1/In-class_Ex1.html#combining-busstop-and-mpsz",
+    "href": "In-class_Ex1/In-class_Ex1.html#combining-busstop-and-mpsz",
+    "title": "In-class Exercise 1: Bus Commuter Flow by Origin",
+    "section": "Combining busstop and mpsz",
+    "text": "Combining busstop and mpsz\nWe first combine that 2 data frames by figuring out which polygon in mpsz each points in busstop are contained in.\n\nbusstop_mpsz &lt;- st_intersection(busstop, mpsz) %&gt;%\n  select(BUS_STOP_N, SUBZONE_C) %&gt;%\n  st_drop_geometry()\nglimpse(busstop_mpsz)\n\nRows: 5,156\nColumns: 2\n$ BUS_STOP_N &lt;chr&gt; \"13099\", \"13089\", \"06151\", \"13211\", \"13139\", \"13109\", \"1311…\n$ SUBZONE_C  &lt;chr&gt; \"RVSZ05\", \"RVSZ05\", \"SRSZ01\", \"SRSZ01\", \"SRSZ01\", \"SRSZ01\",…\n\n\n\n\n\n\n\n\nNote\n\n\n\n\nst_intersection() is used to perform point and polygon overly and the output will be in point sf object.\nselect() of dplyr package is then use to retain only BUS_STOP_N and SUBZONE_C in the busstop_mpsz sf data frame.\nst_drop_geometry() removes the geometry from the data frame, making the data aspatial.\n\n\n\n\n\n\n\n\n\nTip\n\n\n\nbusstop_mpsz has 5 less items than busstop. This is because these bus stops are outside of Singapore 🇸🇬 border.\nFor example, some bus routes start/end in Johor Bahru in Malaysia 🇲🇾.\n\n\nFinally, we now now which subzone each bus stop is located in.\nBefore proceeding, we should save the busstop_mpsz so we won’t need to recalculate it later on.\n\nwrite_rds(busstop_mpsz, \"data/rds/busstop_mpsz.csv\")\n\nNext is to join the busstop_mpsz data with origin7_9.\n\norigin_data &lt;- left_join(origin7_9 , busstop_mpsz,\n            by = c(\"ORIGIN_PT_CODE\" = \"BUS_STOP_N\")) %&gt;%\n  rename(ORIGIN_BS = ORIGIN_PT_CODE,\n         ORIGIN_SZ = SUBZONE_C)\n\nNext is to check for duplicate records.\n\nduplicate &lt;- origin_data %&gt;%\n  group_by_all() %&gt;%\n  filter(n()&gt;1) %&gt;%\n  ungroup()\nglimpse(duplicate)\n\nRows: 26\nColumns: 3\n$ ORIGIN_BS &lt;chr&gt; \"11009\", \"11009\", \"22501\", \"22501\", \"43709\", \"43709\", \"47201…\n$ TRIPS     &lt;dbl&gt; 13826, 13826, 9743, 9743, 1118, 1118, 23998, 23998, 6218, 62…\n$ ORIGIN_SZ &lt;chr&gt; \"QTSZ01\", \"QTSZ01\", \"JWSZ09\", \"JWSZ09\", \"BKSZ07\", \"BKSZ07\", …\n\n\nIn this case, there are some duplicates so we need to clean it up further. This can be done using unique().\n\norigin_data &lt;- unique(origin_data)\n\nLet’s check if the duplicates have been removed.\n\nduplicate &lt;- origin_data %&gt;%\n  group_by_all() %&gt;%\n  filter(n()&gt;1) %&gt;%\n  ungroup()\nglimpse(duplicate)\n\nRows: 0\nColumns: 3\n$ ORIGIN_BS &lt;chr&gt; \n$ TRIPS     &lt;dbl&gt; \n$ ORIGIN_SZ &lt;chr&gt; \n\n\nThe duplicates have been removed so we can proceed with merging origin_data with mpsz to figure out the subzone names on the bus stop locations.\n\nmpsz_origtrip &lt;- left_join(mpsz, \n                           origin_data,\n                           by = c(\"SUBZONE_C\" = \"ORIGIN_SZ\"))\n\nBefore proceeding, let’s save this data as rds.\n\nwrite_rds(origin7_9, \"data/rds/origin7_9.rds\")"
+  },
+  {
+    "objectID": "In-class_Ex1/data/geospatial/MPSZ-2019.html",
+    "href": "In-class_Ex1/data/geospatial/MPSZ-2019.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
+  },
+  {
+    "objectID": "Take-home_Ex2/data/geospatial/Liesure&Recreation.html",
+    "href": "Take-home_Ex2/data/geospatial/Liesure&Recreation.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“WGS 84”,ENSEMBLE[“World Geodetic System 1984 ensemble”,MEMBER[“World Geodetic System 1984 (Transit)”],MEMBER[“World Geodetic System 1984 (G730)”],MEMBER[“World Geodetic System 1984 (G873)”],MEMBER[“World Geodetic System 1984 (G1150)”],MEMBER[“World Geodetic System 1984 (G1674)”],MEMBER[“World Geodetic System 1984 (G1762)”],MEMBER[“World Geodetic System 1984 (G2139)”],ELLIPSOID[“WGS 84”,6378137,298.257223563,LENGTHUNIT[“metre”,1]],ENSEMBLEACCURACY[2.0]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“World.”],BBOX[-90,-180,90,180]],ID[“EPSG”,4326]] +proj=longlat +datum=WGS84 +no_defs 3452 4326 EPSG:4326 WGS 84 longlat EPSG:7030 true"
+  },
+  {
+    "objectID": "Take-home_Ex2/data/geospatial/entertn.html",
+    "href": "Take-home_Ex2/data/geospatial/entertn.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“WGS 84”,ENSEMBLE[“World Geodetic System 1984 ensemble”,MEMBER[“World Geodetic System 1984 (Transit)”],MEMBER[“World Geodetic System 1984 (G730)”],MEMBER[“World Geodetic System 1984 (G873)”],MEMBER[“World Geodetic System 1984 (G1150)”],MEMBER[“World Geodetic System 1984 (G1674)”],MEMBER[“World Geodetic System 1984 (G1762)”],MEMBER[“World Geodetic System 1984 (G2139)”],ELLIPSOID[“WGS 84”,6378137,298.257223563,LENGTHUNIT[“metre”,1]],ENSEMBLEACCURACY[2.0]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“World.”],BBOX[-90,-180,90,180]],ID[“EPSG”,4326]] +proj=longlat +datum=WGS84 +no_defs 3452 4326 EPSG:4326 WGS 84 longlat EPSG:7030 true"
+  },
+  {
+    "objectID": "Take-home_Ex2/data/geospatial/FinServ.html",
+    "href": "Take-home_Ex2/data/geospatial/FinServ.html",
+    "title": "ISSS624",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“WGS 84”,ENSEMBLE[“World Geodetic System 1984 ensemble”,MEMBER[“World Geodetic System 1984 (Transit)”],MEMBER[“World Geodetic System 1984 (G730)”],MEMBER[“World Geodetic System 1984 (G873)”],MEMBER[“World Geodetic System 1984 (G1150)”],MEMBER[“World Geodetic System 1984 (G1674)”],MEMBER[“World Geodetic System 1984 (G1762)”],MEMBER[“World Geodetic System 1984 (G2139)”],ELLIPSOID[“WGS 84”,6378137,298.257223563,LENGTHUNIT[“metre”,1]],ENSEMBLEACCURACY[2.0]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“World.”],BBOX[-90,-180,90,180]],ID[“EPSG”,4326]] +proj=longlat +datum=WGS84 +no_defs 3452 4326 EPSG:4326 WGS 84 longlat EPSG:7030 true"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html",
+    "href": "Take-home_Ex2/Take-home_Ex2.html",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "",
+    "text": "pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)\ntmap_mode(\"plot\")\ntmap_style(\"natural\")\nset.seed(1234)"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#import-geospatial-data",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#import-geospatial-data",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Import Geospatial Data",
+    "text": "Import Geospatial Data\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\",\n                layer = \"MPSZ-2019\") %&gt;% st_transform(crs=3414)\n\nReading layer `MPSZ-2019' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 332 features and 6 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 103.6057 ymin: 1.158699 xmax: 104.0885 ymax: 1.470775\nGeodetic CRS:  WGS 84\n\n\n\nbusstops &lt;- st_read(dsn = \"data/geospatial\",\n                    layer = \"BusStop\") %&gt;% st_transform(crs=3414)\n\nReading layer `BusStop' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 5161 features and 3 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 3970.122 ymin: 26482.1 xmax: 48284.56 ymax: 52983.82\nProjected CRS: SVY21\n\nkable(head(busstops))\n\n\n\n\n\n\n\n\n\n\nBUS_STOP_N\nBUS_ROOF_N\nLOC_DESC\ngeometry\n\n\n\n\n22069\nB06\nOPP CEVA LOGISTICS\nPOINT (13576.31 32883.65)\n\n\n32071\nB23\nAFT TRACK 13\nPOINT (13228.59 44206.38)\n\n\n44331\nB01\nBLK 239\nPOINT (21045.1 40242.08)\n\n\n96081\nB05\nGRACE INDEPENDENT CH\nPOINT (41603.76 35413.11)\n\n\n11561\nB05\nBLK 166\nPOINT (24568.74 30391.85)\n\n\n66191\nB03\nAFT CORFE PL\nPOINT (30951.58 38079.61)\n\n\n\n\n\n\n\nShow the code\ntm_shape(mpsz) +\n  tm_fill(\"lightgreen\", title = \"Singapore Boundary\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Map of bus stops in Singapore\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_shape(busstops) +\n  tm_dots(col = \"red\", size = 0.005, title = \"Bus Stops\") +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\nFilter those only within Singapore\n\nbusstops &lt;- busstops %&gt;% st_intersection(mpsz) %&gt;% select(BUS_STOP_N, )\n\n\n\nShow the code\ntmap_style(\"natural\")\ntm_shape(mpsz) +\n  tm_fill(\"lightgreen\", title = \"Singapore Boundary\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Map of bus stops in Singapore\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_shape(busstops) +\n  tm_dots(col = \"red\", size = 0.005, title = \"Bus Stops\") +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha = 0.2)"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#create-hexagon",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#create-hexagon",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Create Hexagon",
+    "text": "Create Hexagon\n\nhoneycomb &lt;- busstops %&gt;% st_make_grid(cellsize = 650,\n                                       what=\"polygons\",\n                                       square = FALSE) %&gt;%\n  st_sf() %&gt;%\n  filter(lengths(st_intersects(geometry, busstops)) &gt; 0)\n\n\n\nShow the code\ntm_shape(mpsz) +\n  tm_fill(\"green\", title = \"Singapore Boundary\", alpha = 0.5) +\n  tm_shape(honeycomb) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_borders(alpha = 0.2) +\n  tm_layout(main.title = \"Honeycomb grid corresponding to Singapore bus stops\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_compass(type=\"8star\", size = 2, bg.color = \"white\", bg.alpha = 0.5) +\n  tm_scale_bar(bg.color = \"white\", bg.alpha = 0.5) +\n  tm_shape(busstops) +\n  tm_dots(col = \"red\", size = 0.001, title = \"Bus Stops\") +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\nAssign id\n\nhoneycomb$HEX_ID &lt;- sprintf(\"H%04d\", seq_len(nrow(honeycomb))) %&gt;% as.factor()\n\n\nwrite_rds(honeycomb, \"data/rds/honeycomb.rds\")"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#generating-origin-and-destination-data-by-hexagon",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#generating-origin-and-destination-data-by-hexagon",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Generating Origin and Destination Data by Hexagon",
+    "text": "Generating Origin and Destination Data by Hexagon"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#importing-bus-passenger-data",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#importing-bus-passenger-data",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Importing Bus Passenger data",
+    "text": "Importing Bus Passenger data\nThe data set is an aspatial data in csv format so we will use read_csv() to import the data.\n\nodbus &lt;- read_csv(\"data/aspatial/origin_destination_bus_202310.csv\")\nkable(head(odbus))\n\n\n\n\n\n\n\n\n\n\n\n\n\nYEAR_MONTH\nDAY_TYPE\nTIME_PER_HOUR\nPT_TYPE\nORIGIN_PT_CODE\nDESTINATION_PT_CODE\nTOTAL_TRIPS\n\n\n\n\n2023-10\nWEEKENDS/HOLIDAY\n16\nBUS\n04168\n10051\n3\n\n\n2023-10\nWEEKDAY\n16\nBUS\n04168\n10051\n5\n\n\n2023-10\nWEEKENDS/HOLIDAY\n14\nBUS\n80119\n90079\n3\n\n\n2023-10\nWEEKDAY\n14\nBUS\n80119\n90079\n5\n\n\n2023-10\nWEEKDAY\n17\nBUS\n44069\n17229\n4\n\n\n2023-10\nWEEKENDS/HOLIDAY\n17\nBUS\n20281\n20141\n1\n\n\n\n\n\n\nFiltering the study interest\nWeekend morning\n\nodbus &lt;- odbus %&gt;% filter(\n  DAY_TYPE == \"WEEKENDS/HOLIDAY\" &\n    TIME_PER_HOUR &gt;= 11 &\n    TIME_PER_HOUR &lt; 14\n)\n\n\n\nMapping Bus Stop to Hexagon\n\nbs_hex &lt;- st_intersection(busstops, honeycomb) %&gt;%\n  st_drop_geometry() %&gt;%\n  select(c(BUS_STOP_N, HEX_ID))\nkable(head(bs_hex))\n\n\n\n\n\nBUS_STOP_N\nHEX_ID\n\n\n\n\n3269\n25059\nH0001\n\n\n3269.1\n25059\nH0002\n\n\n254\n26379\nH0003\n\n\n2570\n25751\nH0004\n\n\n2897\n25761\nH0004\n\n\n2403\n26369\nH0005\n\n\n\n\n\nWhat if bus stop is in 2 hexagons?\n\nA bus stop is included in 2 hexagons\nWe have to remove one of them.\n\nkable(head(bs_hex))\n\n\n\n\n\nBUS_STOP_N\nHEX_ID\n\n\n\n\n3269\n25059\nH0001\n\n\n3269.1\n25059\nH0002\n\n\n254\n26379\nH0003\n\n\n2570\n25751\nH0004\n\n\n2897\n25761\nH0004\n\n\n2403\n26369\nH0005\n\n\n\n\n\n\ntm_shape(honeycomb[1:10,]) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_text(\"HEX_ID\", size = 0.8) +\n  tm_borders(alpha = 0.2) +\n  tm_layout(main.title = \"Map showing bus stops in 2 hexagons\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_scale_bar(bg.color = \"white\", bg.alpha = 0.5, position = c(\"left\", \"top\")) +\n  tm_shape(busstops %&gt;% filter(BUS_STOP_N == \"25059\")) +\n  tm_dots(col = \"red\", size = 0.05, title = \"Bus Stops\") +\n  tm_grid(alpha = 0.2)\n\n\n\n\nThe bus stop is right on the boundary of H0001 and H0002. If we remove H0002, H0001 will be an island so let us remove H0001. This way, H0002 is still connected to another hexagon. Let’s also re-assign the ids of the hexagon.\n\nhoneycomb &lt;- honeycomb %&gt;% filter(HEX_ID != \"H0001\")\nhoneycomb$HEX_ID &lt;- sprintf(\"H%04d\", seq_len(nrow(honeycomb))) %&gt;% as.factor()\n\n\ntm_shape(honeycomb[1:10,]) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_text(\"HEX_ID\", size = 0.8) +\n  tm_borders(alpha = 0.2) +\n  tm_layout(main.title = \"Honeycomb grid corresponding to Singapore bus stops\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_scale_bar(bg.color = \"white\", bg.alpha = 0.5, position = c(\"left\", \"top\")) +\n  tm_shape(busstops %&gt;% filter(BUS_STOP_N == \"25059\")) +\n  tm_dots(col = \"red\", size = 0.05, title = \"Bus Stops\") +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\nbs_hex &lt;- st_intersection(busstops, honeycomb) %&gt;%\n  st_drop_geometry() %&gt;%\n  select(c(BUS_STOP_N, HEX_ID))\nkable(head(bs_hex))\n\n\n\n\n\nBUS_STOP_N\nHEX_ID\n\n\n\n\n3269\n25059\nH0001\n\n\n254\n26379\nH0002\n\n\n2570\n25751\nH0003\n\n\n2897\n25761\nH0003\n\n\n2403\n26369\nH0004\n\n\n1565\n26299\nH0005\n\n\n\n\n\n\n\n\nAdding hexagon information to bus passenger data\ninner_join() as some bus stops in odbus do not have point data.\n\nodbushex &lt;- odbus %&gt;% inner_join(bs_hex,\n                                by = c(\"ORIGIN_PT_CODE\" = \"BUS_STOP_N\")) %&gt;%\n  rename(ORIG_HEX_ID = HEX_ID) %&gt;% \n  inner_join(bs_hex,\n            by = c(\"DESTINATION_PT_CODE\" = \"BUS_STOP_N\")) %&gt;%\n  rename(DEST_HEX_ID = HEX_ID) %&gt;% \n  rename(HOUR_OF_DAY = TIME_PER_HOUR)"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#aggregating-trips-based-on-origin-and-destination",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#aggregating-trips-based-on-origin-and-destination",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Aggregating trips based on origin and destination",
+    "text": "Aggregating trips based on origin and destination\n\nodtrips &lt;- odbushex %&gt;% group_by(\n    ORIG_HEX_ID,\n    DEST_HEX_ID) %&gt;%\n  summarise(TRIPS = sum(TOTAL_TRIPS))\nkable(head(odtrips))\n\n\n\n\nORIG_HEX_ID\nDEST_HEX_ID\nTRIPS\n\n\n\n\nH0002\nH0025\n2\n\n\nH0002\nH0032\n27\n\n\nH0002\nH0076\n12\n\n\nH0003\nH0007\n4\n\n\nH0003\nH0010\n12\n\n\nH0003\nH0019\n2\n\n\n\n\n\n\nrm(busstops)\nrm(odbus)\nrm(odbushex)"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#choosing-visualization-interval",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#choosing-visualization-interval",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Choosing visualization interval",
+    "text": "Choosing visualization interval\n\nquantile(\n  flowline$TRIPS,\n  probs = c(0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 1))\n\n       0%       25%       50%       75%       90%       95%       99%     99.9% \n    1.000     3.000    10.000    39.000   138.000   296.000  1179.720  4037.008 \n     100% \n12392.000 \n\n\n\n\nShow the code\ntm_shape(mpsz) +\n  tm_fill(\"lightgreen\", title = \"Singapore Boundary\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Map of bus stops in Singapore\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_shape(honeycomb) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_borders(alpha = 0.2) +\n  \n  tm_shape(flowline[flowline$TRIPS &gt; 1179,]) +\n  tm_lines(lwd = \"TRIPS\",\n           col = \"red\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.3) +\n  \n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha = 0.2)"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#converting-honeycomb-to-spatialpolygonsdataframe",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#converting-honeycomb-to-spatialpolygonsdataframe",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Converting honeycomb to SpatialPolygonsDataFrame",
+    "text": "Converting honeycomb to SpatialPolygonsDataFrame\n\nhoneycomb_sp &lt;- as(honeycomb, \"Spatial\")"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#generating-distance-matrix",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#generating-distance-matrix",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Generating distance matrix",
+    "text": "Generating distance matrix\n\ndist_mat &lt;- spDists(honeycomb_sp,\n                    longlat = FALSE)\ncolnames(dist_mat) &lt;- paste0(honeycomb$HEX_ID)\nrownames(dist_mat) &lt;- paste0(honeycomb$HEX_ID)\nkable(head(dist_mat, n=c(10, 10)))\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nH0001\nH0002\nH0003\nH0004\nH0005\nH0006\nH0007\nH0008\nH0009\nH0010\n\n\n\n\nH0001\n0.000\n2251.666\n650.000\n2833.284\n3953.796\n1300.000\n2343.608\n4550.000\n1950.000\n2978.674\n\n\nH0002\n2251.666\n0.000\n1719.738\n650.000\n1719.738\n1300.000\n650.000\n2343.608\n1125.833\n1125.833\n\n\nH0003\n650.000\n1719.738\n0.000\n2251.666\n3377.499\n650.000\n1719.738\n3953.796\n1300.000\n2343.608\n\n\nH0004\n2833.284\n650.000\n2251.666\n0.000\n1125.833\n1719.738\n650.000\n1719.738\n1300.000\n650.000\n\n\nH0005\n3953.796\n1719.738\n3377.499\n1125.833\n0.000\n2833.284\n1719.738\n650.000\n2343.608\n1300.000\n\n\nH0006\n1300.000\n1300.000\n650.000\n1719.738\n2833.284\n0.000\n1125.833\n3377.499\n650.000\n1719.738\n\n\nH0007\n2343.608\n650.000\n1719.738\n650.000\n1719.738\n1125.833\n0.000\n2251.666\n650.000\n650.000\n\n\nH0008\n4550.000\n2343.608\n3953.796\n1719.738\n650.000\n3377.499\n2251.666\n0.000\n2833.284\n1719.738\n\n\nH0009\n1950.000\n1125.833\n1300.000\n1300.000\n2343.608\n650.000\n650.000\n2833.284\n0.000\n1125.833\n\n\nH0010\n2978.674\n1125.833\n2343.608\n650.000\n1300.000\n1719.738\n650.000\n1719.738\n1125.833\n0.000"
+  },
+  {
+    "objectID": "Take-home_Ex2/Take-home_Ex2.html#creating-pivot-table",
+    "href": "Take-home_Ex2/Take-home_Ex2.html#creating-pivot-table",
+    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
+    "section": "Creating pivot table",
+    "text": "Creating pivot table\n300 because of hexagon dimensions\n\ndist_tbl &lt;- melt(dist_mat) %&gt;%\n  rename(distance = value)\ndist_tbl$distance[dist_tbl$distance == 0] &lt;- 300\nkable(head(dist_tbl))\n\n\n\n\nVar1\nVar2\ndistance\n\n\n\n\nH0001\nH0001\n300.000\n\n\nH0002\nH0001\n2251.666\n\n\nH0003\nH0001\n650.000\n\n\nH0004\nH0001\n2833.284\n\n\nH0005\nH0001\n3953.796\n\n\nH0006\nH0001\n1300.000"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "",
+    "text": "This hands-on exercise covers Chapter 2: Choropleth Mapping with R.\nI learned about the following:\n\nCreating thematic/choropleth maps with tmap\nQuantile and equal classification"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#preparing-the-datasets",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#preparing-the-datasets",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Preparing the datasets",
+    "text": "Preparing the datasets\n\nGeospatial\n\nMaster Plan 2014 Subzone Boundary (Web) from data.gov.sg\n\n\n\nAspatial\n\nSingapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling, June 2011-2020 from Department of Statistics, Singapore\n\nNext, is putting them under the Hands-on_Ex1 directory, with the following file structure:\nHands-on_Ex1\n└── data\n    ├── aspatial\n    │   └── respopagesextod2011to2020.csv\n    └── geospatial\n        ├── MP14_SUBZONE_WEB_PL.dbf\n        ├── MP14_SUBZONE_WEB_PL.prj\n        ├── MP14_SUBZONE_WEB_PL.sbn\n        ├── MP14_SUBZONE_WEB_PL.sbx\n        ├── MP14_SUBZONE_WEB_PL.shp\n        ├── MP14_SUBZONE_WEB_PL.shp.xml\n        └── MP14_SUBZONE_WEB_PL.shx"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#installing-r-packages",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#installing-r-packages",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Installing R packages",
+    "text": "Installing R packages\nI used the code below to install the R packages used in the exercise:\n\npacman::p_load(sf, tidyverse, tmap)"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-geospatial-data",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-geospatial-data",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Importing geospatial data",
+    "text": "Importing geospatial data\nTo import the MPSZ data set to RStudio, I used the same code chunk in the previous exercise.\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\", layer = \"MP14_SUBZONE_WEB_PL\")\n\nReading layer `MP14_SUBZONE_WEB_PL' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Hands-on_Ex1/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 323 features and 15 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 2667.538 ymin: 15748.72 xmax: 56396.44 ymax: 50256.33\nProjected CRS: SVY21"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-aspatial-data",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#importing-aspatial-data",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Importing aspatial data",
+    "text": "Importing aspatial data\nThe csv data is an aspatial data so read_csv() must be used instead of st_read():\n\npopdata &lt;- read_csv(\"data/aspatial/respopagesextod2011to2020.csv\")"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#data-preparation",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#data-preparation",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Data preparation",
+    "text": "Data preparation\n\npopdata2020 &lt;- popdata %&gt;%\n  filter(Time == 2020) %&gt;%\n  group_by(PA, SZ, AG) %&gt;%\n  summarise(`POP` = sum(`Pop`)) %&gt;%\n  ungroup()%&gt;%\n  pivot_wider(names_from=AG, \n              values_from=POP) %&gt;%\n  mutate(YOUNG = rowSums(.[3:6])\n         +rowSums(.[12])) %&gt;%\nmutate(`ECONOMY ACTIVE` = rowSums(.[7:11])+\nrowSums(.[13:15]))%&gt;%\nmutate(`AGED`=rowSums(.[16:21])) %&gt;%\nmutate(`TOTAL`=rowSums(.[3:21])) %&gt;%  \nmutate(`DEPENDENCY` = (`YOUNG` + `AGED`)\n/`ECONOMY ACTIVE`) %&gt;%\n  select(`PA`, `SZ`, `YOUNG`, \n       `ECONOMY ACTIVE`, `AGED`, \n       `TOTAL`, `DEPENDENCY`)\n\nI don’t fully understand this entire code chunk yet but I know it filtered for data from 2020 only and did some aggregations based on the age groups, PA, and AZ. New fields like YOUNG and AGED .\nNext, I joined this data with the mpsz data via SZ. However, we still need to make sure that the SZ values are uppercase to match mpsz’s SUBZONE_N.\n\npopdata2020 &lt;- popdata2020 %&gt;%\n  mutate_at(.vars = vars(PA, SZ), \n          .funs = list(toupper)) %&gt;%\n  filter(`ECONOMY ACTIVE` &gt; 0)\n\nThen the 2 data sets can be joined.\n\nmpsz_pop2020 &lt;- left_join(mpsz, popdata2020,\n                          by = c(\"SUBZONE_N\" = \"SZ\"))\n\nLastly, write the rds of the combined data set.\n\nwrite_rds(mpsz_pop2020, \"data/rds/mpszpop2020.rds\")\n\n\n⚠️ This failed on the first try so I had to create the rds directory under data/ before trying again."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#using-qtm",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#using-qtm",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Using qtm()",
+    "text": "Using qtm()\n\ntmap_mode(\"plot\")\nqtm(mpsz_pop2020, \n    fill = \"DEPENDENCY\")\n\n\n\n\nI tried to create an interactive map by using view instead of plot but an error about invalid polygons was returned."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#using-tmap-elements",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#using-tmap-elements",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Using tmap() elements",
+    "text": "Using tmap() elements\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\", \n          style = \"quantile\", \n          palette = \"Blues\",\n          title = \"Dependency ratio\") +\n  tm_layout(main.title = \"Distribution of Dependency Ratio by planning subzone\",\n            main.title.position = \"center\",\n            main.title.size = 1.2,\n            legend.height = 0.45, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_borders(alpha = 0.5) +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha =0.2) +\n  tm_credits(\"Source: Planning Sub-zone boundary from Urban Redevelopment Authorithy (URA)\\n and Population data from Department of Statistics DOS\", \n             position = c(\"left\", \"bottom\"))\n\n\n\n\nFrom this part, I saw that with tm_shape as base, thematic maps can be created by doing + with the tmap actions. I will explore this later but I found a good reference on where to start: https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#classification-methods",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#classification-methods",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Classification methods",
+    "text": "Classification methods\n\nQuantile\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\",\n          n = 5,\n          style = \"jenks\") +\n  tm_borders(alpha = 0.5)\n\n\n\n\n\n\nEqual\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\",\n          n = 5,\n          style = \"equal\") +\n  tm_borders(alpha = 0.5)\n\n\n\n\nMy main takeaway for this is that the quantile classification deals with outliers better. In this data set, there is an outlier subzone. If we use equal classification, the map looks homogeneous and does not provide much information as it cannot be seen how the values from one subzone to the other differ.\nWith quantile classification, these differences can be seen more easily despite the outlier value."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#color-scheme",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#color-scheme",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Color Scheme",
+    "text": "Color Scheme\nThe color scheme can be changed by specifying the palette in tm_fill() like below:\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\",\n          n = 6,\n          style = \"quantile\",\n          palette = \"Blues\") +\n  tm_borders(alpha = 0.5)\n\n\n\n\nMore colors can be found when running tmaptools::palette_explorer() in the console. However, it requires shiny and shinyjs to work. This is a wonderful tool as it can also simulate how the color schemes look from the perspective of people with color blindness. As these maps aim to communicate, it is important for the color schemes chosen to not just be beautiful, but also inclusive."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#map-layouts",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#map-layouts",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Map Layouts",
+    "text": "Map Layouts\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\", \n          style = \"jenks\", \n          palette = \"Blues\", \n          legend.hist = TRUE, \n          legend.is.portrait = TRUE,\n          legend.hist.z = 0.1) +\n  tm_layout(main.title = \"Distribution of Dependency Ratio by planning subzone \\n(Jenks classification)\",\n            main.title.position = \"center\",\n            main.title.size = 1,\n            legend.height = 0.45, \n            legend.width = 0.35,\n            legend.outside = FALSE,\n            legend.position = c(\"right\", \"bottom\"),\n            frame = FALSE) +\n  tm_borders(alpha = 0.5)\n\n\n\n\nAdding legends to maps is very useful as it provides additional information. However, this feature should not be abused to add multiple visualizations as legend as it can cause more confusion if there is too much information to present.\nMap style can also be changed and it is useful to enhance the visual presentation. After doing some research, I found the other available styles in https://cran.r-project.org/web/packages/tmap/vignettes/tmap-changes.html.\n\ntm_shape(mpsz_pop2020)+\n  tm_fill(\"DEPENDENCY\", \n          style = \"quantile\", \n          palette = \"-Greens\") +\n  tm_borders(alpha = 0.5) +\n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar(width = 0.15) +\n  tm_grid(lwd = 0.1, alpha = 0.2) +\n  tmap_style(\"natural\")\n\n\n\n\nIn this example, I used the natural style to make it look like the map is surrounded by water (as it is naturally). Adding “furnitures” like compass and scale can also provide more perspective."
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#smaller-maps",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#smaller-maps",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Smaller Maps",
+    "text": "Smaller Maps\n\ntm_shape(mpsz_pop2020)+ \n  tm_polygons(c(\"DEPENDENCY\",\"AGED\"),\n          style = c(\"equal\", \"quantile\"), \n          palette = list(\"Blues\",\"Greens\")) +\n  tm_layout(legend.position = c(\"right\", \"bottom\"))\n\n\n\n\nI don’t find this very useful as the maps rendered might be too small to inspect. However, the facets with the region can be useful to see the data based on region.\n\ntm_shape(mpsz_pop2020) +\n  tm_fill(\"DEPENDENCY\",\n          style = \"quantile\",\n          palette = \"Greens\",\n          thres.poly = 0) + \n  tm_facets(by=\"REGION_N\", \n            free.coords=TRUE, \n            drop.shapes=TRUE) +\n  tm_layout(legend.show = FALSE,\n            title.position = c(\"center\", \"center\"), \n            title.size = 20) +\n  tm_borders(alpha = 0.5)"
+  },
+  {
+    "objectID": "Hands-on_Ex1/Hands-on_Ex1B.html#mapping-according-to-criterion",
+    "href": "Hands-on_Ex1/Hands-on_Ex1B.html#mapping-according-to-criterion",
+    "title": "Hands on Exercise 1A: Choropleth Mapping with R",
+    "section": "Mapping According to Criterion",
+    "text": "Mapping According to Criterion\n\ntm_shape(mpsz_pop2020[mpsz_pop2020$REGION_N==\"CENTRAL REGION\", ])+\n  tm_fill(\"DEPENDENCY\", \n          style = \"quantile\", \n          palette = \"Greens\", \n          legend.hist = TRUE, \n          legend.is.portrait = TRUE,\n          legend.hist.z = 0.1) +\n  tm_layout(legend.outside = TRUE,\n            legend.height = 0.45, \n            legend.width = 5.0,\n            legend.position = c(\"right\", \"bottom\"),\n            frame = FALSE) +\n  tm_borders(alpha = 0.5)\n\n\n\n\nI find this very useful especially if we just want to map a subset of the data. This can be used when we want to highlight information on certain regions."
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4.html",
+    "href": "In-class_Ex4/In-class_Ex4.html",
+    "title": "In-class Ex 4",
+    "section": "",
+    "text": "Setup Environment\nhttr - work with HTML pages\n\npacman::p_load(tidyverse, sf, httr, tmap)\n\n\n\nGeocoding\nUse https://www.onemap.gov.sg/apidocs/\nX, Y in SVY21, longitude latitude in WGS84\n\nurl &lt;- \"https://www.onemap.gov.sg/api/common/elastic/search\"\n\ncsv &lt;- read_csv(\"data/aspatial/GeneralInformationofschools.csv\")\npostcodes &lt;- csv$\"postal_code\"\n\nfound &lt;- data.frame()\nnot_found &lt;- data.frame()\n\nfor(postcode in postcodes){\n  query &lt;- list(\"searchVal\"=postcode,\"returnGeom\"=\"Y\", \"getAddrDetails\"=\"Y\",\"pageNum\"=\"1\")\n  res&lt;- GET(url, query=query)\n  \n  if((content(res)$found) !=0){\n    found &lt;- rbind(found, data.frame(content(res))[4:13])\n  } else {\n    not_found = data.frame(postcode)\n  }\n}\n\nwrite_rds(found, \"data/rds/found.rds\")\nwrite_rds(not_found, \"data/rds/not_found.rds\")\n\n\ncsv &lt;- read_csv(\"data/aspatial/GeneralInformationofschools.csv\")\nfound &lt;- read_rds(\"data/rds/found.rds\")\nnot_found &lt;- read_rds(\"data/rds/not_found.rds\")\nmerged = merge(csv, found, by.x = \"postal_code\", by.y = \"results.POSTAL\", all = TRUE)\nwrite.csv(merged, file = \"data/aspatial/schools.csv\")\nwrite.csv(not_found, file = \"data/aspatial/not_found.csv\")\n\n\n\n\n\n\n\nImportant\n\n\n\nUse Google to look for the school without geospatial data.\nReplace latitude with 1.3887, longitude with 103.7652.\nDo this before proceeding to the next step. Or else st_as_sf() will complain about missing longitude and latitude\n\n\n\n\n\n\n\n\n\nImport schools.csv\nRename column names\nRetain only relevant columns\n\n\n\n\n\nschools &lt;- read_csv(\"data/aspatial/schools.csv\") %&gt;%\n  rename(latitude = results.LATITUDE,\n         longitude = results.LONGITUDE) %&gt;%\n  select(postal_code, school_name, latitude, longitude)\n\nNew names:\nRows: 350 Columns: 41\n── Column specification\n──────────────────────────────────────────────────────── Delimiter: \",\" chr\n(35): school_name, url_address, address, telephone_no, telephone_no_2, f... dbl\n(6): ...1, postal_code, results.X, results.Y, results.LATITUDE, results...\nℹ Use `spec()` to retrieve the full column specification for this data. ℹ\nSpecify the column types or set `show_col_types = FALSE` to quiet this message.\n• `` -&gt; `...1`\n\n\n\nschools_sf &lt;- st_as_sf(schools,\n                       coords = c(\"longitude\", \"latitude\"),\n                       crs=4326) %&gt;%\n  st_transform(crs = 3414)"
   },
   {
     "objectID": "In-class_Ex3/data/geospatial/MPSZ-2019.html",
@@ -1026,7 +1103,7 @@
     "href": "In-class_Ex2/In-class_Ex2C.html#computing-gi",
     "title": "In-class Exercise 2C: EHSA",
     "section": "Computing Gi*",
-    "text": "Computing Gi*\n\nDeriving spatial weights\nSimilar to the previous exercises, we calculate inverse distance first. However, we now have a time column in our data which is Year.\n\nGDPPC_nb &lt;- GDPPC_st %&gt;%\n  activate(\"geometry\") %&gt;%\n  mutate(nb = include_self(st_contiguity(geometry)),\n         wt = st_inverse_distance(nb, geometry,\n                                  scale = 1,\n                                  alpha = 1),\n         .before = 1) %&gt;%\n  set_nbs(\"nb\") %&gt;%\n  set_wts(\"wt\")\nGDPPC_nb\n\n# A tibble: 1,496 × 5\n    Year County    GDPPC nb        wt       \n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   \n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl [8]&gt;\n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl [7]&gt;\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl [9]&gt;\n# ℹ 1,486 more rows\n\n\n\n\nComputing local Gi*\n\ngi_stars &lt;- GDPPC_nb %&gt;%\n  group_by(Year) %&gt;%\n  mutate(gi_star = local_gstar_perm(\n    GDPPC, nb, wt)) %&gt;%\n  tidyr::unnest(gi_star)\ngi_stars\n\n# A tibble: 1,496 × 13\n# Groups:   Year [17]\n    Year County    GDPPC nb        wt     gi_star   e_gi  var_gi p_value   p_sim\n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;\n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl&gt;    0.398 0.0117 2.87e-6  0.266  0.790  \n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl&gt;   -0.237 0.0110 2.94e-6 -0.0599 0.952  \n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0126 3.21e-6  0.531  0.596  \n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl&gt;    0.966 0.0117 3.07e-6  0.963  0.336  \n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0119 2.58e-6  1.05   0.296  \n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl&gt;    0.210 0.0122 2.95e-6 -0.230  0.818  \n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl&gt;    3.91  0.0141 2.89e-6  3.19   0.00141\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl&gt;    1.61  0.0127 2.45e-6  0.892  0.372  \n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl&gt;    3.88  0.0140 2.65e-6  2.61   0.00896\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl&gt;    1.67  0.0114 2.21e-6  1.77   0.0769 \n# ℹ 1,486 more rows\n# ℹ 3 more variables: p_folded_sim &lt;dbl&gt;, skewness &lt;dbl&gt;, kurtosis &lt;dbl&gt;"
+    "text": "Computing Gi*\n\nDeriving spatial weights\nSimilar to the previous exercises, we calculate inverse distance first. However, we now have a time column in our data which is Year.\n\nGDPPC_nb &lt;- GDPPC_st %&gt;%\n  activate(\"geometry\") %&gt;%\n  mutate(nb = include_self(st_contiguity(geometry)),\n         wt = st_inverse_distance(nb, geometry,\n                                  scale = 1,\n                                  alpha = 1),\n         .before = 1) %&gt;%\n  set_nbs(\"nb\") %&gt;%\n  set_wts(\"wt\")\nGDPPC_nb\n\n# A tibble: 1,496 × 5\n    Year County    GDPPC nb        wt       \n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   \n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl [8]&gt;\n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl [7]&gt;\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl [9]&gt;\n# ℹ 1,486 more rows\n\n\n\n\nComputing local Gi*\n\ngi_stars &lt;- GDPPC_nb %&gt;%\n  group_by(Year) %&gt;%\n  mutate(gi_star = local_gstar_perm(\n    GDPPC, nb, wt)) %&gt;%\n  tidyr::unnest(gi_star)\ngi_stars\n\n# A tibble: 1,496 × 13\n# Groups:   Year [17]\n    Year County    GDPPC nb        wt     gi_star   e_gi  var_gi p_value   p_sim\n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;\n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl&gt;    0.398 0.0117 3.09e-6  0.241  0.810  \n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl&gt;   -0.237 0.0110 2.52e-6 -0.0306 0.976  \n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0127 3.66e-6  0.458  0.647  \n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl&gt;    0.966 0.0117 2.99e-6  0.992  0.321  \n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0120 2.75e-6  0.944  0.345  \n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl&gt;    0.210 0.0120 2.63e-6 -0.141  0.888  \n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl&gt;    3.91  0.0143 3.03e-6  3.00   0.00270\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl&gt;    1.61  0.0128 2.43e-6  0.833  0.405  \n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl&gt;    3.88  0.0140 2.56e-6  2.69   0.00715\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl&gt;    1.67  0.0112 2.08e-6  1.92   0.0551 \n# ℹ 1,486 more rows\n# ℹ 3 more variables: p_folded_sim &lt;dbl&gt;, skewness &lt;dbl&gt;, kurtosis &lt;dbl&gt;"
   },
   {
     "objectID": "In-class_Ex2/In-class_Ex2C.html#arrange-to-show-significant-emerging-hotcold-spots",
@@ -1580,33 +1657,5 @@
     "title": "Hands-on Exercise 3: Processing and Visualizing Flow Data",
     "section": "Visualizing the desire lines",
     "text": "Visualizing the desire lines\nTo visualise the resulting desire lines, the code chunk below is used.\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")\n\n\n\n\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \n  filter(MORNING_PEAK &gt;= 5000) %&gt;%\ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#choosing-visualization-interval",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#choosing-visualization-interval",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Choosing visualization interval",
-    "text": "Choosing visualization interval\n\nquantile(\n  flowline$TRIPS,\n  probs = c(0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 1))\n\n       0%       25%       50%       75%       90%       95%       99%     99.9% \n    1.000     3.000    10.000    39.000   138.000   296.000  1179.720  4037.008 \n     100% \n12392.000 \n\n\n\n\nShow the code\ntm_shape(mpsz) +\n  tm_fill(\"lightgreen\", title = \"Singapore Boundary\") +\n  tm_borders(alpha = 0.5) +\n  tm_layout(main.title = \"Map of bus stops in Singapore\",\n            main.title.position = \"center\",\n            main.title.size = 1.0,\n            legend.height = 0.35, \n            legend.width = 0.35,\n            frame = TRUE) +\n  tm_shape(honeycomb) +\n  tm_fill(col = \"white\", title = \"Hexagons\", alpha = 1) +\n  tm_borders(alpha = 0.2) +\n  \n  tm_shape(flowline[flowline$TRIPS &gt; 1179,]) +\n  tm_lines(lwd = \"TRIPS\",\n           col = \"red\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.3) +\n  \n  tm_compass(type=\"8star\", size = 2) +\n  tm_scale_bar() +\n  tm_grid(alpha = 0.2)"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#converting-honeycomb-to-spatialpolygonsdataframe",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#converting-honeycomb-to-spatialpolygonsdataframe",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Converting honeycomb to SpatialPolygonsDataFrame",
-    "text": "Converting honeycomb to SpatialPolygonsDataFrame\n\nhoneycomb_sp &lt;- as(honeycomb, \"Spatial\")"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#generating-distance-matrix",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#generating-distance-matrix",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Generating distance matrix",
-    "text": "Generating distance matrix\n\ndist_mat &lt;- spDists(honeycomb_sp,\n                    longlat = FALSE)\ncolnames(dist_mat) &lt;- paste0(honeycomb$HEX_ID)\nrownames(dist_mat) &lt;- paste0(honeycomb$HEX_ID)\nkable(head(dist_mat, n=c(10, 10)))\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nH0001\nH0002\nH0003\nH0004\nH0005\nH0006\nH0007\nH0008\nH0009\nH0010\n\n\n\n\nH0001\n0.000\n2251.666\n650.000\n2833.284\n3953.796\n1300.000\n2343.608\n4550.000\n1950.000\n2978.674\n\n\nH0002\n2251.666\n0.000\n1719.738\n650.000\n1719.738\n1300.000\n650.000\n2343.608\n1125.833\n1125.833\n\n\nH0003\n650.000\n1719.738\n0.000\n2251.666\n3377.499\n650.000\n1719.738\n3953.796\n1300.000\n2343.608\n\n\nH0004\n2833.284\n650.000\n2251.666\n0.000\n1125.833\n1719.738\n650.000\n1719.738\n1300.000\n650.000\n\n\nH0005\n3953.796\n1719.738\n3377.499\n1125.833\n0.000\n2833.284\n1719.738\n650.000\n2343.608\n1300.000\n\n\nH0006\n1300.000\n1300.000\n650.000\n1719.738\n2833.284\n0.000\n1125.833\n3377.499\n650.000\n1719.738\n\n\nH0007\n2343.608\n650.000\n1719.738\n650.000\n1719.738\n1125.833\n0.000\n2251.666\n650.000\n650.000\n\n\nH0008\n4550.000\n2343.608\n3953.796\n1719.738\n650.000\n3377.499\n2251.666\n0.000\n2833.284\n1719.738\n\n\nH0009\n1950.000\n1125.833\n1300.000\n1300.000\n2343.608\n650.000\n650.000\n2833.284\n0.000\n1125.833\n\n\nH0010\n2978.674\n1125.833\n2343.608\n650.000\n1300.000\n1719.738\n650.000\n1719.738\n1125.833\n0.000"
-  },
-  {
-    "objectID": "Take-home_Ex2/Take-home_Ex2.html#creating-pivot-table",
-    "href": "Take-home_Ex2/Take-home_Ex2.html#creating-pivot-table",
-    "title": "Take Home Exercise 2: Applied Spatial Interaction Models: A case study of Singapore public bus commuter flows",
-    "section": "Creating pivot table",
-    "text": "Creating pivot table\n300 because of hexagon dimensions\n\ndist_tbl &lt;- melt(dist_mat) %&gt;%\n  rename(distance = value)\ndist_tbl$distance[dist_tbl$distance == 0] &lt;- 300\nkable(head(dist_tbl))\n\n\n\n\nVar1\nVar2\ndistance\n\n\n\n\nH0001\nH0001\n300.000\n\n\nH0002\nH0001\n2251.666\n\n\nH0003\nH0001\n650.000\n\n\nH0004\nH0001\n2833.284\n\n\nH0005\nH0001\n3953.796\n\n\nH0006\nH0001\n1300.000"
   }
 ]

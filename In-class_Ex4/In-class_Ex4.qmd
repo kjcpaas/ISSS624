@@ -1,0 +1,83 @@
+---
+title: "In-class Ex 4"
+---
+
+# Setup Environment
+
+`httr` - work with HTML pages
+
+```{r}
+#| label: setup
+pacman::p_load(tidyverse, sf, httr, tmap)
+```
+
+# Geocoding
+
+Use <https://www.onemap.gov.sg/apidocs/>
+
+X, Y in SVY21, longitude latitude in WGS84
+
+```{r}
+#| eval: false
+url <- "https://www.onemap.gov.sg/api/common/elastic/search"
+
+csv <- read_csv("data/aspatial/GeneralInformationofschools.csv")
+postcodes <- csv$"postal_code"
+
+found <- data.frame()
+not_found <- data.frame()
+
+for(postcode in postcodes){
+  query <- list("searchVal"=postcode,"returnGeom"="Y", "getAddrDetails"="Y","pageNum"="1")
+  res<- GET(url, query=query)
+  
+  if((content(res)$found) !=0){
+    found <- rbind(found, data.frame(content(res))[4:13])
+  } else {
+    not_found = data.frame(postcode)
+  }
+}
+
+write_rds(found, "data/rds/found.rds")
+write_rds(not_found, "data/rds/not_found.rds")
+```
+
+```{r}
+#| eval: false
+csv <- read_csv("data/aspatial/GeneralInformationofschools.csv")
+found <- read_rds("data/rds/found.rds")
+not_found <- read_rds("data/rds/not_found.rds")
+merged = merge(csv, found, by.x = "postal_code", by.y = "results.POSTAL", all = TRUE)
+write.csv(merged, file = "data/aspatial/schools.csv")
+write.csv(not_found, file = "data/aspatial/not_found.csv")
+```
+
+::: callout-important
+Use Google to look for the school without geospatial data.
+
+Replace latitude with **1.3887**, longitude with **103.7652**.
+
+**Do this before proceeding to the next step**. Or else `st_as_sf()` will complain about missing longitude and latitude
+:::
+
+::: {.callout-note appearance="simple"}
+-   Import `schools.csv`
+
+-   Rename column names
+
+-   Retain only relevant columns
+:::
+
+```{r}
+schools <- read_csv("data/aspatial/schools.csv") %>%
+  rename(latitude = results.LATITUDE,
+         longitude = results.LONGITUDE) %>%
+  select(postal_code, school_name, latitude, longitude)
+```
+
+```{r}
+schools_sf <- st_as_sf(schools,
+                       coords = c("longitude", "latitude"),
+                       crs=4326) %>%
+  st_transform(crs = 3414)
+```
