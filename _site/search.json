@@ -700,6 +700,34 @@
     "text": "Visualising fitted\nUnconstrained\n\ndf &lt;- as.data.frame(uncSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(uncTRIPS = \"uncSIM$fitted.values\")\n\nOrigin constrained\n\ndf &lt;- as.data.frame(orcSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(orcTRIPS = \"orcSIM$fitted.values\")\n\nDestination constrained\n\ndf &lt;- as.data.frame(decSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(decTRIPS = \"decSIM$fitted.values\")\n\nDoubly constrained\n\ndf &lt;- as.data.frame(dbcSIM$fitted.values) %&gt;%\n  round(digits = 0)\n\n\nSIM_data &lt;- SIM_data %&gt;%\n  cbind(df) %&gt;%\n  rename(dbcTRIPS = \"dbcSIM$fitted.values\")\n\nGenerating plots\n\nunc_p &lt;- ggplot(data = SIM_data,\n                aes(x = uncTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\norc_p &lt;- ggplot(data = SIM_data,\n                aes(x = orcTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\ndec_p &lt;- ggplot(data = SIM_data,\n                aes(x = decTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\ndbc_p &lt;- ggplot(data = SIM_data,\n                aes(x = dbcTRIPS,\n                    y = TRIPS)) +\n  geom_point() +\n  geom_smooth(method = lm)\n\nggarrange(unc_p, orc_p, dec_p, dbc_p,\n          ncol = 2,\n          nrow = 2)\n\n\n\n\nDouble constrained looks less scattered and more fitted to the line, consistent with RMSE results"
   },
   {
+    "objectID": "In-class_Ex4/In-class_Ex4A.html",
+    "href": "In-class_Ex4/In-class_Ex4A.html",
+    "title": "In-class Ex 4: Geocoding",
+    "section": "",
+    "text": "httr - work with HTML pages\n\npacman::p_load(tidyverse, sf, httr, tmap)\ntmap_mode(\"plot\")\ntmap_style(\"natural\")"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4A.html#importing-geocoded-schools",
+    "href": "In-class_Ex4/In-class_Ex4A.html#importing-geocoded-schools",
+    "title": "In-class Ex 4: Geocoding",
+    "section": "Importing geocoded schools",
+    "text": "Importing geocoded schools\n\n\n\n\n\n\n\nImport schools.csv\nRename column names\nRetain only relevant columns\n\n\n\n\n\nschools &lt;- read_csv(\"data/aspatial/schools.csv\") %&gt;%\n  rename(latitude = results.LATITUDE,\n         longitude = results.LONGITUDE) %&gt;%\n  select(postal_code, school_name, latitude, longitude)\n\n\nschools_sf &lt;- st_as_sf(schools,\n                       coords = c(\"longitude\", \"latitude\"),\n                       crs=4326) %&gt;%\n  st_transform(crs = 3414)"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4A.html#confirming-projection",
+    "href": "In-class_Ex4/In-class_Ex4A.html#confirming-projection",
+    "title": "In-class Ex 4: Geocoding",
+    "section": "Confirming projection",
+    "text": "Confirming projection\n\n\n\n\n\n\nNote\n\n\n\nI used the projected mpsz from previous exercises.\n\n\n\nmpsz &lt;- read_rds(\"data/rds/mpsz.rds\")\n\n\ntm_shape(mpsz) +\n  tm_polygons(col = \"lightgreen\") +\n  tm_shape(schools_sf) +\n  tm_dots(col = \"red\", size = 0.025) #+\n\n\n\n  #tm_view(set.zoom.limits = c(11, 14))\n\nFinding how many schools per planning subzone using point in polygon count\n\nmpsz$SCHOOL_COUNT &lt;- lengths(st_intersects(mpsz, schools_sf))\n\nInspect the summary of statistics\n\nsummary(mpsz$SCHOOL_COUNT)\n\n   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. \n  0.000   0.000   0.000   1.054   2.000  12.000"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4A.html#importing-business-geospatial-data",
+    "href": "In-class_Ex4/In-class_Ex4A.html#importing-business-geospatial-data",
+    "title": "In-class Ex 4: Geocoding",
+    "section": "Importing business geospatial data",
+    "text": "Importing business geospatial data\n\nbusinesses &lt;- st_read(dsn = \"data/geospatial\",\n                      layer = \"Business\")\n\nReading layer `Business' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex4/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 6550 features and 3 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 3669.148 ymin: 25408.41 xmax: 47034.83 ymax: 50148.54\nProjected CRS: SVY21 / Singapore TM\n\n\n\ntmap_options(check.and.fix = TRUE)\ntm_shape(mpsz) +\n  tm_polygons(col = \"lightgreen\") +\n  tm_shape(businesses) +\n  tm_dots(col = \"red\", size = 0.01)"
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "ISSS624",
@@ -1071,11 +1099,25 @@
     "text": "Mapping According to Criterion\n\ntm_shape(mpsz_pop2020[mpsz_pop2020$REGION_N==\"CENTRAL REGION\", ])+\n  tm_fill(\"DEPENDENCY\", \n          style = \"quantile\", \n          palette = \"Greens\", \n          legend.hist = TRUE, \n          legend.is.portrait = TRUE,\n          legend.hist.z = 0.1) +\n  tm_layout(legend.outside = TRUE,\n            legend.height = 0.45, \n            legend.width = 5.0,\n            legend.position = c(\"right\", \"bottom\"),\n            frame = FALSE) +\n  tm_borders(alpha = 0.5)\n\n\n\n\nI find this very useful especially if we just want to map a subset of the data. This can be used when we want to highlight information on certain regions."
   },
   {
-    "objectID": "In-class_Ex4/In-class_Ex4.html",
-    "href": "In-class_Ex4/In-class_Ex4.html",
-    "title": "In-class Ex 4",
+    "objectID": "In-class_Ex4/data/geospatial/Business.html",
+    "href": "In-class_Ex4/data/geospatial/Business.html",
+    "title": "ISSS624",
     "section": "",
-    "text": "httr - work with HTML pages\n\npacman::p_load(tidyverse, sf, httr, tmap)\ntmap_mode(\"plot\")\n\ntmap mode set to plotting\n\ntmap_style(\"natural\")\n\ntmap style set to \"natural\"\n\n\nother available styles are: \"white\", \"gray\", \"cobalt\", \"col_blind\", \"albatross\", \"beaver\", \"bw\", \"classic\", \"watercolor\""
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“WGS 84”,ENSEMBLE[“World Geodetic System 1984 ensemble”,MEMBER[“World Geodetic System 1984 (Transit)”],MEMBER[“World Geodetic System 1984 (G730)”],MEMBER[“World Geodetic System 1984 (G873)”],MEMBER[“World Geodetic System 1984 (G1150)”],MEMBER[“World Geodetic System 1984 (G1674)”],MEMBER[“World Geodetic System 1984 (G1762)”],MEMBER[“World Geodetic System 1984 (G2139)”],ELLIPSOID[“WGS 84”,6378137,298.257223563,LENGTHUNIT[“metre”,1]],ENSEMBLEACCURACY[2.0]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“World.”],BBOX[-90,-180,90,180]],ID[“EPSG”,4326]] +proj=longlat +datum=WGS84 +no_defs 3452 4326 EPSG:4326 WGS 84 longlat EPSG:7030 true"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4B.html",
+    "href": "In-class_Ex4/In-class_Ex4B.html",
+    "title": "In-class Ex 4: Calibration",
+    "section": "",
+    "text": "pacman::p_load(tmap, sf, sp, DT, performance, reshape2, ggpubr, units, tidyverse)"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4B.html#goodness-of-fit",
+    "href": "In-class_Ex4/In-class_Ex4B.html#goodness-of-fit",
+    "title": "In-class Ex 4: Calibration",
+    "section": "Goodness of Fit",
+    "text": "Goodness of Fit\n\nCalcRSquared &lt;- function(observed, estimated) {\n  r &lt;- cor(observed, estimated)\n  R2 &lt;- r^2\n  R2\n}\n\n\nCalcRSquared(orcSIM_Poisson$data$TRIPS, orcSIM_Poisson$fitted.values)\n\n[1] 0.4362208\n\n\nThis is a reasonable number but can be improved.\n\nperformance_rmse(orcSIM_Poisson, normalized = FALSE)\n\n[1] 2613.236\n\n\nThe smaller, the better."
   },
   {
     "objectID": "In-class_Ex3/data/geospatial/MPSZ-2019.html",
@@ -1103,7 +1145,7 @@
     "href": "In-class_Ex2/In-class_Ex2C.html#computing-gi",
     "title": "In-class Exercise 2C: EHSA",
     "section": "Computing Gi*",
-    "text": "Computing Gi*\n\nDeriving spatial weights\nSimilar to the previous exercises, we calculate inverse distance first. However, we now have a time column in our data which is Year.\n\nGDPPC_nb &lt;- GDPPC_st %&gt;%\n  activate(\"geometry\") %&gt;%\n  mutate(nb = include_self(st_contiguity(geometry)),\n         wt = st_inverse_distance(nb, geometry,\n                                  scale = 1,\n                                  alpha = 1),\n         .before = 1) %&gt;%\n  set_nbs(\"nb\") %&gt;%\n  set_wts(\"wt\")\nGDPPC_nb\n\n# A tibble: 1,496 × 5\n    Year County    GDPPC nb        wt       \n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   \n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl [8]&gt;\n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl [7]&gt;\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl [9]&gt;\n# ℹ 1,486 more rows\n\n\n\n\nComputing local Gi*\n\ngi_stars &lt;- GDPPC_nb %&gt;%\n  group_by(Year) %&gt;%\n  mutate(gi_star = local_gstar_perm(\n    GDPPC, nb, wt)) %&gt;%\n  tidyr::unnest(gi_star)\ngi_stars\n\n# A tibble: 1,496 × 13\n# Groups:   Year [17]\n    Year County    GDPPC nb        wt     gi_star   e_gi  var_gi p_value   p_sim\n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;\n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl&gt;    0.398 0.0117 3.09e-6  0.241  0.810  \n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl&gt;   -0.237 0.0110 2.52e-6 -0.0306 0.976  \n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0127 3.66e-6  0.458  0.647  \n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl&gt;    0.966 0.0117 2.99e-6  0.992  0.321  \n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0120 2.75e-6  0.944  0.345  \n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl&gt;    0.210 0.0120 2.63e-6 -0.141  0.888  \n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl&gt;    3.91  0.0143 3.03e-6  3.00   0.00270\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl&gt;    1.61  0.0128 2.43e-6  0.833  0.405  \n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl&gt;    3.88  0.0140 2.56e-6  2.69   0.00715\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl&gt;    1.67  0.0112 2.08e-6  1.92   0.0551 \n# ℹ 1,486 more rows\n# ℹ 3 more variables: p_folded_sim &lt;dbl&gt;, skewness &lt;dbl&gt;, kurtosis &lt;dbl&gt;"
+    "text": "Computing Gi*\n\nDeriving spatial weights\nSimilar to the previous exercises, we calculate inverse distance first. However, we now have a time column in our data which is Year.\n\nGDPPC_nb &lt;- GDPPC_st %&gt;%\n  activate(\"geometry\") %&gt;%\n  mutate(nb = include_self(st_contiguity(geometry)),\n         wt = st_inverse_distance(nb, geometry,\n                                  scale = 1,\n                                  alpha = 1),\n         .before = 1) %&gt;%\n  set_nbs(\"nb\") %&gt;%\n  set_wts(\"wt\")\nGDPPC_nb\n\n# A tibble: 1,496 × 5\n    Year County    GDPPC nb        wt       \n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   \n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl [6]&gt;\n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl [5]&gt;\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl [8]&gt;\n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl [7]&gt;\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl [9]&gt;\n# ℹ 1,486 more rows\n\n\n\n\nComputing local Gi*\n\ngi_stars &lt;- GDPPC_nb %&gt;%\n  group_by(Year) %&gt;%\n  mutate(gi_star = local_gstar_perm(\n    GDPPC, nb, wt)) %&gt;%\n  tidyr::unnest(gi_star)\ngi_stars\n\n# A tibble: 1,496 × 13\n# Groups:   Year [17]\n    Year County    GDPPC nb        wt     gi_star   e_gi  var_gi p_value   p_sim\n   &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;\n 1  2005 Anxiang    8184 &lt;int [6]&gt; &lt;dbl&gt;    0.398 0.0115 2.55e-6  0.415  0.678  \n 2  2005 Hanshou    6560 &lt;int [6]&gt; &lt;dbl&gt;   -0.237 0.0110 3.10e-6 -0.0512 0.959  \n 3  2005 Jinshi     9956 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0126 3.28e-6  0.528  0.597  \n 4  2005 Li         8394 &lt;int [5]&gt; &lt;dbl&gt;    0.966 0.0119 3.38e-6  0.823  0.410  \n 5  2005 Linli      8850 &lt;int [5]&gt; &lt;dbl&gt;    1.05  0.0120 3.00e-6  0.919  0.358  \n 6  2005 Shimen     9244 &lt;int [6]&gt; &lt;dbl&gt;    0.210 0.0121 2.97e-6 -0.166  0.868  \n 7  2005 Liuyang   13406 &lt;int [5]&gt; &lt;dbl&gt;    3.91  0.0143 3.30e-6  2.87   0.00412\n 8  2005 Ningxiang 11687 &lt;int [8]&gt; &lt;dbl&gt;    1.61  0.0127 2.27e-6  0.873  0.383  \n 9  2005 Wangcheng 14659 &lt;int [7]&gt; &lt;dbl&gt;    3.88  0.0139 2.48e-6  2.79   0.00525\n10  2005 Anren      7423 &lt;int [9]&gt; &lt;dbl&gt;    1.67  0.0113 2.15e-6  1.83   0.0676 \n# ℹ 1,486 more rows\n# ℹ 3 more variables: p_folded_sim &lt;dbl&gt;, skewness &lt;dbl&gt;, kurtosis &lt;dbl&gt;"
   },
   {
     "objectID": "In-class_Ex2/In-class_Ex2C.html#arrange-to-show-significant-emerging-hotcold-spots",
@@ -1657,26 +1699,5 @@
     "title": "Hands-on Exercise 3: Processing and Visualizing Flow Data",
     "section": "Visualizing the desire lines",
     "text": "Visualizing the desire lines\nTo visualise the resulting desire lines, the code chunk below is used.\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")\n\n\n\n\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \n  filter(MORNING_PEAK &gt;= 5000) %&gt;%\ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")"
-  },
-  {
-    "objectID": "In-class_Ex4/In-class_Ex4.html#confirming-projection",
-    "href": "In-class_Ex4/In-class_Ex4.html#confirming-projection",
-    "title": "In-class Ex 4",
-    "section": "Confirming projection",
-    "text": "Confirming projection\n\n\n\n\n\n\nNote\n\n\n\nI used the projected mpsz from previous exercises.\n\n\n\nmpsz &lt;- read_rds(\"data/rds/mpsz.rds\")\n\n\ntm_shape(mpsz) +\n  tm_polygons(col = \"lightgreen\") +\n  tm_shape(schools_sf) +\n  tm_dots(col = \"red\", size = 0.025) #+\n\n\n\n  #tm_view(set.zoom.limits = c(11, 14))\n\nFinding how many schools per planning subzone using point in polygon count\n\nmpsz$SCHOOL_COUNT &lt;- lengths(st_intersects(mpsz, schools_sf))\n\nInspect the summary of statistics\n\nsummary(mpsz$SCHOOL_COUNT)\n\n   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. \n  0.000   0.000   0.000   1.054   2.000  12.000"
-  },
-  {
-    "objectID": "In-class_Ex4/In-class_Ex4.html#importing-geocoded-schools",
-    "href": "In-class_Ex4/In-class_Ex4.html#importing-geocoded-schools",
-    "title": "In-class Ex 4",
-    "section": "Importing geocoded schools",
-    "text": "Importing geocoded schools\n\n\n\n\n\n\n\nImport schools.csv\nRename column names\nRetain only relevant columns\n\n\n\n\n\nschools &lt;- read_csv(\"data/aspatial/schools.csv\") %&gt;%\n  rename(latitude = results.LATITUDE,\n         longitude = results.LONGITUDE) %&gt;%\n  select(postal_code, school_name, latitude, longitude)\n\nNew names:\nRows: 350 Columns: 41\n── Column specification\n──────────────────────────────────────────────────────── Delimiter: \",\" chr\n(35): school_name, url_address, address, telephone_no, telephone_no_2, f... dbl\n(6): ...1, postal_code, results.X, results.Y, results.LATITUDE, results...\nℹ Use `spec()` to retrieve the full column specification for this data. ℹ\nSpecify the column types or set `show_col_types = FALSE` to quiet this message.\n• `` -&gt; `...1`\n\n\n\nschools_sf &lt;- st_as_sf(schools,\n                       coords = c(\"longitude\", \"latitude\"),\n                       crs=4326) %&gt;%\n  st_transform(crs = 3414)"
-  },
-  {
-    "objectID": "In-class_Ex4/In-class_Ex4.html#importing-business-geospatial-data",
-    "href": "In-class_Ex4/In-class_Ex4.html#importing-business-geospatial-data",
-    "title": "In-class Ex 4",
-    "section": "Importing business geospatial data",
-    "text": "Importing business geospatial data\n\nbusinesses &lt;- st_read(dsn = \"data/geospatial\",\n                      layer = \"Business\")\n\nReading layer `Business' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex4/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 6550 features and 3 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 3669.148 ymin: 25408.41 xmax: 47034.83 ymax: 50148.54\nProjected CRS: SVY21 / Singapore TM\n\n\n\ntmap_options(check.and.fix = TRUE)\ntm_shape(mpsz) +\n  tm_polygons(col = \"lightgreen\") +\n  tm_shape(businesses) +\n  tm_dots(col = \"red\", size = 0.01)\n\nWarning: The shape mpsz is invalid. See sf::st_is_valid"
   }
 ]

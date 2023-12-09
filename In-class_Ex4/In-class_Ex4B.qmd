@@ -1,0 +1,103 @@
+---
+title: "In-class Ex 4: Calibration"
+author: "Kristine Joy Paas"
+date: "9 December 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Setup
+
+```{r}
+pacman::p_load(tmap, sf, sp, DT, performance, reshape2, ggpubr, units, tidyverse)
+```
+
+# The Data
+
+```{r}
+flow_data <- read_rds("data/rds/flow_data_tidy.rds")
+glimpse(flow_data)
+```
+
+```{r}
+flow_data$FlowNoIntra <- ifelse(
+  flow_data$ORIGIN_SZ == flow_data$DESTIN_SZ,
+  0, flow_data$MORNING_PEAK
+)
+
+flow_data$offset <- ifelse(
+  flow_data$ORIGIN_SZ == flow_data$DESTIN_SZ,
+  0.000001, 1
+)
+
+inter_zonal_flow <- flow_data %>%
+  filter(FlowNoIntra > 0)
+
+inter_zonal_flow <- inter_zonal_flow %>%
+  rename(TRIPS = MORNING_PEAK,
+         DIST = dist)
+```
+
+# Origin (Production) constrained SIM
+
+::: callout-note
+The tilde (\~) is equivalent to "a function of", i.e. `TRIPS` is a function of `SCHOOL_COUNT`, `RETAIL_COUNT`, `DIST`.
+:::
+
+```{r}
+orcSIM_Poisson <- glm(formula = TRIPS ~
+                        ORIGIN_SZ +
+                        log(SCHOOL_COUNT) + # attractiveness
+                        log(RETAIL_COUNT) + # attractiveness
+                        log(DIST) - 1, # impedance (-1 to remove the intercept)
+                      family = poisson(link = "log"),
+                      data = inter_zonal_flow,
+                      na.action = na.exclude
+                      )
+summary(orcSIM_Poisson)
+```
+
+Confirm that perceived attractive forces are **positive**
+
+Distance is always negative as the farther the distance, the less attractive it is
+
+## Goodness of Fit
+
+```{r}
+CalcRSquared <- function(observed, estimated) {
+  r <- cor(observed, estimated)
+  R2 <- r^2
+  R2
+}
+```
+
+```{r}
+CalcRSquared(orcSIM_Poisson$data$TRIPS, orcSIM_Poisson$fitted.values)
+```
+
+This is a reasonable number but can be improved.
+
+```{r}
+performance_rmse(orcSIM_Poisson, normalized = FALSE)
+```
+
+The smaller, the better.
+
+# Doubly constrained
+
+```{r}
+#| eval: false
+dbcSIM_Poisson <- glm(formula = TRIPS ~
+                        ORIGIN_SZ +
+                        DEST_SZ +
+                        log(DIST),
+                      family = poisson(link = "log"),
+                      data = inter_zonal_flow,
+                      na.action = na.exclude
+                      )
+summary(dbcSIM_Poisson)
+```

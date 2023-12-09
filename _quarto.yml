@@ -31,6 +31,10 @@ website:
             href: In-class_Ex2/In-class_Ex2C.qmd
           - text: "3: Calibrating Spatial Interactions"
             href: In-class_Ex3/In-class_Ex3.qmd
+          - text: "4A: Geocoding"
+            href: In-class_Ex4/In-class_Ex4A.qmd
+          - text: "4B: SIM"
+            href: In-class_Ex4/In-class_Ex4B.qmd  
       - text: Take-home Exercises
         menu:
           - text: "1: Geospatial Analytics for Public Good"
