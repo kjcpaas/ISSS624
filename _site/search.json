@@ -1075,7 +1075,7 @@
     "href": "In-class_Ex4/In-class_Ex4.html",
     "title": "In-class Ex 4",
     "section": "",
-    "text": "Setup Environment\nhttr - work with HTML pages\n\npacman::p_load(tidyverse, sf, httr, tmap)\n\n\n\nGeocoding\nUse https://www.onemap.gov.sg/apidocs/\nX, Y in SVY21, longitude latitude in WGS84\n\nurl &lt;- \"https://www.onemap.gov.sg/api/common/elastic/search\"\n\ncsv &lt;- read_csv(\"data/aspatial/GeneralInformationofschools.csv\")\npostcodes &lt;- csv$\"postal_code\"\n\nfound &lt;- data.frame()\nnot_found &lt;- data.frame()\n\nfor(postcode in postcodes){\n  query &lt;- list(\"searchVal\"=postcode,\"returnGeom\"=\"Y\", \"getAddrDetails\"=\"Y\",\"pageNum\"=\"1\")\n  res&lt;- GET(url, query=query)\n  \n  if((content(res)$found) !=0){\n    found &lt;- rbind(found, data.frame(content(res))[4:13])\n  } else {\n    not_found = data.frame(postcode)\n  }\n}\n\nwrite_rds(found, \"data/rds/found.rds\")\nwrite_rds(not_found, \"data/rds/not_found.rds\")\n\n\ncsv &lt;- read_csv(\"data/aspatial/GeneralInformationofschools.csv\")\nfound &lt;- read_rds(\"data/rds/found.rds\")\nnot_found &lt;- read_rds(\"data/rds/not_found.rds\")\nmerged = merge(csv, found, by.x = \"postal_code\", by.y = \"results.POSTAL\", all = TRUE)\nwrite.csv(merged, file = \"data/aspatial/schools.csv\")\nwrite.csv(not_found, file = \"data/aspatial/not_found.csv\")\n\n\n\n\n\n\n\nImportant\n\n\n\nUse Google to look for the school without geospatial data.\nReplace latitude with 1.3887, longitude with 103.7652.\nDo this before proceeding to the next step. Or else st_as_sf() will complain about missing longitude and latitude\n\n\n\n\n\n\n\n\n\nImport schools.csv\nRename column names\nRetain only relevant columns\n\n\n\n\n\nschools &lt;- read_csv(\"data/aspatial/schools.csv\") %&gt;%\n  rename(latitude = results.LATITUDE,\n         longitude = results.LONGITUDE) %&gt;%\n  select(postal_code, school_name, latitude, longitude)\n\nNew names:\nRows: 350 Columns: 41\n── Column specification\n──────────────────────────────────────────────────────── Delimiter: \",\" chr\n(35): school_name, url_address, address, telephone_no, telephone_no_2, f... dbl\n(6): ...1, postal_code, results.X, results.Y, results.LATITUDE, results...\nℹ Use `spec()` to retrieve the full column specification for this data. ℹ\nSpecify the column types or set `show_col_types = FALSE` to quiet this message.\n• `` -&gt; `...1`\n\n\n\nschools_sf &lt;- st_as_sf(schools,\n                       coords = c(\"longitude\", \"latitude\"),\n                       crs=4326) %&gt;%\n  st_transform(crs = 3414)"
+    "text": "httr - work with HTML pages\n\npacman::p_load(tidyverse, sf, httr, tmap)\ntmap_mode(\"plot\")\n\ntmap mode set to plotting\n\ntmap_style(\"natural\")\n\ntmap style set to \"natural\"\n\n\nother available styles are: \"white\", \"gray\", \"cobalt\", \"col_blind\", \"albatross\", \"beaver\", \"bw\", \"classic\", \"watercolor\""
   },
   {
     "objectID": "In-class_Ex3/data/geospatial/MPSZ-2019.html",
@@ -1657,5 +1657,26 @@
     "title": "Hands-on Exercise 3: Processing and Visualizing Flow Data",
     "section": "Visualizing the desire lines",
     "text": "Visualizing the desire lines\nTo visualise the resulting desire lines, the code chunk below is used.\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")\n\n\n\n\n\ntm_shape(mpsz) +\n  tm_polygons() +\nflowLine %&gt;%  \n  filter(MORNING_PEAK &gt;= 5000) %&gt;%\ntm_shape() +\n  tm_lines(lwd = \"MORNING_PEAK\",\n           style = \"quantile\",\n           scale = c(0.1, 1, 3, 5, 7, 10),\n           n = 6,\n           alpha = 0.5,\n           col = \"red\")"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4.html#confirming-projection",
+    "href": "In-class_Ex4/In-class_Ex4.html#confirming-projection",
+    "title": "In-class Ex 4",
+    "section": "Confirming projection",
+    "text": "Confirming projection\n\n\n\n\n\n\nNote\n\n\n\nI used the projected mpsz from previous exercises.\n\n\n\nmpsz &lt;- read_rds(\"data/rds/mpsz.rds\")\n\n\ntm_shape(mpsz) +\n  tm_polygons(col = \"lightgreen\") +\n  tm_shape(schools_sf) +\n  tm_dots(col = \"red\", size = 0.025) #+\n\n\n\n  #tm_view(set.zoom.limits = c(11, 14))\n\nFinding how many schools per planning subzone using point in polygon count\n\nmpsz$SCHOOL_COUNT &lt;- lengths(st_intersects(mpsz, schools_sf))\n\nInspect the summary of statistics\n\nsummary(mpsz$SCHOOL_COUNT)\n\n   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. \n  0.000   0.000   0.000   1.054   2.000  12.000"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4.html#importing-geocoded-schools",
+    "href": "In-class_Ex4/In-class_Ex4.html#importing-geocoded-schools",
+    "title": "In-class Ex 4",
+    "section": "Importing geocoded schools",
+    "text": "Importing geocoded schools\n\n\n\n\n\n\n\nImport schools.csv\nRename column names\nRetain only relevant columns\n\n\n\n\n\nschools &lt;- read_csv(\"data/aspatial/schools.csv\") %&gt;%\n  rename(latitude = results.LATITUDE,\n         longitude = results.LONGITUDE) %&gt;%\n  select(postal_code, school_name, latitude, longitude)\n\nNew names:\nRows: 350 Columns: 41\n── Column specification\n──────────────────────────────────────────────────────── Delimiter: \",\" chr\n(35): school_name, url_address, address, telephone_no, telephone_no_2, f... dbl\n(6): ...1, postal_code, results.X, results.Y, results.LATITUDE, results...\nℹ Use `spec()` to retrieve the full column specification for this data. ℹ\nSpecify the column types or set `show_col_types = FALSE` to quiet this message.\n• `` -&gt; `...1`\n\n\n\nschools_sf &lt;- st_as_sf(schools,\n                       coords = c(\"longitude\", \"latitude\"),\n                       crs=4326) %&gt;%\n  st_transform(crs = 3414)"
+  },
+  {
+    "objectID": "In-class_Ex4/In-class_Ex4.html#importing-business-geospatial-data",
+    "href": "In-class_Ex4/In-class_Ex4.html#importing-business-geospatial-data",
+    "title": "In-class Ex 4",
+    "section": "Importing business geospatial data",
+    "text": "Importing business geospatial data\n\nbusinesses &lt;- st_read(dsn = \"data/geospatial\",\n                      layer = \"Business\")\n\nReading layer `Business' from data source \n  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/In-class_Ex4/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 6550 features and 3 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 3669.148 ymin: 25408.41 xmax: 47034.83 ymax: 50148.54\nProjected CRS: SVY21 / Singapore TM\n\n\n\ntmap_options(check.and.fix = TRUE)\ntm_shape(mpsz) +\n  tm_polygons(col = \"lightgreen\") +\n  tm_shape(businesses) +\n  tm_dots(col = \"red\", size = 0.01)\n\nWarning: The shape mpsz is invalid. See sf::st_is_valid"
   }
 ]
