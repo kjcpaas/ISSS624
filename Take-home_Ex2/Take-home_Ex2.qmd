@@ -229,8 +229,7 @@ honeycomb <- busstops %>% st_make_grid(cellsize = 750,
                                        what="polygons",
                                        square = FALSE) %>%
   st_sf() %>%
-  mutate(NUM_BUS_STOPS = lengths(st_intersects(geometry, busstops))) %>%
-  filter(NUM_BUS_STOPS > 0)
+  filter(lengths(st_intersects(geometry, busstops)) > 0)
 ```
 
 ::: {.callout-tip collapse="true" appearance="simple"}
@@ -244,9 +243,9 @@ st_sf()
 
 :   Converts to simple feature data set
 
-mutate()
+st_intersects()
 
-:   Adds number of bus stops inside each hexagon
+:   Checks if the hexagons have bus stops
 
 filter()
 
@@ -261,8 +260,7 @@ Let's plot the map to visually inspect if the hexagons cover all the bus stop lo
 tm_shape(mpsz) +
   tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
   tm_shape(honeycomb) +
-  tm_fill(col = "white", title = "Hexagons", alpha = 1) +
-  tm_borders(alpha = 0.2) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
   tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
             main.title.position = "center",
             main.title.size = 1.0,
@@ -291,7 +289,7 @@ kable(head(honeycomb))
 Let's save `honeycomb` as it contains the main geometry we will use in analysis.
 
 ```{r}
-write_rds(mpsz, "data/rds/honeycomb_basic.rds")
+write_rds(honeycomb, "data/rds/honeycomb_basic.rds")
 ```
 :::
 
@@ -432,10 +430,10 @@ kable(head(od_hex))
 ::: {.callout-tip collapse="true"}
 #### Save point
 
-Let's save `od_trips` as it contains the data needed to visualize flow data. Take note that this **includes intra-zonal trips**.
+Let's save `od_hex` as it contains the data needed to visualize flow data. Take note that this **includes intra-zonal trips**.
 
 ```{r}
-write_rds(od_trips, "data/rds/od_trips202310.rds")
+write_rds(od_hex, "data/rds/od_hex202310.rds")
 ```
 :::
 
@@ -450,4 +448,156 @@ rm(busstops)
 rm(bs_hex)
 rm(od_trips)
 ```
+:::
+
+# Origin-Destination Flows
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can run the rest of the document from this point by loading these data.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb_basic.rds")
+od_hex <- read_rds("data/rds/od_hex202310.rds")
+```
+:::
+
+The next part focuses on visualizing the bus commuter flows, figuring the potential propulsive and attractiveness variables.
+
+## Generating the flow lines
+
+First, we will generate the flow lines using `od2line()`. `honeycomb` will be supplied as the `zone` as it contains the hexagons we are using as the **traffic analysis zones**.
+
+```{r}
+flowlines <- od_hex %>% od2line(
+  honeycomb,
+  zone_code = "HEX_ID")
+```
+
+## Initial inspection of the flow lines
+
+Next, we will do an initial inspection of the flow lines to check if they have been generated correctly.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  
+  tm_shape(flowlines) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.8) +
+  
+  tm_layout(main.title = "Bus Passenger flow for Weekends/Holidays 11 AM - 2PM (October 2023)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2)
+```
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+The flow lines are sparse at the West side of Singapore, the **Jurong** and **Choa Chu Kang** areas. This is consistent with the observations that we have in the [Take-home Exercise 1](Take-home_Ex1/Take-home_Ex1).
+
+The busiest zones can be seen in this visualization as the zones **where the lines converge**. However, it is hard to see more closely in this web of lines we need a different visualization to inspect the busiest bus flows.
+:::
+
+## Visualizing the busiest flows
+
+To visualize the busiest flows, we have to reduce the dataset into the most useful ones by:
+
+-   Removing the intra-zonal flows, which may have come from passengers riding until the next stop only
+
+-   Visualizing only the busiest flows
+
+::: {.callout-tip appearance="simple"}
+### Helper function for removing intra-zonal data
+
+To help in processing just the inter-zonal flows, we will create a helper function to remove the intra-zonal data. We only need to check if `ORIG_HEX_ID` is the same as `DEST_HEX_ID`.
+
+This function uses `filter()` to remove the rows that do not satisfy the above condition.
+
+```{r}
+remove_intra <- function(df) {
+  df %>% filter(
+    ORIG_HEX_ID != DEST_HEX_ID
+  )
+}
+```
+:::
+
+### Determining the cut-off value for *TRIPS*
+
+To identify the cut-off for our visualization, we will use `summary()` to check the distribution of the data
+
+```{r}
+remove_intra(flowlines)$TRIPS %>% summary()
+```
+
+As can be seen in the summary, the **3rd quartile** is still very low compared to the visualization values in the flow line, which starts as **2000**.
+
+Let's look at the distribution at from `quantile()` to find an appropriate cut-off value.
+
+```{r}
+remove_intra(flowlines)$TRIPS %>%
+  quantile(probs = c(0.8, 0.9, 0.95, 0.99, 0.995, 0.999))
+```
+
+### Visualizing the top 5% busiest flows
+
+We will use the value for the 95th percentile as it removes much of the low traffic so we can see patterns. At the same time, it leaves enough so that important details are not lost.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  
+  tm_shape(
+    flowlines %>%
+      remove_intra() %>%
+      filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.8) +
+  
+  tm_layout(main.title = "Top 5% Bus Passenger Flow for Weekends/Holidays 11 AM - 2PM (October 2023)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2)
+```
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+It is notable that the thickest flow lines are for relatively short distances, like the bus rides to and from **Woodlands Checkpoint** to **Kranji Station**. We should consider the existence of train stations as attractive or propulsive variables. This can also be observed in some residential areas like **Jurong East** or **Woodlands**.
+
+Also, there are longer bus rides for the weekend peak, probably indicating people more willing to travel longer distances for recreation and meeting family and friends.
 :::
