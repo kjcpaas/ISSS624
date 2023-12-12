@@ -289,7 +289,7 @@ kable(head(honeycomb))
 Let's save `honeycomb` as it contains the main geometry we will use in analysis.
 
 ```{r}
-write_rds(honeycomb, "data/rds/honeycomb_basic.rds")
+write_rds(honeycomb, "data/rds/honeycomb.rds")
 ```
 :::
 
@@ -332,9 +332,9 @@ TIME_PER_HOUR >= 6 & TIME_PER_HOUR < 9
 
 ```{r}
 od_trips <- odbus %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
   filter( TIME_PER_HOUR >= 11 &
-            TIME_PER_HOUR < 14 &
-            DAY_TYPE == "WEEKENDS/HOLIDAY"
+            TIME_PER_HOUR < 14
           ) %>%
   group_by(ORIGIN_PT_CODE, DESTINATION_PT_CODE) %>%
   summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
@@ -455,11 +455,11 @@ rm(od_trips)
 ::: {.callout-note collapse="true"}
 ## Load point
 
-We can run the rest of the document from this point by loading these data.
+We can run from this point by loading these data.
 
 ```{r}
 mpsz <- read_rds("data/rds/mpsz.rds")
-honeycomb <- read_rds("data/rds/honeycomb_basic.rds")
+honeycomb <- read_rds("data/rds/honeycomb.rds")
 od_hex <- read_rds("data/rds/od_hex202310.rds")
 ```
 :::
@@ -600,4 +600,454 @@ tm_shape(mpsz) +
 It is notable that the thickest flow lines are for relatively short distances, like the bus rides to and from **Woodlands Checkpoint** to **Kranji Station**. We should consider the existence of train stations as attractive or propulsive variables. This can also be observed in some residential areas like **Jurong East** or **Woodlands**.
 
 Also, there are longer bus rides for the weekend peak, probably indicating people more willing to travel longer distances for recreation and meeting family and friends.
+:::
+
+# Attractiveness and Propulsiveness Variables
+
+## Possible motivations for riding the bus
+
+Based on real-world knowledge and observations from [Origin-Destination Flows], we will identify some possible motivations for people to ride the bus during weekend morning peak period. These are:
+
+-   People leaving their houses to go to their destination
+
+-   Transferring from train or another bus to reach their destination
+
+-   Visiting Leisure, Entertainment, and F&B establishments to spend time with family and friends
+
+-   Going to shops for groceries and other errands
+
+-   Visiting family and friends' homes
+
+With these motivations, we have the following propulsiveness and attractiveness variables.
+
+::: panel-tabset
+## Attractiveness
+
+Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
+
+Number of transport points (MRT exits and bus stops)
+
+:   To transfer to another mode of transport to their final destination
+
+Population at the destination (HDB population)
+
+:   To visit family and friends
+
+Number of retail outlets
+
+:   For shopping and errands
+
+Number of leisure, recreation, entertainment areas
+
+:   To unwind and spend time with family and friends
+
+Number of F&B outlets
+
+:   For eating out, a basic human need and mode of socializing
+
+## Propulsiveness
+
+Propulsiveness variables are factors that influence people to ride the bus from specific zones.
+
+Number of transport points (MRT exits and bus stops)
+
+:   To transfer to another mode of transport to their final destination
+
+Population at the destination (HDB population)
+
+:   To visit family and friends
+:::
+
+## Required data
+
+To summarize, these are the list of data needed, and the data sources we will be using to derive the values for these variables.
+
+::: {.callout-note appearance="simple"}
+Those with **Notes** have additional processing needed on top of just counting how many points intersect the hexagons.
+
+Those already in the `data/` directory are datasets provided or have peviously been used in class.
+:::
+
+| Data                               | Source                                                                         | Notes                                  |
+|-------------------|--------------------------------|---------------------|
+| `BUS_STOP_COUNT`                   | `data/geospatial/BusStop.shp`                                                  |                                        |
+| `ENTERTN_COUNT`                    | `data/geospatial/entertn.shp`                                                  |                                        |
+| `F_AND_B_COUNT`                    | `data/geospatial/F&B.shp`                                                      |                                        |
+| `HDB_COUNT` / `HDB_DWELLING_COUNT` | `data/aspatial/hdb.csv`                                                        | These will serve as population proxies |
+| `LEISURE_COUNT`                    | `data/geospatial/Liesure&Recreation.shp`                                       |                                        |
+| `RETAIL_COUNT`                     | `data/geospatial/Retails.shp`                                                  |                                        |
+| `TRAIN_ST_COUNT`                   | *Train Station Exit* dataset from [LTA DataMall](https://datamall.lta.gov.sg/) | Need to download from LTA DataMall     |
+
+# Preparing variable data
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can run from this point by loading these data.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+```
+:::
+
+We will store the variable in a single `sf` object derived from `honeycomb`.
+
+```{r}
+var_hc <- honeycomb
+```
+
+We will then prepare the variables, starting with those that don't need extra processing. We will use a combination of `lengths()` and `st_intersects()` to determine how many of each establishment type are in each hexagon.
+
+::: panel-tabset
+## Bus Stops
+
+::: {.callout-note appearance="simple"}
+We are using the same steps to import the bus stop data set from [Import Bus Stop Data].
+:::
+
+```{r}
+var_hc$BUS_STOP_COUNT <- lengths(
+  st_intersects(var_hc,
+                st_read(dsn = "data/geospatial",
+                        layer = "BusStop") %>%
+                  st_transform(crs = 3414)))
+```
+
+## Entertainment
+
+```{r}
+entertn <- st_read(dsn = "data/geospatial", layer = "entertn")
+```
+
+::: {.callout-important appearance="simple"}
+### Visual Inspection
+
+As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Map of Entertainment Spots in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(entertn) +
+  tm_dots(col = "red", size = 0.005, title = "Entertainment Spots") +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+```{r}
+var_hc$ENTERTN_COUNT <- lengths(st_intersects(var_hc, entertn))
+```
+
+## F&B
+
+```{r}
+f_and_b <- st_read(dsn = "data/geospatial", layer = "F&B")
+```
+
+::: {.callout-important appearance="simple"}
+### Visual Inspection
+
+As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Map of F&B Establishments in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(f_and_b) +
+  tm_dots(col = "red", size = 0.005, title = "F&B Establishments Spots") +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+```{r}
+var_hc$F_AND_B_COUNT <- lengths(st_intersects(var_hc, f_and_b))
+```
+
+## Leisure & Recreation
+
+```{r}
+leis_rec <- st_read(dsn = "data/geospatial", layer = "Liesure&Recreation")
+```
+
+::: {.callout-important appearance="simple"}
+### Visual Inspection
+
+As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Map of Leisure & Recreation Spots in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(leis_rec) +
+  tm_dots(col = "red", size = 0.005, title = "Leisure & Recreation Spots") +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+```{r}
+var_hc$LEISURE_COUNT <- lengths(st_intersects(var_hc, leis_rec))
+```
+
+## Retail
+
+```{r}
+retail <- st_read(dsn = "data/geospatial", layer = "Retails")
+```
+
+::: {.callout-important appearance="simple"}
+### Visual Inspection
+
+As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Map of Retail Outlets in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(retail) +
+  tm_dots(col = "red", size = 0.005, title = "Retail Outlets") +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+```{r}
+var_hc$RETAIL_COUNT <- lengths(st_intersects(var_hc, retail))
+```
+:::
+
+We now have the variables in `var_hc`.
+
+```{r}
+kable(head(var_hc))
+```
+
+Now, we will process the other variables that need additional processing.
+
+## Train Station Exits
+
+We will download the *Train Station Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip). This is a geospatial `shp` file so we can import it the same way as the previous datasets.
+
+```{r}
+train_exits <- st_read(dsn = "data/geospatial", layer = "Train_Station_Exit_Layer")
+```
+
+::: {.callout-caution collapse="true" appearance="simple"}
+### Correcting the projection
+
+We want to use [SVY21](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) as the projection for this study as it is the projection used for local Singaporean context.
+
+After the import, it shows that the **Projected CRS**is **SVY21**. However, checking the CRS with `st_crs()` tells a different story.
+
+```{r}
+st_crs(train_exits)
+```
+
+As we can see EPSG value is **9001**, which correspond to [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We have to fix the projection by transforming to EPSG value of **3414**, which corresponds to **SVY21**.
+
+```{r}
+train_exits <- st_transform(train_exits, crs = 3414)
+```
+:::
+
+### Visual inspection
+
+As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Map of Train Station Exits in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(train_exits) +
+  tm_dots(col = "red", size = 0.005, title = "Train Station Exits") +
+  tm_grid(alpha = 0.2)
+```
+
+```{r}
+var_hc$TRAIN_ST_COUNT <- lengths(st_intersects(var_hc, train_exits))
+```
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We do not need the data used to read the `shp` contents anymore as we have already derived the variables from them.
+
+```{r}
+#| eval: true
+rm(busstops)
+rm(entertn)
+rm(f_and_b)
+rm(leis_rec)
+rm(retail)
+rm(train_exits)
+```
+:::
+
+## HDB Population
+
+Next, we will derive the population data for each zone. We will use aspatial dataset provided, `hdb.csv`.
+
+### Importing the data
+
+We will first import the aspatial `hdb.csv`.
+
+```{r}
+hdb_csv <- read_csv("data/aspatial/hdb.csv")
+kable(head(hdb_csv))
+```
+
+::: {.callout-tip appearance="minimal"}
+Despite being an aspatial dataset, there are columns where we can derive geospatial data from, `lng` and `lat`.
+:::
+
+We will first convert this to a `sf` data type, which uses **WGS 84** and transform it to **SVY21**.
+
+```{r}
+hdb_sf <- hdb_csv %>% st_as_sf(coords = c("lng", "lat"),
+                               crs = 4326) %>%
+  st_transform(crs = 3414)
+```
+
+::: {.callout-important appearance="simple"}
+#### Visual inspection
+
+As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Map of HDB Blocks in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(hdb_sf) +
+  tm_dots(col = "red", size = 0.001, title = "HDB Blocks") +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+::: {.callout-note collapse="true"}
+#### On the HDB-related variables
+
+We will not have an accurate number for the population for each zone as we have incomplete data of residents in each zone. We have to account for other housing options like private residents, dormitories, etc.
+
+For this study, we will use both the number of **HDB per zone** and the **number of dwellings** in each zone as a population proxy.
+:::
+
+### Removing unnecessary data
+
+Now that we have the verified the validity of the data, we can proceed with trimming out the unnecessary elements. We will only retain the **residential** blocks (there are commercial and market blocks without residents), the **total_dwelling_units** column, and lastly, the geometry.
+
+```{r}
+hdb_filtered_sf <- hdb_sf %>%
+  filter(residential == "Y") %>%
+  select(total_dwelling_units)
+```
+
+### Adding *HDB_COUNT*
+
+This variable will contain the number of **HDB blocks** in a zone. We will use the same methods to count the number locations in the zone, by using `lengths()` and `st_intersects()`.
+
+```{r}
+var_hc$HDB_COUNT <- lengths(st_intersects(var_hc, hdb_filtered_sf))
+```
+
+### Adding *HDB_DWELLING_COUNT*
+
+While `HDB_COUNT` can be a good population proxy, we need to consider that HDB blocks have different sizes. For example, taller and wider blocks may have more units compared to shorter blocks.
+
+As such, we will use `total_dwelling_units` to improve our population proxy.
+
+We need to aggregate the sum of `total_dwelling_units` per hexagon, and doing a `left_join()` with `var_hc`.
+
+```{r}
+var_hc <- var_hc %>%
+  left_join(
+    st_intersection(hdb_filtered_sf, var_hc) %>%
+      st_drop_geometry() %>%
+      group_by(HEX_ID) %>%
+      summarize(HDB_DWELLING_COUNT = sum(total_dwelling_units))
+  )
+var_hc$HDB_DWELLING_COUNT[is.na(var_hc$HDB_DWELLING_COUNT)] <- 0
+kable(head(var_hc))
+```
+
+::: {.callout-note appearance="simple"}
+According to the [2022 official statistics](https://www.singstat.gov.sg/find-data/search-by-theme/households/households/latest-data) from Department of Statistics, the average household size is **3.09 person**.
+
+While we can multiply the number of dwellings with this number to estimate the number of residents per zone, it is wise to stop at `HDB_DWELLING_COUNT` as the other variables all represent the number of a location type per zone. If we have a variable with a different unit, i.e. *persons*, the simulations may not give us the expected results.
+:::
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We do not need the intermediate data used to derive the HDB-based variables so we can remove them from the environment.
+
+```{r}
+rm(hdb_csv)
+rm(hdb_sf)
+rm(hdb_filtered_sf)
+```
 :::

@@ -250,6 +250,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#visualizing-the-top-5-busiest-flows" id="toc-visualizing-the-top-5-busiest-flows" class="nav-link" data-scroll-target="#visualizing-the-top-5-busiest-flows">Visualizing the top 5% busiest flows</a></li>
   </ul></li>
   </ul></li>
+  <li><a href="#attractiveness-and-propulsiveness-variables" id="toc-attractiveness-and-propulsiveness-variables" class="nav-link" data-scroll-target="#attractiveness-and-propulsiveness-variables">Attractiveness and Propulsiveness Variables</a>
+  <ul class="collapse">
+  <li><a href="#possible-motivations-for-riding-the-bus" id="toc-possible-motivations-for-riding-the-bus" class="nav-link" data-scroll-target="#possible-motivations-for-riding-the-bus">Possible motivations for riding the bus</a></li>
+  <li><a href="#required-data" id="toc-required-data" class="nav-link" data-scroll-target="#required-data">Required data</a></li>
+  </ul></li>
+  <li><a href="#preparing-variable-data" id="toc-preparing-variable-data" class="nav-link" data-scroll-target="#preparing-variable-data">Preparing variable data</a>
+  <ul class="collapse">
+  <li><a href="#train-station-exits" id="toc-train-station-exits" class="nav-link" data-scroll-target="#train-station-exits">Train Station Exits</a>
+  <ul class="collapse">
+  <li><a href="#visual-inspection-4" id="toc-visual-inspection-4" class="nav-link" data-scroll-target="#visual-inspection-4">Visual inspection</a></li>
+  </ul></li>
+  <li><a href="#hdb-population" id="toc-hdb-population" class="nav-link" data-scroll-target="#hdb-population">HDB Population</a>
+  <ul class="collapse">
+  <li><a href="#importing-the-data" id="toc-importing-the-data" class="nav-link" data-scroll-target="#importing-the-data">Importing the data</a></li>
+  <li><a href="#removing-unnecessary-data" id="toc-removing-unnecessary-data" class="nav-link" data-scroll-target="#removing-unnecessary-data">Removing unnecessary data</a></li>
+  <li><a href="#adding-hdb_count" id="toc-adding-hdb_count" class="nav-link" data-scroll-target="#adding-hdb_count">Adding <em>HDB_COUNT</em></a></li>
+  <li><a href="#adding-hdb_dwelling_count" id="toc-adding-hdb_dwelling_count" class="nav-link" data-scroll-target="#adding-hdb_dwelling_count">Adding <em>HDB_DWELLING_COUNT</em></a></li>
+  </ul></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -282,7 +301,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">December 12, 2023</p>
+      <p class="date-modified">December 13, 2023</p>
     </div>
   </div>
     
@@ -833,7 +852,7 @@ Save point
 <div class="callout-body-container callout-body">
 <p>Let’s save <code>honeycomb</code> as it contains the main geometry we will use in analysis.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(honeycomb, <span class="st">"data/rds/honeycomb_basic.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(honeycomb, <span class="st">"data/rds/honeycomb.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -966,9 +985,9 @@ How to filter data by <em>TIME_PER_HOUR</em>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>od_trips <span class="ot">&lt;-</span> odbus <span class="sc">%&gt;%</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>( TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">11</span> <span class="sc">&amp;</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>            TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">14</span> <span class="sc">&amp;</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>            DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKENDS/HOLIDAY"</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKENDS/HOLIDAY"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>( TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">11</span> <span class="sc">&amp;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>            TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">14</span></span>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>          ) <span class="sc">%&gt;%</span></span>
 <span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ORIGIN_PT_CODE, DESTINATION_PT_CODE) <span class="sc">%&gt;%</span></span>
 <span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TOTAL_TRIPS)) <span class="sc">%&gt;%</span></span>
@@ -1261,10 +1280,10 @@ Load point
 </div>
 <div id="callout-16" class="callout-16-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>We can run the rest of the document from this point by loading these data.</p>
+<p>We can run from this point by loading these data.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/mpsz.rds"</span>)</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb_basic.rds"</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb.rds"</span>)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>od_hex <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/od_hex202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
@@ -1429,6 +1448,1193 @@ Insights
 <div class="callout-body-container callout-body">
 <p>It is notable that the thickest flow lines are for relatively short distances, like the bus rides to and from <strong>Woodlands Checkpoint</strong> to <strong>Kranji Station</strong>. We should consider the existence of train stations as attractive or propulsive variables. This can also be observed in some residential areas like <strong>Jurong East</strong> or <strong>Woodlands</strong>.</p>
 <p>Also, there are longer bus rides for the weekend peak, probably indicating people more willing to travel longer distances for recreation and meeting family and friends.</p>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="attractiveness-and-propulsiveness-variables" class="level1">
+<h1>Attractiveness and Propulsiveness Variables</h1>
+<section id="possible-motivations-for-riding-the-bus" class="level2">
+<h2 class="anchored" data-anchor-id="possible-motivations-for-riding-the-bus">Possible motivations for riding the bus</h2>
+<p>Based on real-world knowledge and observations from <a href="#origin-destination-flows">Origin-Destination Flows</a>, we will identify some possible motivations for people to ride the bus during weekend morning peak period. These are:</p>
+<ul>
+<li><p>People leaving their houses to go to their destination</p></li>
+<li><p>Transferring from train or another bus to reach their destination</p></li>
+<li><p>Visiting Leisure, Entertainment, and F&amp;B establishments to spend time with family and friends</p></li>
+<li><p>Going to shops for groceries and other errands</p></li>
+<li><p>Visiting family and friends’ homes</p></li>
+</ul>
+<p>With these motivations, we have the following propulsiveness and attractiveness variables.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Attractiveness</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">Propulsiveness</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<p>Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what <em>motivates people to ride to their destination bus stop</em>.</p>
+<dl>
+<dt>Number of transport points (MRT exits and bus stops)</dt>
+<dd>
+<p>To transfer to another mode of transport to their final destination</p>
+</dd>
+<dt>Population at the destination (HDB population)</dt>
+<dd>
+<p>To visit family and friends</p>
+</dd>
+<dt>Number of retail outlets</dt>
+<dd>
+<p>For shopping and errands</p>
+</dd>
+<dt>Number of leisure, recreation, entertainment areas</dt>
+<dd>
+<p>To unwind and spend time with family and friends</p>
+</dd>
+<dt>Number of F&amp;B outlets</dt>
+<dd>
+<p>For eating out, a basic human need and mode of socializing</p>
+</dd>
+</dl>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<p>Propulsiveness variables are factors that influence people to ride the bus from specific zones.</p>
+<dl>
+<dt>Number of transport points (MRT exits and bus stops)</dt>
+<dd>
+<p>To transfer to another mode of transport to their final destination</p>
+</dd>
+<dt>Population at the destination (HDB population)</dt>
+<dd>
+<p>To visit family and friends</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</section>
+<section id="required-data" class="level2">
+<h2 class="anchored" data-anchor-id="required-data">Required data</h2>
+<p>To summarize, these are the list of data needed, and the data sources we will be using to derive the values for these variables.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Those with <strong>Notes</strong> have additional processing needed on top of just counting how many points intersect the hexagons.</p>
+<p>Those already in the <code>data/</code> directory are datasets provided or have peviously been used in class.</p>
+</div>
+</div>
+</div>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Data</th>
+<th>Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BUS_STOP_COUNT</code></td>
+<td><code>data/geospatial/BusStop.shp</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>ENTERTN_COUNT</code></td>
+<td><code>data/geospatial/entertn.shp</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>F_AND_B_COUNT</code></td>
+<td><code>data/geospatial/F&amp;B.shp</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>HDB_COUNT</code> / <code>HDB_DWELLING_COUNT</code></td>
+<td><code>data/aspatial/hdb.csv</code></td>
+<td>These will serve as population proxies</td>
+</tr>
+<tr class="odd">
+<td><code>LEISURE_COUNT</code></td>
+<td><code>data/geospatial/Liesure&amp;Recreation.shp</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>RETAIL_COUNT</code></td>
+<td><code>data/geospatial/Retails.shp</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>TRAIN_ST_COUNT</code></td>
+<td><em>Train Station Exit</em> dataset from <a href="https://datamall.lta.gov.sg/">LTA DataMall</a></td>
+<td>Need to download from LTA DataMall</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="preparing-variable-data" class="level1">
+<h1>Preparing variable data</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-20-contents" aria-controls="callout-20" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Load point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-20" class="callout-20-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We can run from this point by loading these data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/mpsz.rds"</span>)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<p>We will store the variable in a single <code>sf</code> object derived from <code>honeycomb</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>var_hc <span class="ot">&lt;-</span> honeycomb</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We will then prepare the variables, starting with those that don’t need extra processing. We will use a combination of <code>lengths()</code> and <code>st_intersects()</code> to determine how many of each establishment type are in each hexagon.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Bus Stops</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">Entertainment</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">F&amp;B</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-4" role="tab" aria-controls="tabset-3-4" aria-selected="false">Leisure &amp; Recreation</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-5" role="tab" aria-controls="tabset-3-5" aria-selected="false">Retail</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>We are using the same steps to import the bus stop data set from <a href="#import-bus-stop-data">Import Bus Stop Data</a>.</p>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>BUS_STOP_COUNT <span class="ot">&lt;-</span> <span class="fu">lengths</span>(</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_intersects</span>(var_hc,</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">layer =</span> <span class="st">"BusStop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `BusStop' from data source 
+  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 5161 features and 3 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 3970.122 ymin: 26482.1 xmax: 48284.56 ymax: 52983.82
+Projected CRS: SVY21</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>entertn <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"entertn"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `entertn' from data source 
+  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 114 features and 3 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 10809.34 ymin: 26528.63 xmax: 41600.62 ymax: 46375.77
+Projected CRS: SVY21 / Singapore TM</code></pre>
+</div>
+</div>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Visual Inspection
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As we haven’t used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.</p>
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Map of Entertainment Spots in Singapore"</span>,</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(entertn) <span class="sc">+</span></span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.005</span>, <span class="at">title =</span> <span class="st">"Entertainment Spots"</span>) <span class="sc">+</span></span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-39-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>ENTERTN_COUNT <span class="ot">&lt;-</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(var_hc, entertn))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>f_and_b <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"F&amp;B"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `F&amp;B' from data source 
+  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 1919 features and 3 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 6010.495 ymin: 25343.27 xmax: 45462.43 ymax: 48796.21
+Projected CRS: SVY21 / Singapore TM</code></pre>
+</div>
+</div>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Visual Inspection
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As we haven’t used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.</p>
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Map of F&amp;B Establishments in Singapore"</span>,</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(f_and_b) <span class="sc">+</span></span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.005</span>, <span class="at">title =</span> <span class="st">"F&amp;B Establishments Spots"</span>) <span class="sc">+</span></span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-42-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>F_AND_B_COUNT <span class="ot">&lt;-</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(var_hc, f_and_b))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-3-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>leis_rec <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"Liesure&amp;Recreation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `Liesure&amp;Recreation' from data source 
+  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 1217 features and 30 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 6010.495 ymin: 25134.28 xmax: 48439.77 ymax: 50078.88
+Projected CRS: SVY21 / Singapore TM</code></pre>
+</div>
+</div>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Visual Inspection
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As we haven’t used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.</p>
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Map of Leisure &amp; Recreation Spots in Singapore"</span>,</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb58-13"><a href="#cb58-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(leis_rec) <span class="sc">+</span></span>
+<span id="cb58-14"><a href="#cb58-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.005</span>, <span class="at">title =</span> <span class="st">"Leisure &amp; Recreation Spots"</span>) <span class="sc">+</span></span>
+<span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-45-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>LEISURE_COUNT <span class="ot">&lt;-</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(var_hc, leis_rec))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-3-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-5-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>retail <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"Retails"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `Retails' from data source 
+  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 37635 features and 3 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 4737.982 ymin: 25171.88 xmax: 48265.04 ymax: 50135.28
+Projected CRS: SVY21 / Singapore TM</code></pre>
+</div>
+</div>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Visual Inspection
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As we haven’t used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.</p>
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Map of Retail Outlets in Singapore"</span>,</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(retail) <span class="sc">+</span></span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.005</span>, <span class="at">title =</span> <span class="st">"Retail Outlets"</span>) <span class="sc">+</span></span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-48-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>RETAIL_COUNT <span class="ot">&lt;-</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(var_hc, retail))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<p>We now have the variables in <code>var_hc</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(var_hc))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 6%">
+<col style="width: 13%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">geometry</th>
+<th style="text-align: left;">HEX_ID</th>
+<th style="text-align: right;">BUS_STOP_COUNT</th>
+<th style="text-align: right;">ENTERTN_COUNT</th>
+<th style="text-align: right;">F_AND_B_COUNT</th>
+<th style="text-align: right;">LEISURE_COUNT</th>
+<th style="text-align: right;">RETAIL_COUNT</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">POLYGON ((3970.122 27348.13…</td>
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">POLYGON ((4345.122 27997.65…</td>
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">POLYGON ((4345.122 30595.72…</td>
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">POLYGON ((4720.122 28647.16…</td>
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">POLYGON ((4720.122 29946.2,…</td>
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">POLYGON ((4720.122 31245.24…</td>
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Now, we will process the other variables that need additional processing.</p>
+<section id="train-station-exits" class="level2">
+<h2 class="anchored" data-anchor-id="train-station-exits">Train Station Exits</h2>
+<p>We will download the <em>Train Station Exit Point</em> from <a href="https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip">LTA DataMall</a>. This is a geospatial <code>shp</code> file so we can import it the same way as the previous datasets.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>train_exits <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"Train_Station_Exit_Layer"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `Train_Station_Exit_Layer' from data source 
+  `/Users/kjcpaas/Documents/Grad School/ISSS624/Project/ISSS624/Take-home_Ex2/data/geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 565 features and 2 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 6134.086 ymin: 27499.7 xmax: 45356.36 ymax: 47865.92
+Projected CRS: SVY21</code></pre>
+</div>
+</div>
+<div class="callout callout-style-simple callout-caution callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-25-contents" aria-controls="callout-25" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Correcting the projection
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-25" class="callout-25-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We want to use <a href="https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem">SVY21</a> as the projection for this study as it is the projection used for local Singaporean context.</p>
+<p>After the import, it shows that the <strong>Projected CRS</strong>is <strong>SVY21</strong>. However, checking the CRS with <code>st_crs()</code> tells a different story.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(train_exits)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Coordinate Reference System:
+  User input: SVY21 
+  wkt:
+PROJCRS["SVY21",
+    BASEGEOGCRS["WGS 84",
+        DATUM["World Geodetic System 1984",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]],
+            ID["EPSG",6326]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["Degree",0.0174532925199433]]],
+    CONVERSION["unnamed",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",1.36666666666667,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",103.833333333333,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",1,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",28001.642,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",38744.572,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]]</code></pre>
+</div>
+</div>
+<p>As we can see EPSG value is <strong>9001</strong>, which correspond to <a href="https://gisgeography.com/wgs84-world-geodetic-system/"><strong>WGS84</strong></a>. We have to fix the projection by transforming to EPSG value of <strong>3414</strong>, which corresponds to <strong>SVY21</strong>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>train_exits <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(train_exits, <span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<section id="visual-inspection-4" class="level3">
+<h3 class="anchored" data-anchor-id="visual-inspection-4">Visual inspection</h3>
+<p>As we haven’t used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.</p>
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Map of Train Station Exits in Singapore"</span>,</span>
+<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(train_exits) <span class="sc">+</span></span>
+<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.005</span>, <span class="at">title =</span> <span class="st">"Train Station Exits"</span>) <span class="sc">+</span></span>
+<span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-54-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>TRAIN_ST_COUNT <span class="ot">&lt;-</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(var_hc, train_exits))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-26-contents" aria-controls="callout-26" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-26" class="callout-26-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We do not need the data used to read the <code>shp</code> contents anymore as we have already derived the variables from them.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(busstops)</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(entertn)</span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(f_and_b)</span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(leis_rec)</span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(retail)</span>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_exits)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="hdb-population" class="level2">
+<h2 class="anchored" data-anchor-id="hdb-population">HDB Population</h2>
+<p>Next, we will derive the population data for each zone. We will use aspatial dataset provided, <code>hdb.csv</code>.</p>
+<section id="importing-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="importing-the-data">Importing the data</h3>
+<p>We will first import the aspatial <code>hdb.csv</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>hdb_csv <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/hdb.csv"</span>)</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(hdb_csv))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 0%">
+<col style="width: 1%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 1%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 6%">
+<col style="width: 13%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 2%">
+<col style="width: 1%">
+<col style="width: 2%">
+<col style="width: 1%">
+<col style="width: 2%">
+<col style="width: 1%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">…1</th>
+<th style="text-align: left;">blk_no</th>
+<th style="text-align: left;">street</th>
+<th style="text-align: right;">max_floor_lvl</th>
+<th style="text-align: right;">year_completed</th>
+<th style="text-align: left;">residential</th>
+<th style="text-align: left;">commercial</th>
+<th style="text-align: left;">market_hawker</th>
+<th style="text-align: left;">miscellaneous</th>
+<th style="text-align: left;">multistorey_carpark</th>
+<th style="text-align: left;">precinct_pavilion</th>
+<th style="text-align: left;">bldg_contract_town</th>
+<th style="text-align: right;">total_dwelling_units</th>
+<th style="text-align: right;">1room_sold</th>
+<th style="text-align: right;">2room_sold</th>
+<th style="text-align: right;">3room_sold</th>
+<th style="text-align: right;">4room_sold</th>
+<th style="text-align: right;">5room_sold</th>
+<th style="text-align: right;">exec_sold</th>
+<th style="text-align: right;">multigen_sold</th>
+<th style="text-align: right;">studio_apartment_sold</th>
+<th style="text-align: right;">1room_rental</th>
+<th style="text-align: right;">2room_rental</th>
+<th style="text-align: right;">3room_rental</th>
+<th style="text-align: right;">other_room_rental</th>
+<th style="text-align: right;">lat</th>
+<th style="text-align: right;">lng</th>
+<th style="text-align: left;">building</th>
+<th style="text-align: left;">addr</th>
+<th style="text-align: left;">postal</th>
+<th style="text-align: right;">SUBZONE_NO</th>
+<th style="text-align: left;">SUBZONE_N</th>
+<th style="text-align: left;">SUBZONE_C</th>
+<th style="text-align: left;">PLN_AREA_N</th>
+<th style="text-align: left;">PLN_AREA_C</th>
+<th style="text-align: left;">REGION_N</th>
+<th style="text-align: left;">REGION_C</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">BEACH RD</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">1970</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">KWN</td>
+<td style="text-align: right;">142</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">138</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.295097</td>
+<td style="text-align: right;">103.8541</td>
+<td style="text-align: left;">RAFFLES HOTEL</td>
+<td style="text-align: left;">1 BEACH ROAD RAFFLES HOTEL SINGAPORE 189673</td>
+<td style="text-align: left;">189673</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">CITY HALL</td>
+<td style="text-align: left;">DTSZ02</td>
+<td style="text-align: left;">DOWNTOWN CORE</td>
+<td style="text-align: left;">DT</td>
+<td style="text-align: left;">CENTRAL REGION</td>
+<td style="text-align: left;">CR</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">BEDOK STH AVE 1</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">1975</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">BD</td>
+<td style="text-align: right;">206</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">204</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.320852</td>
+<td style="text-align: right;">103.9337</td>
+<td style="text-align: left;">NIL</td>
+<td style="text-align: left;">1 BEDOK SOUTH AVENUE 1 SINGAPORE 460001</td>
+<td style="text-align: left;">460001</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">BEDOK SOUTH</td>
+<td style="text-align: left;">BDSZ06</td>
+<td style="text-align: left;">BEDOK</td>
+<td style="text-align: left;">BD</td>
+<td style="text-align: left;">EAST REGION</td>
+<td style="text-align: left;">ER</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">CANTONMENT RD</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2010</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">CT</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.275488</td>
+<td style="text-align: right;">103.8414</td>
+<td style="text-align: left;">PINNACLE @ DUXTON</td>
+<td style="text-align: left;">1 CANTONMENT ROAD PINNACLE @ DUXTON SINGAPORE 080001</td>
+<td style="text-align: left;">080001</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">CHINATOWN</td>
+<td style="text-align: left;">OTSZ03</td>
+<td style="text-align: left;">OUTRAM</td>
+<td style="text-align: left;">OT</td>
+<td style="text-align: left;">CENTRAL REGION</td>
+<td style="text-align: left;">CR</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">CHAI CHEE RD</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">1982</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">BD</td>
+<td style="text-align: right;">102</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">92</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.327969</td>
+<td style="text-align: right;">103.9227</td>
+<td style="text-align: left;">PING YI GARDENS</td>
+<td style="text-align: left;">1 CHAI CHEE ROAD PING YI GARDENS SINGAPORE 461001</td>
+<td style="text-align: left;">461001</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">KEMBANGAN</td>
+<td style="text-align: left;">BDSZ03</td>
+<td style="text-align: left;">BEDOK</td>
+<td style="text-align: left;">BD</td>
+<td style="text-align: left;">EAST REGION</td>
+<td style="text-align: left;">ER</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">CHANGI VILLAGE RD</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1975</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">PRC</td>
+<td style="text-align: right;">55</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.388610</td>
+<td style="text-align: right;">103.9881</td>
+<td style="text-align: left;">OCBC CHANGI VILLAGE ROAD - 7 ELEVEN</td>
+<td style="text-align: left;">1 CHANGI VILLAGE ROAD OCBC CHANGI VILLAGE ROAD - 7 ELEVEN SINGAPORE 500001</td>
+<td style="text-align: left;">500001</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">CHANGI POINT</td>
+<td style="text-align: left;">CHSZ01</td>
+<td style="text-align: left;">CHANGI</td>
+<td style="text-align: left;">CH</td>
+<td style="text-align: left;">EAST REGION</td>
+<td style="text-align: left;">ER</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">DELTA AVE</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">1982</td>
+<td style="text-align: left;">Y</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">N</td>
+<td style="text-align: left;">BM</td>
+<td style="text-align: right;">96</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">96</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.292075</td>
+<td style="text-align: right;">103.8286</td>
+<td style="text-align: left;">NIL</td>
+<td style="text-align: left;">1 DELTA AVENUE SINGAPORE 160001</td>
+<td style="text-align: left;">160001</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">BUKIT HO SWEE</td>
+<td style="text-align: left;">BMSZ09</td>
+<td style="text-align: left;">BUKIT MERAH</td>
+<td style="text-align: left;">BM</td>
+<td style="text-align: left;">CENTRAL REGION</td>
+<td style="text-align: left;">CR</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Despite being an aspatial dataset, there are columns where we can derive geospatial data from, <code>lng</code> and <code>lat</code>.</p>
+</div>
+</div>
+</div>
+<p>We will first convert this to a <code>sf</code> data type, which uses <strong>WGS 84</strong> and transform it to <strong>SVY21</strong>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>hdb_sf <span class="ot">&lt;-</span> hdb_csv <span class="sc">%&gt;%</span> <span class="fu">st_as_sf</span>(<span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"lng"</span>, <span class="st">"lat"</span>),</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">crs =</span> <span class="dv">4326</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Visual inspection
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As we haven’t used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.</p>
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Map of HDB Blocks in Singapore"</span>,</span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb75-12"><a href="#cb75-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb75-13"><a href="#cb75-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(hdb_sf) <span class="sc">+</span></span>
+<span id="cb75-14"><a href="#cb75-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="fl">0.001</span>, <span class="at">title =</span> <span class="st">"HDB Blocks"</span>) <span class="sc">+</span></span>
+<span id="cb75-15"><a href="#cb75-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-59-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-28-contents" aria-controls="callout-28" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+On the HDB-related variables
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-28" class="callout-28-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We will not have an accurate number for the population for each zone as we have incomplete data of residents in each zone. We have to account for other housing options like private residents, dormitories, etc.</p>
+<p>For this study, we will use both the number of <strong>HDB per zone</strong> and the <strong>number of dwellings</strong> in each zone as a population proxy.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="removing-unnecessary-data" class="level3">
+<h3 class="anchored" data-anchor-id="removing-unnecessary-data">Removing unnecessary data</h3>
+<p>Now that we have the verified the validity of the data, we can proceed with trimming out the unnecessary elements. We will only retain the <strong>residential</strong> blocks (there are commercial and market blocks without residents), the <strong>total_dwelling_units</strong> column, and lastly, the geometry.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>hdb_filtered_sf <span class="ot">&lt;-</span> hdb_sf <span class="sc">%&gt;%</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(residential <span class="sc">==</span> <span class="st">"Y"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(total_dwelling_units)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="adding-hdb_count" class="level3">
+<h3 class="anchored" data-anchor-id="adding-hdb_count">Adding <em>HDB_COUNT</em></h3>
+<p>This variable will contain the number of <strong>HDB blocks</strong> in a zone. We will use the same methods to count the number locations in the zone, by using <code>lengths()</code> and <code>st_intersects()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>HDB_COUNT <span class="ot">&lt;-</span> <span class="fu">lengths</span>(<span class="fu">st_intersects</span>(var_hc, hdb_filtered_sf))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="adding-hdb_dwelling_count" class="level3">
+<h3 class="anchored" data-anchor-id="adding-hdb_dwelling_count">Adding <em>HDB_DWELLING_COUNT</em></h3>
+<p>While <code>HDB_COUNT</code> can be a good population proxy, we need to consider that HDB blocks have different sizes. For example, taller and wider blocks may have more units compared to shorter blocks.</p>
+<p>As such, we will use <code>total_dwelling_units</code> to improve our population proxy.</p>
+<p>We need to aggregate the sum of <code>total_dwelling_units</code> per hexagon, and doing a <code>left_join()</code> with <code>var_hc</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>var_hc <span class="ot">&lt;-</span> var_hc <span class="sc">%&gt;%</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_intersection</span>(hdb_filtered_sf, var_hc) <span class="sc">%&gt;%</span></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(HEX_ID) <span class="sc">%&gt;%</span></span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">summarize</span>(<span class="at">HDB_DWELLING_COUNT =</span> <span class="fu">sum</span>(total_dwelling_units))</span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>var_hc<span class="sc">$</span>HDB_DWELLING_COUNT[<span class="fu">is.na</span>(var_hc<span class="sc">$</span>HDB_DWELLING_COUNT)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(var_hc))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 12%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">HEX_ID</th>
+<th style="text-align: right;">BUS_STOP_COUNT</th>
+<th style="text-align: right;">ENTERTN_COUNT</th>
+<th style="text-align: right;">F_AND_B_COUNT</th>
+<th style="text-align: right;">LEISURE_COUNT</th>
+<th style="text-align: right;">RETAIL_COUNT</th>
+<th style="text-align: right;">TRAIN_ST_COUNT</th>
+<th style="text-align: right;">HDB_COUNT</th>
+<th style="text-align: right;">HDB_DWELLING_COUNT</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0001</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">POLYGON ((3970.122 27348.13…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">POLYGON ((4345.122 27997.65…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">POLYGON ((4345.122 30595.72…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0004</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">POLYGON ((4720.122 28647.16…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">POLYGON ((4720.122 29946.2,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0006</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">POLYGON ((4720.122 31245.24…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>According to the <a href="https://www.singstat.gov.sg/find-data/search-by-theme/households/households/latest-data">2022 official statistics</a> from Department of Statistics, the average household size is <strong>3.09 person</strong>.</p>
+<p>While we can multiply the number of dwellings with this number to estimate the number of residents per zone, it is wise to stop at <code>HDB_DWELLING_COUNT</code> as the other variables all represent the number of a location type per zone. If we have a variable with a different unit, i.e.&nbsp;<em>persons</em>, the simulations may not give us the expected results.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-29-contents" aria-controls="callout-29" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-29" class="callout-29-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We do not need the intermediate data used to derive the HDB-based variables so we can remove them from the environment.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(hdb_csv)</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(hdb_sf)</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(hdb_filtered_sf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
 </div>
 </div>
 
