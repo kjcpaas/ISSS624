@@ -492,6 +492,7 @@ tm_shape(mpsz) +
   tm_shape(flowlines) +
   tm_lines(lwd = "TRIPS",
            style = "quantile",
+           col = "red",
            scale = c(0.1, 1, 3, 5, 7, 10),
            title.lwd = "# of bus trips",
            n = 6,
@@ -512,7 +513,7 @@ tm_shape(mpsz) +
 ::: {.callout-tip appearance="simple"}
 ### Insights
 
-The flow lines are sparse at the West side of Singapore, the **Jurong** and **Choa Chu Kang** areas. This is consistent with the observations that we have in the [Take-home Exercise 1](Take-home_Ex1/Take-home_Ex1).
+The flow lines are sparse at the West side of Singapore, the **Jurong** and **Choa Chu Kang** areas. This is consistent with the observations that we have in the [Take-home Exercise 1](Take-home_Ex1/Take-home_Ex1) that these areas are least busy in terms of bus rides.
 
 The busiest zones can be seen in this visualization as the zones **where the lines converge**. However, it is hard to see more closely in this web of lines we need a different visualization to inspect the busiest bus flows.
 :::
@@ -577,6 +578,7 @@ tm_shape(mpsz) +
       filter(TRIPS > 376)) +
   tm_lines(lwd = "TRIPS",
            style = "quantile",
+           col = "red",
            scale = c(0.1, 1, 3, 5, 7, 10),
            title.lwd = "# of bus trips",
            n = 6,
@@ -602,17 +604,27 @@ It is notable that the thickest flow lines are for relatively short distances, l
 Also, there are longer bus rides for the weekend peak, probably indicating people more willing to travel longer distances for recreation and meeting family and friends.
 :::
 
+::: {.callout-tip collapse="true"}
+### Save point
+
+Let's save `flowlines` as it contains the flow data that we will be using in the next parts of the analysis
+
+```{r}
+write_rds(flowlines, "data/rds/flowlines202310.rds")
+```
+:::
+
 # Attractiveness and Propulsiveness Variables
 
 ## Possible motivations for riding the bus
 
 Based on real-world knowledge and observations from [Origin-Destination Flows], we will identify some possible motivations for people to ride the bus during weekend morning peak period. These are:
 
--   People leaving their houses to go to their destination
+-   People leaving their homes to go to their destination
 
 -   Transferring from train or another bus to reach their destination
 
--   Visiting Leisure, Entertainment, and F&B establishments to spend time with family and friends
+-   Visiting Leisure, Entertainment, and F&B establishments for recreation
 
 -   Going to shops for groceries and other errands
 
@@ -676,7 +688,7 @@ Those already in the `data/` directory are datasets provided or have peviously b
 | `HDB_COUNT` / `HDB_DWELLING_COUNT` | `data/aspatial/hdb.csv`                                                        | These will serve as population proxies |
 | `LEISURE_COUNT`                    | `data/geospatial/Liesure&Recreation.shp`                                       |                                        |
 | `RETAIL_COUNT`                     | `data/geospatial/Retails.shp`                                                  |                                        |
-| `TRAIN_ST_COUNT`                   | *Train Station Exit* dataset from [LTA DataMall](https://datamall.lta.gov.sg/) | Need to download from LTA DataMall     |
+| `TRAIN_EXITS_COUNT`                | *Train Station Exit* dataset from [LTA DataMall](https://datamall.lta.gov.sg/) | Need to download from LTA DataMall     |
 
 # Preparing variable data
 
@@ -688,6 +700,7 @@ We can run from this point by loading these data.
 ```{r}
 mpsz <- read_rds("data/rds/mpsz.rds")
 honeycomb <- read_rds("data/rds/honeycomb.rds")
+flowlines <- read_rds("data/rds/flowlines202310.rds")
 ```
 :::
 
@@ -918,7 +931,7 @@ tm_shape(mpsz) +
 ```
 
 ```{r}
-var_hc$TRAIN_ST_COUNT <- lengths(st_intersects(var_hc, train_exits))
+var_hc$TRAIN_EXITS_COUNT <- lengths(st_intersects(var_hc, train_exits))
 ```
 
 ::: {.callout-warning collapse="true"}
@@ -998,7 +1011,7 @@ For this study, we will use both the number of **HDB per zone** and the **number
 
 ### Removing unnecessary data
 
-Now that we have the verified the validity of the data, we can proceed with trimming out the unnecessary elements. We will only retain the **residential** blocks (there are commercial and market blocks without residents), the **total_dwelling_units** column, and lastly, the geometry.
+Now that we have inspected the the data contents, we can proceed with trimming out the unnecessary elements. We will only retain the **residential** blocks (there are commercial and market blocks without residents), the **total_dwelling_units** column, and lastly, the geometry.
 
 ```{r}
 hdb_filtered_sf <- hdb_sf %>%
@@ -1011,6 +1024,7 @@ hdb_filtered_sf <- hdb_sf %>%
 This variable will contain the number of **HDB blocks** in a zone. We will use the same methods to count the number locations in the zone, by using `lengths()` and `st_intersects()`.
 
 ```{r}
+# TODO: Remove if this is unnecessary after all
 var_hc$HDB_COUNT <- lengths(st_intersects(var_hc, hdb_filtered_sf))
 ```
 
@@ -1049,5 +1063,255 @@ We do not need the intermediate data used to derive the HDB-based variables so w
 rm(hdb_csv)
 rm(hdb_sf)
 rm(hdb_filtered_sf)
+```
+:::
+
+## Visualizing the attractiveness and propulsiveness variables
+
+Next, we will visualize the [Attractiveness and Propulsiveness Variables] with the flowline, to check if the busiest bus flows correspond to these factors we identified.
+
+To simplify the visualization, we will add the counts for the different variables. We will do this by using `mutate()` to generate the sums.
+
+::: {.callout-note collapse="true" appearance="simple"}
+### Why we need to generate totals without the population proxy
+
+When we do a summary of the variable values, we can see that `HDB_DWELLING_COUNT` is higher than the other variable values.
+
+```{r}
+kable(summary(var_hc))
+```
+
+If we visualize the factors, we won't be able to see the influence of the other factors to the flows.
+:::
+
+```{r}
+var_totals_hc <- var_hc
+var_totals_hc <- var_totals_hc %>%
+  mutate(ATTRACTIVENESS_TOTAL =
+           BUS_STOP_COUNT + TRAIN_EXITS_COUNT +
+           HDB_DWELLING_COUNT +
+           RETAIL_COUNT +
+           LEISURE_COUNT +
+           ENTERTN_COUNT +
+           F_AND_B_COUNT) %>%
+  mutate(ATTRACTIVENESS_NO_POP_TOTAL =
+           BUS_STOP_COUNT + TRAIN_EXITS_COUNT +
+           RETAIL_COUNT +
+           LEISURE_COUNT +
+           ENTERTN_COUNT +
+           F_AND_B_COUNT) %>%
+  mutate(PROPULSIVENESS_TOTAL =
+           BUS_STOP_COUNT + TRAIN_EXITS_COUNT +
+           HDB_DWELLING_COUNT) %>%
+  mutate(PROPULSIVENESS_NO_POP_TOTAL =
+           BUS_STOP_COUNT + TRAIN_EXITS_COUNT) %>%
+  select(HEX_ID,
+         ATTRACTIVENESS_TOTAL,
+         ATTRACTIVENESS_NO_POP_TOTAL,
+         PROPULSIVENESS_TOTAL,
+         PROPULSIVENESS_NO_POP_TOTAL)
+kable(head(var_totals_hc))
+```
+
+::: {.callout-note appearance="minimal"}
+We will use **tabsets** to compare the 2 maps by switching between tabs.
+:::
+
+### Visualizing all variables
+
+::: panel-tabset
+#### Attractiveness
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("white", title = "Singapore Boundary") +
+  
+  tm_shape(var_totals_hc) +
+  tm_polygons("ATTRACTIVENESS_TOTAL", palette = "Greens", style = "quantile") +
+  
+  tm_shape(
+    flowlines %>%
+      remove_intra() %>%
+      filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.5) +
+  
+  tm_layout(main.title = "Top 5% Bus Passenger flows and Attractiveness Factors",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2) +
+  tm_credits("*Passenger data from weekend/holidays 11AM - 2PM\n(October 2023)",
+             bg.color = "white", bg.alpha = 0.5,
+             position = c("right", "top"))
+```
+
+#### Propulsiveness
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("white", title = "Singapore Boundary") +
+  
+  tm_shape(var_totals_hc) +
+  tm_polygons("PROPULSIVENESS_TOTAL", palette = "Purples", style = "quantile") +
+  
+  tm_shape(
+    flowlines %>%
+      remove_intra() %>%
+      filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.5) +
+  
+  tm_layout(main.title = "Top 5% Bus Passenger flows and Propulsiveness Factors",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2) +
+  tm_credits("*Passenger data from weekend/holidays 11AM - 2PM\n(October 2023)",
+             bg.color = "white", bg.alpha = 0.5,
+             position = c("right", "top"))
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+The maps have similar patterns on the attractiveness and propulsiveness factors. This is to be expected as these values are heavily influenced by `HDB_DWELLINGS_COUNT`.
+
+The zones with high attractiveness and propulsiveness correspond the popular intersections of the flowlines. This indicates that there is **high usage of buses in residential areas**.
+
+However, we are not clear on whether passengers board or alight the buses more in residential hubs at this point in time. A flow analysis will help us gain further insights on this matter.
+:::
+
+### Visualizing without population
+
+Now, we will plot the maps of the attractiveness and propulsiveness factors without `HDB_DWELLING_COUNT` to see the effects of the factors we identified, without the population factor.
+
+::: panel-tabset
+#### Attractiveness
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("white", title = "Singapore Boundary") +
+  
+  tm_shape(var_totals_hc) +
+  tm_polygons("ATTRACTIVENESS_NO_POP_TOTAL", palette = "Greens", style = "quantile") +
+  
+  tm_shape(
+    flowlines %>%
+      remove_intra() %>%
+      filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.5) +
+  
+  tm_layout(main.title = "Top 5% Bus Passenger flows and Attractiveness Factors (w/o Population)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2) +
+  tm_credits("*Passenger data from weekend/holidays 11AM - 2PM\n(October 2023)",
+             bg.color = "white", bg.alpha = 0.5,
+             position = c("right", "top"))
+```
+
+#### Propulsiveness
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("white", title = "Singapore Boundary") +
+  
+  tm_shape(var_totals_hc) +
+  tm_polygons("PROPULSIVENESS_NO_POP_TOTAL", palette = "Purples", style = "quantile") +
+  
+  tm_shape(
+    flowlines %>%
+      remove_intra() %>%
+      filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.5) +
+  
+  tm_layout(main.title = "Top 5% Bus Passenger flows and Propulsiveness Factors (w/o Population)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2) +
+  tm_credits("*Passenger data from weekend/holidays 11AM - 2PM\n(October 2023)",
+             bg.color = "white", bg.alpha = 0.5,
+             position = c("right", "top"))
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+Compared to the plots that include `HDB_DWELLING_COUNT`, the flows match the attractiveness and propulsiveness maps less.
+
+We need to consider that we simplified the visualizations by adding all the variables so details like the effect of each location type in bus ridership are loss, especially on the attractiveness map, as we have more variables.
+
+The propulsiveness map correspond to the flow lines better, but that is because we include the bus stops, which are the origin and destinations of our data set.
+
+Once we model the flows, we can better see the effects of the individual variables, e.g. `TRAIN_EXITS_COUNT`, `RETAIL_COUNT`.
+:::
+
+We must also consider that we [visualized only the top 5% of `TRIPS` count](#visualizing-the-top-5-busiest-flows), so if there are zones with passengers from multiple bus stops, they will not show up. For example, **1000 trips coming from a single bus stop** will show up but **100 trips from 10 different bus stops** won't show up.
+
+Another thing of note is that the busiest pairs, which is from **Kranji to Woodlands Checkpoint** do not correspond strongly with the attractiveness and propulsiveness factors we defined. We may need details like **passengers alighting from train stations** as a propulsiveness variable, and add **international access** as attractiveness variable.
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We do not need `var_totals_hc` anymore so we can remove it.
+
+```{r}
+#| eval: true
+rm(var_totals_hc)
 ```
 :::
