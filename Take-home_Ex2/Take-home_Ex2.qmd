@@ -559,7 +559,7 @@ remove_intra(flowlines)$TRIPS %>%
   quantile(probs = c(0.8, 0.9, 0.95, 0.99, 0.995, 0.999))
 ```
 
-### Visualizing the top 5% busiest flows
+### Visualizing the top 5% busiest flows {#visualizing-the-top-5-busiest-flows}
 
 We will use the value for the 95th percentile as it removes much of the low traffic so we can see patterns. At the same time, it leaves enough so that important details are not lost.
 
@@ -701,6 +701,16 @@ We can run from this point by loading these data.
 mpsz <- read_rds("data/rds/mpsz.rds")
 honeycomb <- read_rds("data/rds/honeycomb.rds")
 flowlines <- read_rds("data/rds/flowlines202310.rds")
+```
+
+We also need to define the `remove_intra()` as we are removing the intra_zonal flows from our visualization.
+
+```{r}
+remove_intra <- function(df) {
+  df %>% filter(
+    ORIG_HEX_ID != DEST_HEX_ID
+  )
+}
 ```
 :::
 
@@ -1303,15 +1313,244 @@ Once we model the flows, we can better see the effects of the individual variabl
 
 We must also consider that we [visualized only the top 5% of `TRIPS` count](#visualizing-the-top-5-busiest-flows), so if there are zones with passengers from multiple bus stops, they will not show up. For example, **1000 trips coming from a single bus stop** will show up but **100 trips from 10 different bus stops** won't show up.
 
-Another thing of note is that the busiest pairs, which is from **Kranji to Woodlands Checkpoint** do not correspond strongly with the attractiveness and propulsiveness factors we defined. We may need details like **passengers alighting from train stations** as a propulsiveness variable, and add **international access** as attractiveness variable.
+Another thing of note is that the busiest pair, which is from **Kranji to Woodlands Checkpoint** do not correspond strongly with the attractiveness and propulsiveness factors we defined. We may need details like **passengers alighting from train stations** as a propulsiveness variable, and add **international access** as attractiveness variable.
 
 ::: {.callout-warning collapse="true"}
 ### Data clear point
 
-We do not need `var_totals_hc` anymore so we can remove it.
+We do not need `var_totals_hc` anymore so we can remove it. Also, as we are done with the flow visualizations, we also can remove `flowlines`
 
 ```{r}
 #| eval: true
 rm(var_totals_hc)
+rm(flowlines)
+```
+:::
+
+# Preparing modelling data
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can run from this point by loading these data.
+
+```{r}
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+od_hex <- read_rds("data/rds/od_hex202310.rds")
+```
+
+We also need to define the `remove_intra()` as we are removing the intra_zonal flows from our visualization.
+
+```{r}
+remove_intra <- function(df) {
+  df %>% filter(
+    ORIG_HEX_ID != DEST_HEX_ID
+  )
+}
+```
+:::
+
+Now that we have the data for the variables, we will now make further preparations to shape data that can be used with `glm()` for our flow models.
+
+## Modelling data shape
+
+To make our data usable for modeling, we need to create a data set with the following columns:
+
+-   `ORIG_HEX_ID` - corresponding to the origin zone
+
+-   `DEST_HEX_ID` - corresponding to the destination zone
+
+-   `DISTANCE` - distance between the origin and destination hexagons, this is the **cost** variable of the model
+
+-   `ORIG_*_COUNT` - propulsiveness variables
+
+-   `DEST_*_COUNT` - attractiveness variables
+
+-   `TRIPS` - the dependent variable
+
+Lastly, the size of this data must be , $N_{hexagons}^2 = 831^2$ which in our case is:
+
+```{r}
+nrow(honeycomb) ^ 2
+```
+
+## Calculating distances
+
+We will first calculate the distances from each hexagon to each of the other hexagon as in our modelling, this will serve as the **cost** variable, as people need to spend more time by travelling long distance to their destination.
+
+### Generating distance matrix
+
+We will use `spDists()` to generate the matrix from our `honeycomb`, which requires a *Spatial* data frame. We also need to name the columns and rows to the corresponding `HEX_ID` of the hexagons.
+
+```{r}
+dist_mat <- spDists(as(honeycomb, "Spatial"),
+                    longlat = FALSE)
+colnames(dist_mat) <- paste0(honeycomb$HEX_ID)
+rownames(dist_mat) <- paste0(honeycomb$HEX_ID)
+kable(head(dist_mat, n=c(8, 8)))
+```
+
+::: {.callout-tip appearance="minimal"}
+As expected, many of the distances are **multiples of 750** as we set our hexagon size to 750m edge-to-edge. This also means that the distance between centroids of adjacent hexagons is **750m**.
+:::
+
+### Generating a pivot table
+
+To generate data with the specifications we defined in [Modelling data shape], we must generate a pivot table from our distance matrix, `dist_mat`.
+
+We will use `melt()`, for this purpose and rename the columns to names we defined in our modelling data shape.
+
+```{r}
+dist_tbl <- melt(dist_mat) %>%
+  rename(DISTANCE = value) %>%
+  rename(ORIG_HEX_ID = Var1) %>%
+  rename(DEST_HEX_ID = Var2)
+kable(head(dist_tbl))
+```
+
+### Setting intra-zonal distances
+
+Intra-zonal distances are currently **0**. This can be a result of passengers taking a short bus ride to the next stop. We have to set these to a value other than 0.
+
+::: {.callout-important collapse="true" appearance="simple"}
+#### Why can't we just keep them as 0?
+
+As we are going to use **log-based Poisson models**, *log* operations will be applied to all independent variables (including distance).
+
+$log(0) = undefined$ so we have to set it to a value **greater than 0**, as distances are **positive** in this context.
+:::
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### What do we use as intra-zonal distance? Answer: 200m
+
+To consider the intra-zonal distance for this context, we need to consider why people board and alight within the same zone.
+
+The most plausible explanation is people riding the bus to the immediate next stop. With this thought process, we can base the intra-zonal distance from some of the closest bus stops within the same route, **School of the Arts** (Stop ID: 08079) and **Peace Ctr** (Stop ID: 07011).
+
+![](images/sota_to_peace_ctr.png){fig-align="center"}
+
+Bus routes like [**147**](https://www.transitlink.com.sg/eservice/eguide/service_route.php?service=147)and [**166**](https://www.transitlink.com.sg/eservice/eguide/service_route.php?service=166) pass by these bus stops so it is possible for the above scenario to happen here. As these may not be closest bus stops within the same route, we will round the value down to **200m**.
+:::
+
+We will set the intra-zonal distances to **200m**.
+
+```{r}
+dist_tbl$DISTANCE[dist_tbl$ORIG_HEX_ID == dist_tbl$DEST_HEX_ID] <- 200
+summary(dist_tbl$DISTANCE)
+```
+
+::: {.callout-note appearance="simple"}
+`dist_tbl` will be the base of our modelling data as it contains all the possible pairs of our set of hexagons.
+
+As such, we will initiate our modelling data using this data frame.
+
+```{r}
+model_data <- dist_tbl
+```
+:::
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We do not need `dist_mat` and `dist_tbl` anymore as we have the model data in `model_data`
+
+```{r}
+#| eval: true
+rm(dist_mat)
+rm(dist_tbl)
+```
+:::
+
+## Adding the variables
+
+::: panel-tabset
+### Trips
+
+We will get the `TRIPS` data from `od_hex`.
+
+::: {.callout-note collapse="true" appearance="simple"}
+#### Recap of od_hex
+
+```{r}
+kable(head(od_hex))
+```
+:::
+
+We will use `left_join()` to join this data with `model_data`, and set those with `NA` values to `0`.
+
+```{r}
+model_data <- left_join(model_data, od_hex)
+model_data$TRIPS[is.na(model_data$TRIPS)] <- 0
+kable(head(model_data))
+```
+
+### Propulsiveness
+
+We will add the propulsiveness variables as `ORIG_*_COUNT` columns as they are factors forcing passengers to board the bus from specific origins.
+
+Similarly, we will do this by joining `var_hc`, selecting the propulsiveness variables, and doing a `left_join()` with `model_data`. We also need to rename the included variables by adding a prefix `ORIG_` using `rename_with()`.
+
+```{r}
+propulsiveness <- var_hc %>%
+  st_drop_geometry() %>%
+  select(c(
+    HEX_ID,
+    BUS_STOP_COUNT,
+    TRAIN_EXITS_COUNT,
+    HDB_DWELLING_COUNT)) %>%
+  rename_with(~paste("ORIG_", .x, sep = ""))
+
+model_data <- left_join(model_data, propulsiveness)
+rm(propulsiveness)
+
+kable(head(model_data))
+```
+
+### Attractiveness
+
+We will add the attractiveness variables as `DEST_*_COUNT` columns as they are factors attracting bus passengers to go alight from specific bus stops.
+
+We will do this by joining `var_hc`, selecting the attractiveness variables, and doing a `left_join()` with `model_data`. We also need to rename the included variables by adding a prefix `DEST_` using `rename_with()`.
+
+```{r}
+attractive <- var_hc %>%
+  st_drop_geometry() %>%
+  select(c(
+    HEX_ID,
+    BUS_STOP_COUNT,
+    ENTERTN_COUNT,
+    F_AND_B_COUNT,
+    LEISURE_COUNT,
+    RETAIL_COUNT,
+    TRAIN_EXITS_COUNT,
+    HDB_DWELLING_COUNT)) %>%
+  rename_with(~paste("DEST_", .x, sep = ""))
+
+model_data <- left_join(model_data, attractive)
+rm(attractive)
+
+kable(head(model_data))
+```
+:::
+
+::: {.callout-tip collapse="true"}
+### Save point
+
+Let's save `model_data` as it contains the data we need to model the flows.
+
+```{r}
+write_rds(model_data, "data/rds/model_data202310.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We do not need `od_hex` and `var_hc` anymore as we have everything we need in `model_data`.
+
+```{r}
+#| eval: true
+rm(od_hex)
+rm(var_hc)
 ```
 :::
