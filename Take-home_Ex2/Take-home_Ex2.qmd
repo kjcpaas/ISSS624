@@ -1184,14 +1184,13 @@ The passenger data only has the **train station code**, but not the name. Howeve
 ```{r}
 kable(head(train_exits))
 ```
-
+:::
 Hence, we need way to connect the 2 datasets so we will use *Train Station Codes and Chinese Names* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/PublicTransportRelated/Train%20Station%20Codes%20and%20Chinese%20Names.zip).
 
 ```{r}
 station_codes_names <- read_csv("data/aspatial/Train_Station_Codes_and_Chinese_Names.csv")
 kable(head(station_codes_names))
 ```
-:::
 
 We only need the station code and English names so we can remove the columns that are not needed.
 

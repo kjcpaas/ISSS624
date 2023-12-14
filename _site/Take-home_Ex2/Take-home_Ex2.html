@@ -2496,6 +2496,9 @@ Recap of <em>train exits</em>
 </table>
 </div>
 </div>
+</div>
+</div>
+</div>
 <p>Hence, we need way to connect the 2 datasets so we will use <em>Train Station Codes and Chinese Names</em> from <a href="https://datamall.lta.gov.sg/content/dam/datamall/datasets/PublicTransportRelated/Train%20Station%20Codes%20and%20Chinese%20Names.zip">LTA DataMall</a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>station_codes_names <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/Train_Station_Codes_and_Chinese_Names.csv"</span>)</span>
@@ -2563,9 +2566,6 @@ Recap of <em>train exits</em>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-</div>
 </div>
 </div>
 <p>We only need the station code and English names so we can remove the columns that are not needed.</p>
