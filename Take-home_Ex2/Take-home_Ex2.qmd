@@ -169,7 +169,7 @@ This data will be used generating the flow lines for visualization, and for Spat
 :::
 
 ::: {.callout-note collapse="true" appearance="minimal"}
-#### Flow Lines
+#### Flow Lines (*flowlines*)
 
 This contains the flow lines derived from the pairs of zones in \[Number of trips between 2 zones (od_hex)\]. It will be used to visualize the flow patterns.
 
@@ -401,7 +401,9 @@ We will use the following R packages to run the code needed for data analysis.
 
 -   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
 
--   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
+-   [**knitr**](https://cran.r-project.org/web/packages/knitr/): for prettifying presentation
+
+-   [**stplanr**](https://cran.r-project.org/web/packages/stplanr/index.html): for generating flow lines
 
 ## Environment Settings
 
@@ -422,9 +424,468 @@ We will label this code chunk with `label: setup` so it will always be run even 
 
 ```{r}
 #| label: setup
-pacman::p_load(sf, sp, tmap, tidyverse, knitr)
+pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr)
 #pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
 ```
+
+# Data Wrangling
+
+Using the [Data Outputs] previously identified, we generate the dependency map below.
+
+![](images/data_dependency_map.png)
+
+## Utility
+
+We will first start by preparing the data needed for utility, \[Singapore Boundary geometry (mpsz)\] and \[Honeycomb grid corresponding to bus stop locations (honeycomb)\].
+
+### Importing the datasets
+
+We will import the datasets needed to prepare the utility data.
+
+::: panel-tabset
+#### Singapore boundary map
+
+We will import the **Master Plan 2019 Subzone Boundary (Web)** data set that has been used in class. We will only keep the `SUBZONE_N` column and the geometry as we will only use this as the **base for our visualizations**.
+
+```{r}
+mpsz <- st_read(dsn = "data/geospatial",
+                layer = "MPSZ-2019") %>%
+  select(SUBZONE_N)
+```
+
+::: {.callout-caution collapse="true" appearance="simple"}
+##### Correcting the projection
+
+This data frame using the global GPS standard, [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We need to convert this to [**SVY21**](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) projection that we will use for all our data in our analysis.
+
+```{r}
+mpsz <- mpsz %>% st_transform(crs=3414)
+```
+:::
+
+::: {.callout-important collapse="true" appearance="simple"}
+##### Visual inspection
+
+We will do a quick visual inspection to check if the map has been imported as expected.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("lightgreen", title = "Singapore Boundary") +
+  tm_layout(main.title = "Map of Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+::: {.callout-tip collapse="true"}
+##### Save point
+
+Let's save this geometry as this is one of our Utility data outputs, \[Singapore Boundary geometry (mpsz)\].
+
+```{r}
+write_rds(mpsz, "data/rds/mpsz.rds")
+```
+:::
+:::
+
+#### BusStop (shp)
+
+Next, we need to import the bus stop data as we will generate the honeycomb grid based on locations with bus stops.
+
+```{r}
+busstops <- st_read(dsn = "data/geospatial",
+                    layer = "BusStop")
+```
+
+::: {.callout-caution collapse="true" appearance="simple"}
+##### Correcting the projection
+
+We want to use [SVY21](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) as the projection for this study as it is the projection used for local Singaporean context.
+
+After the import, it shows that the **Projected CRS**is **SVY21**. However, checking the CRS with `st_crs()` tells a different story.
+
+```{r}
+st_crs(busstops)
+```
+
+As we can see EPSG value is **9001**, which correspond to [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We have to fix the projection by transforming to EPSG value of **3414**, which corresponds to **SVY21**.
+
+```{r}
+busstops <- st_transform(busstops, crs = 3414)
+```
+:::
+
+::: {.callout-important collapse="true" appearance="simple"}
+##### Visual inspection
+
+We will do a quick visual inspection to check if the map has been imported as expected.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tmap_style("natural")
+tm_shape(mpsz) +
+  tm_polygons("lightgreen", title = "Singapore Boundary") +
+  tm_layout(main.title = "Map of bus stops in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.005, title = "Bus Stops") +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+
+The map shows that there are bus stops in our data set that are outside Singapore bounds (green area). We need to remove them as we are only interested in bus stops within Singapore.
+
+::: {.callout-important appearance="simple" collapse="true"}
+##### Removing the bus stops outside Singapore
+
+We can remove the points outside Singapore from our `busstops` data by using `st_intersection()`.
+
+We will use this as `busstops` contains points, the intersection of the 2 geometries will generate points corresponding to the bus stops within Singapore.
+
+We will also just retain the `BUS_STOP_N` to remove the columns we do not need.
+
+```{r}
+busstops <- busstops %>% st_intersection(mpsz) %>% select(BUS_STOP_N, )
+```
+
+Visualizing again, all the bus stops are now within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tmap_style("natural")
+tm_shape(mpsz) +
+  tm_polygons("lightgreen", title = "Singapore Boundary") +
+  tm_layout(main.title = "Map of bus stops in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.005, title = "Bus Stops") +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha = 0.2)
+```
+:::
+:::
+:::
+
+### Generating the honeycomb grid
+
+Finally, we can generate the honeycomb grid using `st_make_grid()`, providing *cellsize* of **750m**.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Calculating cellsize
+
+[Apothem](https://www.merriam-webster.com/dictionary/apothem) is defined as *the perpendicular from the center of a regular polygon to one of the sides**.***
+
+The specification is this study requires hexagons to be **375 m** from the center of the hexagon to the center of one of it's edge.
+
+![](images/apothem.png){fig-align="center"}
+
+As such, this corresponds to the length of 2 opposite apothems, which is **750 m**.
+
+The edge length is **not** the same as apothem. It is **433.013 m**m.
+
+$$
+375m/cos(30) = 433.013m
+$$
+:::
+
+```{r}
+honeycomb <- busstops %>% st_make_grid(cellsize = 750,
+                                       what="polygons",
+                                       square = FALSE) %>%
+  st_sf() %>%
+  filter(lengths(st_intersects(geometry, busstops)) > 0)
+```
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Code Explanation
+
+st_make_grid()
+
+:   Creates a grid that covers the entire bus stop geometry, including areas without bus stop.
+
+st_sf()
+
+:   Converts to simple feature data set
+
+st_intersects()
+
+:   Checks if the hexagons have bus stops
+
+filter()
+
+:   Removes hexagons without bus stops
+:::
+
+Let's plot the map to visually inspect if the hexagons cover all the bus stop locations.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Honeycomb grid corresponding to Singapore bus stops",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(busstops) +
+  tm_dots(col = "red", size = 0.001, title = "Bus Stops") +
+  tm_grid(alpha = 0.2)
+```
+
+### Assigning id to each hexagon
+
+Now that we have hexagons properly generated, we will assign id for each hexagon to be used as a unique identifier. We will store this id under the `HEX_ID` column, and can be used in joining data frames.
+
+```{r}
+honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb))) %>% as.factor()
+kable(head(honeycomb))
+```
+
+::: {.callout-tip collapse="true"}
+### Save point
+
+Let's save `honeycomb` as it contains the main geometry we will use in analysis.
+
+```{r}
+write_rds(honeycomb, "data/rds/honeycomb.rds")
+```
+:::
+
+## Spatial Interaction Analysis
+
+### Importing the datasets
+
+We will import the datasets needed to prepare the data outputs, \[Number of trips between 2 zones (od_hex)\] and \[Flow Lines (flowlines)\].
+
+Aside from the output of [Utility], we also need to import the *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API for the month of **October 2023**.
+
+The data set is an aspatial data in `csv` format so we will use `read_csv()` to import the data.
+
+::: {.callout-note appearance="simple"}
+We will use the October 2023 passenger data in this document. If you want to use dataset for another month, replace `202310` to the corresponding `YYYYMM` format.
+:::
+
+```{r}
+odbus <- read_csv("data/aspatial/origin_destination_bus_202310.csv")
+kable(head(odbus))
+```
+
+### Generating the O-D trip data by hexagon level
+
+#### Filtering the relevant data
+
+We only need the data for the **weekend morning peak period**, which is from 11 AM - 2 PM on weekends and holidays. As such, we will filter the data for the relevant hours.
+
+We will also rename the `ORIGIN_PT_CODE` and `DESTINATION_PT_CODE` to be consistent with the naming with `busstops` as these columns can be associated to `busstops`'s `BUS_STOP_N`
+
+::: {.callout-tip collapse="true" appearance="simple"}
+##### How to filter data by *TIME_PER_HOUR*
+
+The `TIME_PER_HOUR` in data set covers the data from the start to the end of the hour in **24-hour format**, i.e. when `TIME_PER_HOUR = 13`, this means bus taps from `1:00 PM` ton`1:59:59PM`.
+
+Hence, if we want to get 11AM to 2PM data, we will filter by:
+
+```         
+TIME_PER_HOUR >= 11 & TIME_PER_HOUR < 14
+```
+:::
+
+```{r}
+od_trips <- odbus %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter( TIME_PER_HOUR >= 11 &
+            TIME_PER_HOUR < 14
+          ) %>%
+  group_by(ORIGIN_PT_CODE, DESTINATION_PT_CODE) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  rename(
+    ORIG_BUS_STOP_N = ORIGIN_PT_CODE,
+    DEST_BUS_STOP_N = DESTINATION_PT_CODE
+  )
+kable(head(od_trips))
+```
+
+::: {.callout-warning collapse="true"}
+##### Data clear point
+
+We do not need `odbus` anymore as we already extracted the data relevant to our analysis.
+
+```{r}
+#| eval: true
+rm(odbus)
+```
+:::
+
+#### Generating lookup table for bus stop to associated hexagon
+
+To connect the trip data to the their corresponding hexagon, we need to create a lookup table. This will serve as a glue in associating the aspatial `od_trips` data frame to the `honeycomb` data frame.
+
+This can be done via `st_intersection()`.
+
+```{r}
+bs_hex <- st_intersection(busstops, honeycomb) %>%
+  st_drop_geometry() %>%
+  select(c(BUS_STOP_N, HEX_ID))
+kable(head(bs_hex))
+```
+
+#### Joining *od_trips* and *bs_hex*
+
+Next, we need to associate each origin bus stop and destination bus stop to their corresponding hexagons.
+
+We can use that by doing `inner_join()` twice, once for the origin and another for the destination.
+
+::: {.callout-tip collapse="true"}
+##### Why *inner_join()* instead of *left_join()*?
+
+We will use `inner_join` as there are `BUS_STOP_N` values in `od_trips` data that are not in `bs_hex`.
+
+```{r}
+c(
+  od_trips$ORIG_BUS_STOP_N[!(od_trips$ORIG_BUS_STOP_N %in% bs_hex$BUS_STOP_N)],
+  od_trips$DEST_BUS_STOP_N[!(od_trips$DEST_BUS_STOP_N %in% bs_hex$BUS_STOP_N)]
+) %>% unique() %>% length()
+```
+
+There are **59** bus stops in `od_trips` that are not in `bs_hex`. **5** of these can be attributed the bus stops we removed due to them being out in Singapore. Others may be due to the *BusStops* data set not having complete information.
+
+The proper way to handle this is to validate the existence of each of these bus stops and look at public sources (e.g. Google Maps, LTA data) and add coordinate data. However, as we do not have much to do this task, we have to **remove** these bus stops from our analysis as **we do not have geospatial data** to associate to the hexagons from the data sets available to us.
+
+Therefore, we will use `inner_join` to keep only the observations in `trips` with the matching bus stops in `bs_hex`.
+:::
+
+```{r}
+od_trips_w_hex <- od_trips %>%
+  inner_join(bs_hex,
+             by = c("ORIG_BUS_STOP_N" = "BUS_STOP_N")) %>%
+  rename(ORIG_HEX_ID = HEX_ID) %>%
+  inner_join(bs_hex,
+             by = c("DEST_BUS_STOP_N" = "BUS_STOP_N")) %>%
+  rename(DEST_HEX_ID = HEX_ID)
+
+kable(head(od_trips_w_hex))
+```
+
+#### Aggregating data by hexagon
+
+Next, we will perform aggregations by `ORIG_HEX_ID` and `DEST_HEX_ID` to have an aggregated sum of trips by hexagon instead of bus stops.
+
+```{r}
+od_hex <- od_trips_w_hex %>%
+  group_by(ORIG_HEX_ID, DEST_HEX_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(od_hex))
+```
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `od_hex` as it contains the `TRIP` data needed to visualize flow data and do spatial interaction modelling. Take note that this **includes intra-zonal trips**.
+
+```{r}
+write_rds(od_hex, "data/rds/od_hex202310.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need `bs_hex`, `od_trips_w_hex` anymore as we already have the necessary data for doing hexagon-based analysis in `od_hex`.
+
+```{r}
+#| eval: true
+rm(bs_hex)
+rm(od_trips_w_hex)
+```
+
+We will still keep `busstops` and `od_trips` as we need these for calculating attractiveness and propulsiveness variables.
+:::
+
+### Generating the flow lines
+
+First, we will generate the flow lines using `od2line()`. `honeycomb` will be supplied as the `zone` as it contains the hexagons we are using as the **traffic analysis zones**.
+
+```{r}
+flowlines <- od_hex %>% od2line(
+  honeycomb,
+  zone_code = "HEX_ID")
+```
+
+#### Initial inspection of the flow lines
+
+Next, we will do an initial inspection of the flow lines to check if they have been generated correctly.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  
+  tm_shape(flowlines) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7),
+           title.lwd = "# of bus trips",
+           alpha = 0.8) +
+  
+  tm_layout(main.title = "Bus Passenger flow for Weekends/Holidays 11 AM - 2PM (October 2023)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2)
+```
+
+::: {.callout-tip appearance="simple"}
+#### Insights
+
+The flow lines are sparse at the West side of Singapore, the **Jurong** and **Choa Chu Kang** areas. This is consistent with the observations that we have in the [Take-home Exercise 1](Take-home_Ex1/Take-home_Ex1) that these areas are least busy in terms of bus rides.
+
+We can also notice that the thickest flow lines is between **Woodlands Chaeckpoint** and **Kranji Station**. There are not residential areas so our hypothesis that connecting transport points influence the bus passenger flow.
+:::
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `flowlines` as it contains the data for spatial interaction that we will use later on.
+
+```{r}
+write_rds(flowlines, "data/rds/flowlines202310.rds")
+```
+:::
