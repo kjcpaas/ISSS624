@@ -255,6 +255,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#spatial-interaction-modelling-2" id="toc-spatial-interaction-modelling-2" class="nav-link" data-scroll-target="#spatial-interaction-modelling-2">Spatial Interaction Modelling</a>
   <ul>
   <li><a href="#attractiveness-variables" id="toc-attractiveness-variables" class="nav-link" data-scroll-target="#attractiveness-variables">Attractiveness variables</a></li>
+  <li><a href="#deriving-train-passenger-data" id="toc-deriving-train-passenger-data" class="nav-link" data-scroll-target="#deriving-train-passenger-data">Deriving Train Passenger Data</a>
+  <ul class="collapse">
+  <li><a href="#importing-data-sets" id="toc-importing-data-sets" class="nav-link" data-scroll-target="#importing-data-sets">Importing data sets</a></li>
+  <li><a href="#adjusting-data-columns" id="toc-adjusting-data-columns" class="nav-link" data-scroll-target="#adjusting-data-columns">Adjusting data columns</a></li>
+  <li><a href="#adding-tap-out-information-to-exits" id="toc-adding-tap-out-information-to-exits" class="nav-link" data-scroll-target="#adding-tap-out-information-to-exits">Adding tap out information to exits</a></li>
+  <li><a href="#aggregating-taps-by-hexagon-level" id="toc-aggregating-taps-by-hexagon-level" class="nav-link" data-scroll-target="#aggregating-taps-by-hexagon-level">Aggregating TAPS by Hexagon level</a></li>
+  </ul></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -289,7 +296,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">December 14, 2023</p>
+      <p class="date-modified">December 15, 2023</p>
     </div>
   </div>
     
@@ -2149,6 +2156,7 @@ Visual Inspection
 </div>
 </div>
 </div>
+<p>Let’s check if the attractiveness variables have been added correctly.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(attractiveness))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -2240,8 +2248,837 @@ Visual Inspection
 </table>
 </div>
 </div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-35-contents" aria-controls="callout-35" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-35" class="callout-35-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We do not need the data used to read the <code>shp</code> contents anymore as we have already derived the attractiveness variables from them.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(busstops)</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(entertn)</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(f_and_b)</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(leis_rec)</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(retail)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="deriving-train-passenger-data" class="level3">
+<h3 class="anchored" data-anchor-id="deriving-train-passenger-data">Deriving Train Passenger Data</h3>
+<p>One of our propulsiveness variables is the <strong>number of passengers alighting from a train stations</strong> as they are potential bus passengers, especially if they need to transfer to a bus to reach their final destination.</p>
+<p>For this, we will import the <em>Passenger Volume By Train Stations</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, which contains the number of tap outs from a station every hour. It has a similar structure to <em>Passenger Volume By Origin Destination Bus Stops</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, which we have been using in class so I will not dive deep in to the details on how to get passenger data from them as we are using the same techniques as the bus data.</p>
+<section id="importing-data-sets" class="level4">
+<h4 class="anchored" data-anchor-id="importing-data-sets">Importing data sets</h4>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true">Passenger Data</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false">Station Code and Names</a></li></ul>
+<div class="tab-content">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
+<p>We will import the <code>csv</code> from <em>Passenger Volume By Train Stations</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, using <code>read_csv()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>train_tap <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/transport_node_train_202310.csv"</span>)</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 17%">
+<col style="width: 14%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 20%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">YEAR_MONTH</th>
+<th style="text-align: left;">DAY_TYPE</th>
+<th style="text-align: right;">TIME_PER_HOUR</th>
+<th style="text-align: left;">PT_TYPE</th>
+<th style="text-align: left;">PT_CODE</th>
+<th style="text-align: right;">TOTAL_TAP_IN_VOLUME</th>
+<th style="text-align: right;">TOTAL_TAP_OUT_VOLUME</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">2023-10</td>
+<td style="text-align: left;">WEEKENDS/HOLIDAY</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">TRAIN</td>
+<td style="text-align: left;">NS7</td>
+<td style="text-align: right;">10207</td>
+<td style="text-align: right;">11033</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-10</td>
+<td style="text-align: left;">WEEKDAY</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">TRAIN</td>
+<td style="text-align: left;">NS7</td>
+<td style="text-align: right;">20072</td>
+<td style="text-align: right;">13995</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023-10</td>
+<td style="text-align: left;">WEEKENDS/HOLIDAY</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">TRAIN</td>
+<td style="text-align: left;">SW4</td>
+<td style="text-align: right;">1031</td>
+<td style="text-align: right;">1107</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-10</td>
+<td style="text-align: left;">WEEKDAY</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">TRAIN</td>
+<td style="text-align: left;">SW4</td>
+<td style="text-align: right;">1985</td>
+<td style="text-align: right;">2669</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023-10</td>
+<td style="text-align: left;">WEEKENDS/HOLIDAY</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">TRAIN</td>
+<td style="text-align: left;">CC5</td>
+<td style="text-align: right;">1308</td>
+<td style="text-align: right;">2484</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-10</td>
+<td style="text-align: left;">WEEKDAY</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">TRAIN</td>
+<td style="text-align: left;">CC5</td>
+<td style="text-align: right;">2603</td>
+<td style="text-align: right;">5292</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We only need data for <strong>weekend/holidays 11AM - 2PM,</strong> and the columns <code>PT_CODE</code> and <code>TAP_OUT_VOLUME</code> as we are only interested in passengers leaving the train station.</p>
+<p>We will extract this the same way we did in <a href="#filtering-the-relevant-data">Filtering the relevant data</a>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>train_tap_out <span class="ot">&lt;-</span> train_tap <span class="sc">%&gt;%</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKENDS/HOLIDAY"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>( TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">11</span> <span class="sc">&amp;</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>            TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">14</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>          ) <span class="sc">%&gt;%</span></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(PT_CODE) <span class="sc">%&gt;%</span></span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TAPS =</span> <span class="fu">sum</span>(TOTAL_TAP_OUT_VOLUME)) <span class="sc">%&gt;%</span></span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">TRAIN_ST_CODE =</span> PT_CODE)</span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">TRAIN_ST_CODE</th>
+<th style="text-align: right;">TAPS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">BP10</td>
+<td style="text-align: right;">3730</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BP11</td>
+<td style="text-align: right;">2882</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BP12</td>
+<td style="text-align: right;">1893</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BP13</td>
+<td style="text-align: right;">988</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BP2</td>
+<td style="text-align: right;">2720</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BP3</td>
+<td style="text-align: right;">3831</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-36-contents" aria-controls="callout-36" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-36" class="callout-36-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We do not need <code>train_tap</code> anymore as we already extracted the tap out data we need.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_tap)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
+<p>The passenger data only has the <strong>train station code</strong>, but not the name. However, <code>train_exits</code> only have the <strong>station names</strong>, not the station code.</p>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-37-contents" aria-controls="callout-37" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Recap of <em>train exits</em>
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-37" class="callout-37-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_exits))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">stn_name</th>
+<th style="text-align: left;">exit_code</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (34285.07 34322.99)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: left;">POINT (34382.15 34231.9)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit C</td>
+<td style="text-align: left;">POINT (34337.29 34190.6)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: left;">POINT (33872.15 41256.05)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (33858.54 41234.07)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RENJONG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (34353.45 40959.61)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Hence, we need way to connect the 2 datasets so we will use <em>Train Station Codes and Chinese Names</em> from <a href="https://datamall.lta.gov.sg/content/dam/datamall/datasets/PublicTransportRelated/Train%20Station%20Codes%20and%20Chinese%20Names.zip">LTA DataMall</a>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>station_codes_names <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/Train_Station_Codes_and_Chinese_Names.csv"</span>)</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(station_codes_names))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 24%">
+<col style="width: 24%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">stn_code</th>
+<th style="text-align: left;">mrt_station_english</th>
+<th style="text-align: left;">mrt_station_chinese</th>
+<th style="text-align: left;">mrt_line_english</th>
+<th style="text-align: left;">mrt_line_chinese</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">NS1</td>
+<td style="text-align: left;">Jurong East</td>
+<td style="text-align: left;">裕廊东</td>
+<td style="text-align: left;">North-South Line</td>
+<td style="text-align: left;">南北线</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS2</td>
+<td style="text-align: left;">Bukit Batok</td>
+<td style="text-align: left;">武吉巴督</td>
+<td style="text-align: left;">North-South Line</td>
+<td style="text-align: left;">南北线</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">NS3</td>
+<td style="text-align: left;">Bukit Gombak</td>
+<td style="text-align: left;">武吉甘柏</td>
+<td style="text-align: left;">North-South Line</td>
+<td style="text-align: left;">南北线</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS4</td>
+<td style="text-align: left;">Choa Chu Kang</td>
+<td style="text-align: left;">蔡厝港</td>
+<td style="text-align: left;">North-South Line</td>
+<td style="text-align: left;">南北线</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">NS5</td>
+<td style="text-align: left;">Yew Tee</td>
+<td style="text-align: left;">油池</td>
+<td style="text-align: left;">North-South Line</td>
+<td style="text-align: left;">南北线</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS7</td>
+<td style="text-align: left;">Kranji</td>
+<td style="text-align: left;">克兰芝</td>
+<td style="text-align: left;">North-South Line</td>
+<td style="text-align: left;">南北线</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>We only need the station code and English names so we can remove the columns that are not needed.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>station_codes_names <span class="ot">&lt;-</span> station_codes_names <span class="sc">%&gt;%</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(stn_code, mrt_station_english)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="adjusting-data-columns" class="level4">
+<h4 class="anchored" data-anchor-id="adjusting-data-columns">Adjusting data columns</h4>
+<p>To connect <code>train_exits</code>, <code>station_code_names</code>, and <code>train_tap_out</code>, we need to make adjustments to the columns.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true"><em>station_code_names</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false"><em>train_tap_out</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false"><em>train_exits</em></a></li></ul>
+<div class="tab-content">
+<div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(station_codes_names))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">stn_code</th>
+<th style="text-align: left;">mrt_station_english</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">NS1</td>
+<td style="text-align: left;">Jurong East</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS2</td>
+<td style="text-align: left;">Bukit Batok</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">NS3</td>
+<td style="text-align: left;">Bukit Gombak</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS4</td>
+<td style="text-align: left;">Choa Chu Kang</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">NS5</td>
+<td style="text-align: left;">Yew Tee</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS7</td>
+<td style="text-align: left;">Kranji</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We need to capitalize the station names as the names are capitalized in <code>train_exits</code>. We can use <code>toupper()</code> to accomplish this.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>station_codes_names <span class="ot">&lt;-</span> station_codes_names <span class="sc">%&gt;%</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">stn_name =</span> <span class="fu">toupper</span>(mrt_station_english))</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(station_codes_names))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">stn_code</th>
+<th style="text-align: left;">mrt_station_english</th>
+<th style="text-align: left;">stn_name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">NS1</td>
+<td style="text-align: left;">Jurong East</td>
+<td style="text-align: left;">JURONG EAST</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS2</td>
+<td style="text-align: left;">Bukit Batok</td>
+<td style="text-align: left;">BUKIT BATOK</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">NS3</td>
+<td style="text-align: left;">Bukit Gombak</td>
+<td style="text-align: left;">BUKIT GOMBAK</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS4</td>
+<td style="text-align: left;">Choa Chu Kang</td>
+<td style="text-align: left;">CHOA CHU KANG</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">NS5</td>
+<td style="text-align: left;">Yew Tee</td>
+<td style="text-align: left;">YEW TEE</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NS7</td>
+<td style="text-align: left;">Kranji</td>
+<td style="text-align: left;">KRANJI</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out[<span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>,]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">TRAIN_ST_CODE</th>
+<th style="text-align: right;">TAPS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">BP3</td>
+<td style="text-align: right;">3831</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BP4</td>
+<td style="text-align: right;">1700</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BP5</td>
+<td style="text-align: right;">2294</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BP6/DT1</td>
+<td style="text-align: right;">46054</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BP7</td>
+<td style="text-align: right;">1116</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>There are multiple station codes in <code>TRAIN_ST_CODE</code> column, while in <code>station_codes_names</code>, the <code>stn_code</code> column only has 1 station code.</p>
+<p>We have to separate these station codes into their own rows by using <code>separate_rows()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>train_tap_out <span class="ot">&lt;-</span> train_tap_out <span class="sc">%&gt;%</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(TRAIN_ST_CODE, <span class="at">sep=</span><span class="st">"/"</span>)</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out[<span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>,]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">TRAIN_ST_CODE</th>
+<th style="text-align: right;">TAPS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">BP3</td>
+<td style="text-align: right;">3831</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BP4</td>
+<td style="text-align: right;">1700</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BP5</td>
+<td style="text-align: right;">2294</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BP6</td>
+<td style="text-align: right;">46054</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DT1</td>
+<td style="text-align: right;">46054</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><code>station_codes_names</code> and <code>train_tap_out</code> now have the number of rows so they can be mapped one-to-one.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(station_codes_names) <span class="sc">==</span> <span class="fu">nrow</span>(train_tap_out)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-8-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_exits))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">stn_name</th>
+<th style="text-align: left;">exit_code</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (34285.07 34322.99)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: left;">POINT (34382.15 34231.9)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit C</td>
+<td style="text-align: left;">POINT (34337.29 34190.6)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: left;">POINT (33872.15 41256.05)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (33858.54 41234.07)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RENJONG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (34353.45 40959.61)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Station names in <code>train_exits</code> have <code>MRT STATION</code> or <code>LRT STATION</code> while <code>station_code_names</code> does not have.</p>
+<p>We have to remove this part of the name so we can join the tables properly. We can use <code>sub()</code> to remove this part of the station name.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>train_exits <span class="ot">&lt;-</span> train_exits <span class="sc">%&gt;%</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">stn_name_short =</span> <span class="fu">gsub</span>(<span class="st">" [ML]RT STATION$"</span> , <span class="st">""</span>, stn_name))</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_exits))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 31%">
+<col style="width: 13%">
+<col style="width: 35%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">stn_name</th>
+<th style="text-align: left;">exit_code</th>
+<th style="text-align: left;">geometry</th>
+<th style="text-align: left;">stn_name_short</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (34285.07 34322.99)</td>
+<td style="text-align: left;">MACPHERSON</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: left;">POINT (34382.15 34231.9)</td>
+<td style="text-align: left;">MACPHERSON</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit C</td>
+<td style="text-align: left;">POINT (34337.29 34190.6)</td>
+<td style="text-align: left;">MACPHERSON</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: left;">POINT (33872.15 41256.05)</td>
+<td style="text-align: left;">TONGKANG</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (33858.54 41234.07)</td>
+<td style="text-align: left;">TONGKANG</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RENJONG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: left;">POINT (34353.45 40959.61)</td>
+<td style="text-align: left;">RENJONG</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="adding-tap-out-information-to-exits" class="level4">
+<h4 class="anchored" data-anchor-id="adding-tap-out-information-to-exits">Adding tap out information to exits</h4>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true">Joining <em>station_code_names</em> and <em>train_tap_out</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false">Adding tap out to exits</a></li></ul>
+<div class="tab-content">
+<div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
+<p>We will join by the station code. Also, as some train stations have multiple station codes, we will remove the duplicates on the station name. This can be accomplished by selecting <code>stn_name</code> and <code>TAPS</code> and applying <code>unique()</code>. It is safe to not include the station code here anymore as <code>trains_exits</code> does not have the station code.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>train_tap_out_with_names <span class="ot">&lt;-</span> station_codes_names <span class="sc">%&gt;%</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(train_tap_out,</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">join_by</span>(stn_code <span class="sc">==</span> TRAIN_ST_CODE)) <span class="sc">%&gt;%</span></span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(stn_name, TAPS) <span class="sc">%&gt;%</span></span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out_with_names))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">stn_name</th>
+<th style="text-align: right;">TAPS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">JURONG EAST</td>
+<td style="text-align: right;">130121</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BUKIT BATOK</td>
+<td style="text-align: right;">31489</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BUKIT GOMBAK</td>
+<td style="text-align: right;">22847</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHOA CHU KANG</td>
+<td style="text-align: right;">47680</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">YEW TEE</td>
+<td style="text-align: right;">30945</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">KRANJI</td>
+<td style="text-align: right;">30021</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
+<p>Next, we join <code>train_tap_out_with_names</code> with <code>train_exits</code> to finally add the tap information to exits.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>tap_out_exit <span class="ot">&lt;-</span> train_exits <span class="sc">%&gt;%</span></span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(train_tap_out_with_names,</span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">join_by</span>(stn_name_short <span class="sc">==</span> stn_name)) <span class="sc">%&gt;%</span></span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">STN_NAME =</span> stn_name) <span class="sc">%&gt;%</span></span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">EXIT_CODE =</span> exit_code) <span class="sc">%&gt;%</span></span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(STN_NAME, EXIT_CODE, TAPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(tap_out_exit))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">STN_NAME</th>
+<th style="text-align: left;">EXIT_CODE</th>
+<th style="text-align: right;">TAPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: right;">17002</td>
+<td style="text-align: left;">POINT (34285.07 34322.99)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: right;">17002</td>
+<td style="text-align: left;">POINT (34382.15 34231.9)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MACPHERSON MRT STATION</td>
+<td style="text-align: left;">Exit C</td>
+<td style="text-align: right;">17002</td>
+<td style="text-align: left;">POINT (34337.29 34190.6)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit B</td>
+<td style="text-align: right;">2920</td>
+<td style="text-align: left;">POINT (33872.15 41256.05)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TONGKANG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: right;">2920</td>
+<td style="text-align: left;">POINT (33858.54 41234.07)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RENJONG LRT STATION</td>
+<td style="text-align: left;">Exit A</td>
+<td style="text-align: right;">2431</td>
+<td style="text-align: left;">POINT (34353.45 40959.61)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We now have the number of tap outs from station, that we can use as propulsive variable on the exits. We will <strong>not distribute</strong> these taps to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station <strong>as potential passengers</strong> of bus stop from the nearby exits.</p>
+</section>
+<section id="aggregating-taps-by-hexagon-level" class="level4">
+<h4 class="anchored" data-anchor-id="aggregating-taps-by-hexagon-level">Aggregating TAPS by Hexagon level</h4>
+<p>Finally, we can aggregate the taps on a hexagon level. We will do an <code>st_join()</code> of <code>honeycomb</code> and <code>tap_out_exit</code> as they are both of class <code>sf</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>tap_out_hex <span class="ot">&lt;-</span> honeycomb <span class="sc">%&gt;%</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_join</span>(tap_out_exit,</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">left =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(HEX_ID) <span class="sc">%&gt;%</span></span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TAPS =</span> <span class="fu">sum</span>(TAPS))</span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(tap_out_hex))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">HEX_ID</th>
+<th style="text-align: right;">TAPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0028</td>
+<td style="text-align: right;">6016</td>
+<td style="text-align: left;">POLYGON ((6220.122 35142.35…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0032</td>
+<td style="text-align: right;">5322</td>
+<td style="text-align: left;">POLYGON ((6595.122 34492.84…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0038</td>
+<td style="text-align: right;">2660</td>
+<td style="text-align: left;">POLYGON ((7345.122 33193.8,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0051</td>
+<td style="text-align: right;">3166</td>
+<td style="text-align: left;">POLYGON ((8845.122 33193.8,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0065</td>
+<td style="text-align: right;">22556</td>
+<td style="text-align: left;">POLYGON ((10720.12 33843.32…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0100</td>
+<td style="text-align: right;">44486</td>
+<td style="text-align: left;">POLYGON ((12970.12 35142.35…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-38-contents" aria-controls="callout-38" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-38" class="callout-38-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We do not need the intermediate data used to derive <code>tap_out_hex</code> so we can remove them.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_exits)</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_tap_out)</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_tap_out_with_names)</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(tap_out_exit)</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(station_codes_names)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
 
 
+</section>
 </section>
 </section>
 </section>

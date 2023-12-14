@@ -1107,6 +1107,220 @@ attractiveness$TRAIN_EXITS_COUNT <- lengths(st_intersects(attractiveness, train_
 ```
 :::
 
+Let's check if the attractiveness variables have been added correctly.
+
 ```{r}
 kable(head(attractiveness))
 ```
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need the data used to read the `shp` contents anymore as we have already derived the attractiveness variables from them.
+
+```{r}
+#| eval: true
+rm(busstops)
+rm(entertn)
+rm(f_and_b)
+rm(leis_rec)
+rm(retail)
+
+```
+:::
+
+### Deriving Train Passenger Data
+
+One of our propulsiveness variables is the **number of passengers alighting from a train stations** as they are potential bus passengers, especially if they need to transfer to a bus to reach their final destination.
+
+For this, we will import the *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, which contains the number of tap outs from a station every hour. It has a similar structure to *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, which we have been using in class so I will not dive deep in to the details on how to get passenger data from them as we are using the same techniques as the bus data.
+
+#### Importing data sets
+
+::: panel-tabset
+##### Passenger Data
+
+We will import the `csv` from *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, using `read_csv()`.
+
+```{r}
+train_tap <- read_csv("data/aspatial/transport_node_train_202310.csv")
+kable(head(train_tap))
+```
+
+We only need data for **weekend/holidays 11AM - 2PM,** and the columns `PT_CODE` and `TAP_OUT_VOLUME` as we are only interested in passengers leaving the train station.
+
+We will extract this the same way we did in [Filtering the relevant data].
+
+```{r}
+train_tap_out <- train_tap %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  filter( TIME_PER_HOUR >= 11 &
+            TIME_PER_HOUR < 14
+          ) %>%
+  group_by(PT_CODE) %>%
+  summarise(TAPS = sum(TOTAL_TAP_OUT_VOLUME)) %>%
+  rename(TRAIN_ST_CODE = PT_CODE)
+kable(head(train_tap_out))
+```
+
+::: {.callout-warning collapse="true"}
+###### Data clear point
+
+We do not need `train_tap` anymore as we already extracted the tap out data we need.
+
+```{r}
+#| eval: true
+rm(train_tap)
+```
+:::
+
+##### Station Code and Names
+
+The passenger data only has the **train station code**, but not the name. However, `train_exits` only have the **station names**, not the station code.
+
+::: {.callout-note collapse="true" appearance="simple"}
+###### Recap of *train exits*
+
+```{r}
+kable(head(train_exits))
+```
+
+Hence, we need way to connect the 2 datasets so we will use *Train Station Codes and Chinese Names* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/PublicTransportRelated/Train%20Station%20Codes%20and%20Chinese%20Names.zip).
+
+```{r}
+station_codes_names <- read_csv("data/aspatial/Train_Station_Codes_and_Chinese_Names.csv")
+kable(head(station_codes_names))
+```
+:::
+
+We only need the station code and English names so we can remove the columns that are not needed.
+
+```{r}
+station_codes_names <- station_codes_names %>%
+  select(stn_code, mrt_station_english)
+```
+:::
+
+#### Adjusting data columns
+
+To connect `train_exits`, `station_code_names`, and `train_tap_out`, we need to make adjustments to the columns.
+
+::: panel-tabset
+##### *station_code_names*
+
+```{r}
+kable(head(station_codes_names))
+```
+
+We need to capitalize the station names as the names are capitalized in `train_exits`. We can use `toupper()` to accomplish this.
+
+```{r}
+station_codes_names <- station_codes_names %>%
+  mutate(stn_name = toupper(mrt_station_english))
+kable(head(station_codes_names))
+```
+
+##### *train_tap_out*
+
+```{r}
+kable(head(train_tap_out[6:10,]))
+```
+
+There are multiple station codes in `TRAIN_ST_CODE` column, while in `station_codes_names`, the `stn_code` column only has 1 station code.
+
+We have to separate these station codes into their own rows by using `separate_rows()`.
+
+```{r}
+train_tap_out <- train_tap_out %>%
+  separate_rows(TRAIN_ST_CODE, sep="/")
+kable(head(train_tap_out[6:10,]))
+```
+
+::: {.callout-tip appearance="simple"}
+`station_codes_names` and `train_tap_out` now have the number of rows so they can be mapped one-to-one.
+
+```{r}
+nrow(station_codes_names) == nrow(train_tap_out)
+```
+:::
+
+##### *train_exits*
+
+```{r}
+kable(head(train_exits))
+```
+
+Station names in `train_exits` have `MRT STATION` or `LRT STATION` while `station_code_names` does not have.
+
+We have to remove this part of the name so we can join the tables properly. We can use `sub()` to remove this part of the station name.
+
+```{r}
+train_exits <- train_exits %>%
+  mutate(stn_name_short = gsub(" [ML]RT STATION$" , "", stn_name))
+kable(head(train_exits))
+```
+:::
+
+#### Adding tap out information to exits
+
+::: panel-tabset
+##### Joining *station_code_names* and *train_tap_out*
+
+We will join by the station code. Also, as some train stations have multiple station codes, we will remove the duplicates on the station name. This can be accomplished by selecting `stn_name` and `TAPS` and applying `unique()`. It is safe to not include the station code here anymore as `trains_exits` does not have the station code.
+
+```{r}
+train_tap_out_with_names <- station_codes_names %>%
+  left_join(train_tap_out,
+            by = join_by(stn_code == TRAIN_ST_CODE)) %>%
+  select(stn_name, TAPS) %>%
+  unique()
+kable(head(train_tap_out_with_names))
+```
+
+##### Adding tap out to exits
+
+Next, we join `train_tap_out_with_names` with `train_exits` to finally add the tap information to exits.
+
+```{r}
+tap_out_exit <- train_exits %>%
+  left_join(train_tap_out_with_names,
+            by = join_by(stn_name_short == stn_name)) %>%
+  rename(STN_NAME = stn_name) %>%
+  rename(EXIT_CODE = exit_code) %>%
+  select(STN_NAME, EXIT_CODE, TAPS)
+```
+:::
+
+```{r}
+kable(head(tap_out_exit))
+```
+
+We now have the number of tap outs from station, that we can use as propulsive variable on the exits. We will **not distribute** these taps to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station **as potential passengers** of bus stop from the nearby exits.
+
+#### Aggregating TAPS by Hexagon level
+
+Finally, we can aggregate the taps on a hexagon level. We will do an `st_join()` of `honeycomb` and `tap_out_exit` as they are both of class `sf`.
+
+```{r}
+tap_out_hex <- honeycomb %>%
+  st_join(tap_out_exit,
+          left = FALSE) %>%
+  group_by(HEX_ID) %>%
+  summarise(TAPS = sum(TAPS))
+kable(head(tap_out_hex))
+```
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need the intermediate data used to derive `tap_out_hex` so we can remove them.
+
+```{r}
+#| eval: true
+rm(train_exits)
+rm(train_tap_out)
+rm(train_tap_out_with_names)
+rm(tap_out_exit)
+rm(station_codes_names)
+```
+:::
