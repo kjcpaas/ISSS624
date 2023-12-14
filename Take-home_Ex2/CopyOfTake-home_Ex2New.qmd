@@ -9,7 +9,7 @@ format:
     toc-depth: 5
 execute: 
   echo: true
-  eval: true
+  eval: false
   warning: false
 ---
 
@@ -80,25 +80,35 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
-| Variable            | Data Source                                                                                                                                 | Motivation                                               |
+::: {.callout-note collapse="true" appearance="simple"}
+#### Why not use *Train Station Exit* instead?
+
+It is more ideal to use the [*Train Station Exit Point*](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) dataset compared to *Train Station* dataset.
+
+However, there is no dataset where we can get **how many people exit from a specific station exit** as **passengers tap in and out within the station**, not the exits.
+
+In [Propulsiveness], we will use the **number of people exiting from a station**, and since we cannot estimate the number of people taking specific exits from the said number, we will just use the station location itself for simplicity.
+:::
+
+| Variable         | Data Source                                                                                                                       | Motivation                                               |
 |------------------------|------------------------|------------------------|
-| `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
-| `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
-| `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
-| `ENTERTN_COUNT`     | `entertn.shp` geospatial data provided on E-learn                                                                                           | For recreation, spending time with friends/family        |
-| `F_AND_B_COUNT`     | `F&B.shp` geospatial data provided on E-learn                                                                                               | For spending time with friends/family                    |
-| `LEISURE_COUNT`     | `Liesure&Recreation.shp` geospatial data provided on E-learn                                                                                | For recreation, spending time with friends/family        |
-| `RETAIL_COUNT`      | `Retails.shp` geospatial data provided on E-learn                                                                                           | For errands, shopping, spending time with friends/family |
+| `BUS_STOP_COUNT` | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip) | Transferring to another bus to their end destination     |
+| `TRAIN_ST_COUNT` | *Train Station* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip)    | Transferring to train to their end destination           |
+| `HDB_COUNT`      | `hdb.csv` aspatial data provided on E-learn                                                                                       | To meet up with friends/family                           |
+| `ENTERTN_COUNT`  | `entertn.shp` geospatial data provided on E-learn                                                                                 | For recreation, spending time with friends/family        |
+| `F_AND_B_COUNT`  | `F&B.shp` geospatial data provided on E-learn                                                                                     | For spending time with friends/family                    |
+| `LEISURE_COUNT`  | `Liesure&Recreation.shp` geospatial data provided on E-learn                                                                      | For recreation, spending time with friends/family        |
+| `RETAIL_COUNT`   | `Retails.shp` geospatial data provided on E-learn                                                                                 | For errands, shopping, spending time with friends/family |
 
 ### Propulsiveness
 
 Propulsiveness variables are factors that influence people to ride the bus from specific zones. This is based on the **number** **of potential passengers** at the origin zones.
 
-| Variable             | Data Source                                                                                                                          | Motivation                                                                                        |
+| Variable             | Data Source                                                                                                                               | Motivation                                                                                        |
 |------------------------|------------------------|------------------------|
-| `BUS_ALIGHT_COUNT`   | *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API | Passengers who alight from a bus stop within can transfer to another bus to reach                 |
-| `TRAIN_ALIGHT_COUNT` | *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API               | Passengers who alight from a train station can transfer to a bus to reach their final destination |
-| `HDB_RESIDENT_COUNT` | `hdb.csv` aspatial data provided on E-learn                                                                                          | Residents in an area are potential bus passengers as they leave their homes                       |
+| `BUS_ALIGHT_COUNT`   | *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API      | Passengers who alight from a bus stop within can transfer to another bus to reach                 |
+| `TRAIN_ALIGHT_COUNT` | *Passenger Volume By Origin Destination Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API | Passengers who alight from a train station can transfer to a bus to reach their final destination |
+| `HDB_RESIDENT_COUNT` | `hdb.csv` aspatial data provided on E-learn                                                                                               | Residents in an area are potential bus passengers as they leave their homes                       |
 :::
 
 ## Data Outputs
@@ -136,7 +146,7 @@ We only consider the bus stops within Singapore so we have to ensure that the bu
 **Columns:**
 
 -   `HEX_ID`: Unique ID used to associate the zone with other data frames
--   Geometry of the hexagons corresponding to the traffic analysis zone
+-   Gometry of the hexagons corresponding to the traffic analysis zone
 :::
 
 ### Spatial Interaction Analysis
@@ -208,19 +218,18 @@ This table contains the values of the [Attractiveness] variables. Data sources a
 
 **Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\], prepared data from identified data sources
 
-**Output data:** `attractiveness` (geospatial)
+**Output data:** `attractiveness` (aspatial)
 
 **Columns**:
 
 -   `HEX_ID`: ID corresponding to the zone
 -   `BUS_STOP_COUNT`: Number of bus stops in a zone
--   `TRAIN_EXITS_COUNT`: Number of train station exits in a zone
+-   `TRAIN_ST_COUNT`: Number of train stations in a zone
 -   `HDB_COUNT`: Number of HDB blocks in a zone
 -   `ENTERTN_COUNT`: Number of entertainment locations in a zone
 -   `F_AND_B_COUNT`: Number of F&B outlets in a zone
 -   `LEISURE_COUNT`: Number of leisure and recreation in a zone
 -   `RETAIL_COUNT`: Number of retail locations in a zone
--   Geometry of the hexagons corresponding to the traffic analysis zone
 :::
 
 ::: {.callout-note collapse="true" appearance="minimal"}
@@ -230,7 +239,7 @@ This table contains the values of the [Propulsiveness] variables. Data sources a
 
 **Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\], prepared data from identified data sources
 
-**Output data:** `propulsiveness` (geospatial)
+**Output data:** `propulsiveness` (aspatial)
 
 **Columns**:
 
@@ -241,8 +250,6 @@ This table contains the values of the [Propulsiveness] variables. Data sources a
 -   `TRAIN_ALIGHT_COUNT`: Number of train passengers alighting from a zone
 
 -   `HDB_RESIDENT_COUNT`: Number of residents in a zone
-
--   Geometry of the hexagons corresponding to the traffic analysis zone
 :::
 
 ::: {.callout-note collapse="true" appearance="minimal"}
@@ -885,228 +892,3 @@ Let's save `flowlines` as it contains the data for spatial interaction that we w
 write_rds(flowlines, "data/rds/flowlines202310.rds")
 ```
 :::
-
-## Spatial Interaction Modelling
-
-Next, we will prepare the data needed for spatial interaction modelling. Some of these are straightforward to get, especially those of attractiveness variables. Additional steps are needed for more complex data sets, like those needed for propulsiveness variables. We will derive those in a separate section.
-
-### Attractiveness variables
-
-We will first initiate `attractiveness` from `honeycomb`.
-
-```{r}
-attractiveness <- honeycomb
-```
-
-For all the variables, we only need to count the number of each location types for each hexagon. We will use a combination of `lengths()` and `st_intersects()` to derive this value.
-
-::: panel-tabset
-#### Bus Stops
-
-```{r}
-attractiveness$BUS_STOP_COUNT <- lengths(
-  st_intersects(attractiveness, busstops))
-```
-
-#### Entertainment
-
-```{r}
-entertn <- st_read(dsn = "data/geospatial", layer = "entertn")
-```
-
-::: {.callout-important collapse="true" appearance="simple"}
-##### Visual Inspection
-
-As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
-
-```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-tm_shape(mpsz) +
-  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
-  tm_shape(honeycomb) +
-  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
-  tm_layout(main.title = "Map of Entertainment Spots in Singapore",
-            main.title.position = "center",
-            main.title.size = 1.0,
-            legend.height = 0.35, 
-            legend.width = 0.35,
-            frame = TRUE) +
-  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
-  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
-  tm_shape(entertn) +
-  tm_dots(col = "red", size = 0.005, title = "Entertainment Spots") +
-  tm_grid(alpha = 0.2)
-```
-:::
-
-```{r}
-attractiveness$ENTERTN_COUNT <- lengths(st_intersects(attractiveness, entertn))
-```
-
-#### F&B
-
-```{r}
-f_and_b <- st_read(dsn = "data/geospatial", layer = "F&B")
-```
-
-::: {.callout-important collapse="true" appearance="simple"}
-##### Visual Inspection
-
-As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
-
-```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-tm_shape(mpsz) +
-  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
-  tm_shape(honeycomb) +
-  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
-  tm_layout(main.title = "Map of F&B Establishments in Singapore",
-            main.title.position = "center",
-            main.title.size = 1.0,
-            legend.height = 0.35, 
-            legend.width = 0.35,
-            frame = TRUE) +
-  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
-  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
-  tm_shape(f_and_b) +
-  tm_dots(col = "red", size = 0.005, title = "F&B Establishments Spots") +
-  tm_grid(alpha = 0.2)
-```
-:::
-
-```{r}
-attractiveness$F_AND_B_COUNT <- lengths(st_intersects(attractiveness, f_and_b))
-```
-
-#### Leisure & Recreation
-
-```{r}
-leis_rec <- st_read(dsn = "data/geospatial", layer = "Liesure&Recreation")
-```
-
-::: {.callout-important appearance="simple"}
-##### Visual Inspection
-
-As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
-
-```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-tm_shape(mpsz) +
-  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
-  tm_shape(honeycomb) +
-  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
-  tm_layout(main.title = "Map of Leisure & Recreation Spots in Singapore",
-            main.title.position = "center",
-            main.title.size = 1.0,
-            legend.height = 0.35, 
-            legend.width = 0.35,
-            frame = TRUE) +
-  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
-  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
-  tm_shape(leis_rec) +
-  tm_dots(col = "red", size = 0.005, title = "Leisure & Recreation Spots") +
-  tm_grid(alpha = 0.2)
-```
-:::
-
-```{r}
-attractiveness$LEISURE_COUNT <- lengths(st_intersects(attractiveness, leis_rec))
-```
-
-#### Retail
-
-```{r}
-retail <- st_read(dsn = "data/geospatial", layer = "Retails")
-```
-
-::: {.callout-important collapse="true" appearance="simple"}
-##### Visual Inspection
-
-As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
-
-```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-tm_shape(mpsz) +
-  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
-  tm_shape(honeycomb) +
-  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
-  tm_layout(main.title = "Map of Retail Outlets in Singapore",
-            main.title.position = "center",
-            main.title.size = 1.0,
-            legend.height = 0.35, 
-            legend.width = 0.35,
-            frame = TRUE) +
-  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
-  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
-  tm_shape(retail) +
-  tm_dots(col = "red", size = 0.005, title = "Retail Outlets") +
-  tm_grid(alpha = 0.2)
-```
-:::
-
-```{r}
-attractiveness$RETAIL_COUNT <- lengths(st_intersects(attractiveness, retail))
-```
-
-#### Train Station Exits
-
-```{r}
-train_exits <- st_read(dsn = "data/geospatial", layer = "Train_Station_Exit_Layer")
-```
-
-::: {.callout-caution collapse="true" appearance="simple"}
-##### Correcting the projection
-
-We want to use [SVY21](https://app.sla.gov.sg/sirent/About/PlaneCoordinateSystem) as the projection for this study as it is the projection used for local Singaporean context.
-
-After the import, it shows that the **Projected CRS** is **SVY21**. However, checking the CRS with `st_crs()` tells a different story.
-
-```{r}
-st_crs(train_exits)
-```
-
-As we can see EPSG value is **9001**, which correspond to [**WGS84**](https://gisgeography.com/wgs84-world-geodetic-system/). We have to fix the projection by transforming to EPSG value of **3414**, which corresponds to **SVY21**.
-
-```{r}
-train_exits <- st_transform(train_exits, crs = 3414)
-```
-:::
-
-::: {.callout-important appearance="simple"}
-##### Visual Inspection
-
-As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
-
-```{r}
-#| code-fold: true
-#| code-summary: "**Show the code**"
-tm_shape(mpsz) +
-  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
-  tm_shape(honeycomb) +
-  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
-  tm_layout(main.title = "Map of Train Station Exits in Singapore",
-            main.title.position = "center",
-            main.title.size = 1.0,
-            legend.height = 0.35, 
-            legend.width = 0.35,
-            frame = TRUE) +
-  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
-  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
-  tm_shape(train_exits) +
-  tm_dots(col = "red", size = 0.005, title = "Train Station Exits") +
-  tm_grid(alpha = 0.2)
-```
-:::
-
-```{r}
-attractiveness$TRAIN_EXITS_COUNT <- lengths(st_intersects(attractiveness, train_exits))
-```
-:::
-
-```{r}
-kable(head(attractiveness))
-```
