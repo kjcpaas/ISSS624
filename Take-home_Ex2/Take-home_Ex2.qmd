@@ -81,7 +81,7 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
 | Variable            | Data Source                                                                                                                                 | Motivation                                               |
-|------------------------|------------------------|------------------------|
+|------------------|-------------------------------------|------------------|
 | `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
 | `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
 | `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
@@ -95,7 +95,7 @@ Attractiveness variables are factors that can motivate people to go to their des
 Propulsiveness variables are factors that influence people to ride the bus from specific zones. This is based on the **number** **of potential passengers** at the origin zones.
 
 | Variable             | Data Source                                                                                                                          | Motivation                                                                                        |
-|------------------------|------------------------|------------------------|
+|------------------|-------------------------------|-----------------------|
 | `BUS_ALIGHT_COUNT`   | *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API | Passengers who alight from a bus stop within can transfer to another bus to reach                 |
 | `TRAIN_ALIGHT_COUNT` | *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API               | Passengers who alight from a train station can transfer to a bus to reach their final destination |
 | `HDB_RESIDENT_COUNT` | `hdb.csv` aspatial data provided on E-learn                                                                                          | Residents in an area are potential bus passengers as they leave their homes                       |
@@ -434,6 +434,8 @@ set.seed(1234)
 Using the [Data Outputs] previously identified, we generate the dependency map below.
 
 ![](images/data_dependency_map.png)
+
+We will use this as a guide to do our complex data wrangling tasks.
 
 ## Utility
 
@@ -895,7 +897,9 @@ tm_shape(mpsz) +
 
 The flow lines are sparse at the West side of Singapore, the **Jurong** and **Choa Chu Kang** areas. This is consistent with the observations that we have in the [Take-home Exercise 1](Take-home_Ex1/Take-home_Ex1) that these areas are least busy in terms of bus rides.
 
-We can also notice that the thickest flow lines is between **Woodlands Chaeckpoint** and **Kranji Station**. There are not residential areas so our hypothesis that connecting transport points influence the bus passenger flow.
+We can also notice that the thickest flow lines is between **Woodlands Checkpoint** and **Kranji Station**. There are not residential areas so our hypothesis that connecting transport points influence the bus passenger flow.
+
+Lastly, points where many lines intersect must be transportation hubs as many trips originate or end in those zones.
 :::
 
 ::: {.callout-tip collapse="true"}
@@ -1913,7 +1917,7 @@ summary(model_data)
 Let's save `model_data` as it contains the data we need for our models.
 
 ```{r}
-write_rds(model_data, "data/rds/model_data.rds")
+write_rds(model_data, "data/rds/model_data202310.rds")
 ```
 :::
 
@@ -1925,5 +1929,176 @@ We won't need the `model_data` for a while so we can remove it from the environm
 ```{r}
 #| eval: true
 rm(model_data)
+```
+:::
+
+# Visualizing Spatial Interactions
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+flowlines <- read_rds("data/rds/flowlines202310.rds")
+model_data <- read_rds("data/rds/model_data202310.rds")
+propulsiveness <- read_rds("data/rds/propulsiveness202310.rds")
+attractiveness <- read_rds("data/rds/attractiveness.rds")
+```
+:::
+
+## Visualizing flow lines again
+
+We already did initial visualization of the flow lines in [Initial inspection of the flow lines]. However, there plot is very messy because of the number of lines.
+
+We will remove intra-zonal flows to reduce the number of flow lines.
+
+```{r}
+flowlines_no_intra <- flowlines %>%
+  filter(ORIG_HEX_ID != DEST_HEX_ID)
+```
+
+We need to look at the busiest zone pairs more closely so we will filter those with lower traffic.
+
+We will use `quantile()` to find and appropriate cut-off number.
+
+```{r}
+quantile(flowlines_no_intra$TRIPS,
+         probs = c(0.8, 0.9, 0.95, 0.99, 1))
+```
+
+Trying these values, showing *5%* of the flow lines revealed important details.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  
+  tm_shape(flowlines_no_intra %>% filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7),
+           title.lwd = "# of bus trips",
+           alpha = 0.8) +
+  
+  tm_layout(main.title = "Top 5% Bus Passenger flow for Weekends/Holidays 11 AM - 2PM (October 2023)",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_grid(alpha = 0.2)
+```
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+It is notable that the thickest flow lines are for relatively short distances, like the bus rides to and from **Woodlands Checkpoint** to **Kranji Station**. We can notice these thick lines on busy zones where lines converge as well.
+
+Although not as thick, we can notice longer long lines on the map. This can indicate people more willing to travel longer distances over the weekend for recreation and meeting family and friends. This also means that a location being close by is not the only motivator for people to visit a place. Spatial interaction model can reveal more patterns to this.
+:::
+
+## Plotting *TRIPS* vs. *DISTANCE*
+
+From the previous map, we can see that longer distances do not deter people from coming to a place. To verify that there is no correlation, let us plot the distance vs. the number vs trips.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+ggplot(model_data %>% filter(TRIPS > 0),
+       aes(x = DISTANCE, y = TRIPS)) +
+  geom_point() +
+  geom_hline(yintercept = 376.25, color = "red", linetype = "dashed") +
+  annotate("text", x = 20000,
+           y = 600, label = "95th percentile",
+           hjust = -0.1, color = "red", size = 3) +
+  geom_hline(yintercept = 1510, color = "purple", linetype = "dashed") +
+  annotate("text", x = 20000,
+           y = 1800, label = "99th percentile",
+           hjust = -0.1, color = "purple", size = 3) +
+  labs(title = "Number of Trips as a Function of Distance",
+       x = "Distance (m)",
+       y = "Number of Trips")
+```
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+As we can see in this plot, the distance decay can still be seen in the plot, as the *maximum number of trips* decrease as the distance increases.
+
+However, some outliers can be observed like some zone pairs with almost 20km distance between them having close to 99th percentile of `TRIP` values. In these zone pairs, there could be strong propulsive or attractive forces attracting passengers to ride the bus between those zones.
+:::
+
+## Visualizing propulsive forces
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Helper function
+
+We will use the following function to plot the maps in this section.
+
+```{r}
+plot_propulsive <- function(var_name, title_comp) {
+  tm_shape(mpsz) +
+  tm_polygons("white", title = "Singapore Boundary") +
+  
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white") +
+  tm_shape(propulsiveness %>% filter(across(var_name, ~. > 0))) +
+  tm_polygons(var_name, palette = "Greens", style = "quantile") +
+    
+  tm_shape(flowlines_no_intra %>% filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.5) +
+  
+  tm_layout(main.title = paste("Top 5% Bus Passenger Flows and ", title_comp),
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.7, position = c("right", "top")) +
+  tm_compass(type="8star", size = 2, bg.color = "white",
+             bg.alpha = 0.5, position = c("right", "top")) +
+  tm_grid(alpha = 0.2) +
+  tm_credits("*Passenger data from weekend/holidays 11AM - 2PM\n(October 2023)",
+             bg.color = "white", bg.alpha = 0.7,
+             position = c("left", "bottom"))
+}
+```
+:::
+
+::: panel-tabset
+### HDB Residents
+
+```{r}
+plot_propulsive("HDB_RESIDENT_COUNT", "HDB Population")
+```
+
+### Transfers from Train
+
+```{r}
+plot_propulsive("TRAIN_ALIGHT_COUNT", "Potential Transfers from Train")
+```
+
+### Transfers from Bus
+
+```{r}
+plot_propulsive("BUS_ALIGHT_COUNT", "Potential Transfers from Bus")
 ```
 :::
