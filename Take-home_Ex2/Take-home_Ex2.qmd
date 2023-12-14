@@ -73,7 +73,7 @@ As our data will be based on real-world data, *Passenger Volume By Origin Destin
 As we are interested in the factors that influence **weekend/holiday morning (11 AM - 2PM)** peak period bus commuting patterns, we will consider the following variables.
 
 ::: panel-tabset
-### Attractiveness
+### Attractiveness {data-link="Attractiveness"}
 
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
@@ -134,9 +134,9 @@ We will be using `tmap_mode("plot")` instead of `tmap_mode("view")` to make the 
 
 Sourced from the `shp` [*Bus Stop Locations*](https://datamall.lta.gov.sg/content/datamall/en/static-data.html#:~:text=drop%20off%20passengers.-,203%20kB,-Last%20Update%3A%C2%A0Jul) dataset from LTA DataMall. This consist of hexagons with a distance of **375m** from the center to the midpoint of the edge as the [traffic analysis zone (TAZ)](https://tmg.utoronto.ca/files/Reports/Traffic-Zone-Guidance_March-2021_Final.pdf).
 
-We only consider the bus stops within Singapore so we have to ensure that the bus stops included here are within the [Singapore Boundary geometry (mpsz)].
+We only consider the bus stops within Singapore so we have to ensure that the bus stops included here are within the \[Singapore Boundary geometry (mpsz)\].
 
-**Prerequisites:** [Singapore Boundary geometry (mpsz)]
+**Prerequisites:** \[Singapore Boundary geometry (mpsz)\]
 
 **Output data:** `honeycomb` (geospatial)
 
@@ -155,7 +155,7 @@ This contains the number of trips on **weekend/holiday morning peak periods** (1
 
 This data will be used generating the flow lines for visualization, and for Spatial Interaction Modelling.
 
-**Prerequisites:** [Honeycomb grid corresponding to bus stop locations (honeycomb)]
+**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\]
 
 **Output data:** `od_hex` (aspatial)
 
@@ -171,9 +171,9 @@ This data will be used generating the flow lines for visualization, and for Spat
 ::: {.callout-note collapse="true" appearance="minimal"}
 #### Flow Lines
 
-This contains the flow lines derived from the pairs of zones in [Number of trips between 2 zones (od_hex)]. It will be used to visualize the flow patterns.
+This contains the flow lines derived from the pairs of zones in \[Number of trips between 2 zones (od_hex)\]. It will be used to visualize the flow patterns.
 
-**Prerequisites:** [Number of trips between 2 zones (od_hex)]
+**Prerequisites:** \[Number of trips between 2 zones (od_hex)\]
 
 **Output data:** `flowlines`
 
@@ -195,7 +195,7 @@ This contains the flow lines derived from the pairs of zones in [Number of trips
 
 This table contains the distances between all the pair of zones. This corresponds to the **cost** component of our model
 
-**Prerequisites:** [Honeycomb grid corresponding to bus stop locations (honeycomb)]
+**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\]
 
 **Output data:** `dist_tbl` (aspatial)
 
@@ -213,7 +213,7 @@ This table contains the distances between all the pair of zones. This correspond
 
 This table contains the values of the [Attractiveness] variables. Data sources are defined in the [Attractiveness] section.
 
-**Prerequisites:** [Honeycomb grid corresponding to bus stop locations (honeycomb)], prepared data from identified data sources
+**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\], prepared data from identified data sources
 
 **Output data:** `attractiveness` (aspatial)
 
@@ -234,7 +234,7 @@ This table contains the values of the [Attractiveness] variables. Data sources a
 
 This table contains the values of the [Propulsiveness] variables. Data sources are defined in the [Propulsiveness] section.
 
-**Prerequisites:** [Honeycomb grid corresponding to bus stop locations (honeycomb)], prepared data from identified data sources
+**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\], prepared data from identified data sources
 
 **Output data:** `propulsiveness` (aspatial)
 
@@ -256,13 +256,13 @@ Contains all the data we need to model the interaction.
 
 **Prerequisites:**
 
--   [Zone distance table (dist_tbl)]
+-   \[Zone distance table (dist_tbl)\]
 
--   [Number of trips between 2 zones (od_hex)]
+-   \[Number of trips between 2 zones (od_hex)\]
 
--   [Attractiveness Variables Table (attractiveness)]
+-   \[Attractiveness Variables Table (attractiveness)\]
 
--   [Propulsiveness Variables Table (propulsiveness)]
+-   \[Propulsiveness Variables Table (propulsiveness)\]
 
 **Output data:** `model_data` (aspatial)
 
@@ -276,9 +276,9 @@ Contains all the data we need to model the interaction.
 
 -   `TRIPS`: Number of bus trips between the origin and destination zones
 
--   `DEST_*_COUNT`: Values from [Attractiveness Variables Table (attractiveness)]
+-   `DEST_*_COUNT`: Values from \[Attractiveness Variables Table (attractiveness)\]
 
--   `ORIG_*_COUNT`: Values from [Propulsiveness Variables Table (propulsiveness)]
+-   `ORIG_*_COUNT`: Values from \[Propulsiveness Variables Table (propulsiveness)\]
 :::
 :::
 
@@ -319,9 +319,111 @@ message <- "This code chunk executed"
 
 # Setup
 
+::: panel-tabset
+## Datasets
+
+Using the data sources identified in [Data Outputs], we will download the datasets and add them into our `data/` directory.
+
+We will also prepare the `data/rds/` directory to save the data we from our [Load point]. After the setup we are left with the directory structure below.
+
+::: {.callout-note collapse="true" appearance="simple"}
+## Directory structure
+
+``` bash
+Take-home_Ex2/data
+├── aspatial
+│   ├── hdb.csv
+│   ├── origin_destination_bus_202310.csv
+│   └── origin_destination_train_202310.csv
+├── geospatial
+│   ├── BusStop.cpg
+│   ├── BusStop.dbf
+│   ├── BusStop.lyr
+│   ├── BusStop.prj
+│   ├── BusStop.sbn
+│   ├── BusStop.sbx
+│   ├── BusStop.shp
+│   ├── BusStop.shp.xml
+│   ├── BusStop.shx
+│   ├── F&B.cpg
+│   ├── F&B.dbf
+│   ├── F&B.prj
+│   ├── F&B.qix
+│   ├── F&B.qmd
+│   ├── F&B.shp
+│   ├── F&B.shx
+│   ├── Liesure&Recreation.cpg
+│   ├── Liesure&Recreation.dbf
+│   ├── Liesure&Recreation.prj
+│   ├── Liesure&Recreation.qmd
+│   ├── Liesure&Recreation.shp
+│   ├── Liesure&Recreation.shx
+│   ├── MPSZ-2019.cpg
+│   ├── MPSZ-2019.dbf
+│   ├── MPSZ-2019.prj
+│   ├── MPSZ-2019.qmd
+│   ├── MPSZ-2019.shp
+│   ├── MPSZ-2019.shx
+│   ├── RapidTransitSystemStation.cpg
+│   ├── RapidTransitSystemStation.dbf
+│   ├── RapidTransitSystemStation.lyr
+│   ├── RapidTransitSystemStation.prj
+│   ├── RapidTransitSystemStation.sbn
+│   ├── RapidTransitSystemStation.sbx
+│   ├── RapidTransitSystemStation.shp
+│   ├── RapidTransitSystemStation.shp.xml
+│   ├── RapidTransitSystemStation.shx
+│   ├── Retails.cpg
+│   ├── Retails.dbf
+│   ├── Retails.prj
+│   ├── Retails.qix
+│   ├── Retails.qmd
+│   ├── Retails.shp
+│   ├── Retails.shx
+│   ├── entertn.cpg
+│   ├── entertn.dbf
+│   ├── entertn.prj
+│   ├── entertn.qix
+│   ├── entertn.qmd
+│   ├── entertn.shp
+│   └── entertn.shx
+└── rds
+```
+:::
+
+## R Packages
+
+We will use the following R packages to run the code needed for data analysis.
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html): for thematic mapping
+
+-   [**sf**](https://cran.r-project.org/web/packages/sf/index.html): for geospatial data handling
+
+-   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
+
+-   [**knitr**](https://cran.r-project.org/web/packages/knitr/):for prettifying presentation
+
+## Environment Settings
+
+These are the default setting we will use, and initial setup required for the environment.
+
+-   `tmap_mode` to **plot**: for plotting simple maps
+
+-   `tmap_style` to **natural**: for my preferred mapping style
+
+-   set **seed** for reproducibility of results
+:::
+
+Using the setup tasks identified above, we will now run the setup code.
+
+::: {.callout-note appearance="simple"}
+We will label this code chunk with `label: setup` so it will always be run even if we reset our environment and start in the middle of the page
+:::
+
 ```{r}
 #| label: setup
-pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)
+pacman::p_load(sf, sp, tmap, tidyverse, knitr)
+#pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
