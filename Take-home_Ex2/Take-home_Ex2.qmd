@@ -186,7 +186,7 @@ This contains the flow lines derived from the pairs of zones in \[Number of trip
 ::: {.callout-note collapse="true" appearance="minimal"}
 #### Zone distance table (*dist_tbl*)
 
-This table contains the distances between all the pair of zones. This corresponds to the **cost** component of our model
+This table contains the distances between all the pair of zones. This corresponds to the **distance decay** component of our model
 
 **Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\]
 
@@ -401,6 +401,8 @@ We will use the following R packages to run the code needed for data analysis.
 
 -   [**stplanr**](https://cran.r-project.org/web/packages/stplanr/index.html): for generating flow lines
 
+-   [**reshape2**](https://cran.r-project.org/web/packages/reshape2/index.html): for generating pivot tables from matrix
+
 ## Environment Settings
 
 These are the default setting we will use, and initial setup required for the environment.
@@ -420,7 +422,7 @@ We will label this code chunk with `label: setup` so it will always be run even 
 
 ```{r}
 #| label: setup
-pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr)
+pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2)
 #pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)
 tmap_mode("plot")
 tmap_style("natural")
@@ -482,16 +484,6 @@ tm_shape(mpsz) +
   tm_scale_bar() +
   tm_grid(alpha = 0.2)
 ```
-
-::: {.callout-tip collapse="true"}
-##### Save point
-
-Let's save this geometry as this is one of our Utility data outputs, \[Singapore Boundary geometry (mpsz)\].
-
-```{r}
-write_rds(mpsz, "data/rds/mpsz.rds")
-```
-:::
 :::
 
 #### BusStop (shp)
@@ -582,6 +574,19 @@ tm_shape(mpsz) +
 ```
 :::
 :::
+:::
+
+::: {.callout-tip collapse="true"}
+##### Save point
+
+Let's save `mpsz` geometry as this is one of our Utility data outputs, \[Singapore Boundary geometry (mpsz)\].
+
+We will also save `busstops` for later use.
+
+```{r}
+write_rds(mpsz, "data/rds/mpsz.rds")
+write_rds(busstops, "data/rds/busstops.rds")
+```
 :::
 
 ### Generating the honeycomb grid
@@ -676,6 +681,18 @@ write_rds(honeycomb, "data/rds/honeycomb.rds")
 :::
 
 ## Spatial Interaction Analysis
+
+::: {.callout-note collapse="true"}
+### Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+busstops <- read_rds("data/rds/busstops.rds")
+```
+:::
 
 ### Importing the datasets
 
@@ -806,8 +823,12 @@ kable(head(od_hex))
 
 Let's save `od_hex` as it contains the `TRIP` data needed to visualize flow data and do spatial interaction modelling. Take note that this **includes intra-zonal trips**.
 
+We will also write save `od_trips` as we need this later for calculating propulsiveness variables.
+
 ```{r}
+write_rds(bs_hex, "data/rds/bs_hex.rds")
 write_rds(od_hex, "data/rds/od_hex202310.rds")
+write_rds(od_trips, "data/rds/od_trips202310.rds")
 ```
 :::
 
@@ -816,13 +837,14 @@ write_rds(od_hex, "data/rds/od_hex202310.rds")
 
 We do not need `bs_hex`, `od_trips_w_hex` anymore as we already have the necessary data for doing hexagon-based analysis in `od_hex`.
 
+We will also remove `od_trips` for now as we do not need them until the later sections.
+
 ```{r}
 #| eval: true
 rm(bs_hex)
+rm(od_trips)
 rm(od_trips_w_hex)
 ```
-
-We will still keep `busstops` and `od_trips` as we need these for calculating attractiveness and propulsiveness variables.
 :::
 
 ### Generating the flow lines
@@ -886,7 +908,31 @@ write_rds(flowlines, "data/rds/flowlines202310.rds")
 ```
 :::
 
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need `flowlines` and `od_hex` until later sections so we can remove them from the environment for now.
+
+```{r}
+#| eval: true
+rm(flowlines)
+rm(od_hex)
+```
+:::
+
 ## Spatial Interaction Modelling
+
+::: {.callout-note collapse="true"}
+### Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+busstops <- read_rds("data/rds/busstops.rds")
+```
+:::
 
 Next, we will prepare the data needed for spatial interaction modelling. Some of these are straightforward to get, especially those of attractiveness variables. Additional steps are needed for more complex data sets, like those needed for propulsiveness variables. We will derive those in a separate section.
 
@@ -1113,6 +1159,17 @@ Let's check if the attractiveness variables have been added correctly.
 kable(head(attractiveness))
 ```
 
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `attractiveness` even though it is still missing `HDB_COUNT` as additional processing is needed to derive that. We will also save `train_exits` as it contains data needed for deriving propulsiveness variables.
+
+```{r}
+write_rds(attractiveness, "data/rds/attractiveness_no_hdb.rds")
+write_rds(train_exits, "data/rds/train_exits.rds")
+```
+:::
+
 ::: {.callout-warning collapse="true"}
 #### Data clear point
 
@@ -1129,7 +1186,69 @@ rm(retail)
 ```
 :::
 
+### Deriving Passengers Alighting from Bus Stop
+
+::: {.callout-note collapse="true"}
+#### Load point
+
+We can run from this point by loading these data.
+
+```{r}
+bs_hex <- read_rds("data/rds/bs_hex.rds")
+od_trips <- read_rds("data/rds/od_trips202310.rds")
+```
+
+-   `bs_hex`: for connecting `od_trips` with honeycomb grid.
+-   `od_trips`: to get trips to destination bus stops
+
+We are not using `od_hex` as some destination trips were lost from \[Joining od_trips and bs_hex\] if the origin bus stop has no known geometry.
+:::
+
+Using the similar techniques used in [Take-home Exercise 1](Take-home_Ex1/Take-home_Ex1.html#extracting-hourly-of-bus-trips-originating-from-hexagons), we will aggregate the trips using `inner_join()`, `group_by`, and `summarise`.
+
+```{r}
+dest_bus_hex <- od_trips %>%
+  inner_join(bs_hex,
+             by = join_by(DEST_BUS_STOP_N == BUS_STOP_N)) %>%
+  group_by(HEX_ID) %>%
+  summarise(TRIPS = sum(TRIPS))
+kable(head(dest_bus_hex))
+```
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `dest_bus_hex` as it contains the data for propulsiveness variable.
+
+```{r}
+write_rds(dest_bus_hex, "data/rds/dest_bus_hex202310.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need `bs_hex` and `od_trips` anymore so we can remove them from our environment.
+
+```{r}
+#| eval: true
+rm(bs_hex)
+rm(od_trips)
+```
+:::
+
 ### Deriving Train Passenger Data
+
+::: {.callout-note collapse="true"}
+#### Load point
+
+We can run from this point by loading these data.
+
+```{r}
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+train_exits <- read_rds("data/rds/train_exits.rds")
+```
+:::
 
 One of our propulsiveness variables is the **number of passengers alighting from a train stations** as they are potential bus passengers, especially if they need to transfer to a bus to reach their final destination.
 
@@ -1185,6 +1304,7 @@ The passenger data only has the **train station code**, but not the name. Howeve
 kable(head(train_exits))
 ```
 :::
+
 Hence, we need way to connect the 2 datasets so we will use *Train Station Codes and Chinese Names* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/PublicTransportRelated/Train%20Station%20Codes%20and%20Chinese%20Names.zip).
 
 ```{r}
@@ -1294,7 +1414,11 @@ tap_out_exit <- train_exits %>%
 kable(head(tap_out_exit))
 ```
 
-We now have the number of tap outs from station, that we can use as propulsive variable on the exits. We will **not distribute** these taps to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station **as potential passengers** of bus stop from the nearby exits.
+We now have the number of tap outs from station, that we can use as propulsive variable on the exits.
+
+::: {.callout-note appearance="simple"}
+We will **not distribute** these taps to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station **as potential passengers** of bus stop from the nearby exits.
+:::
 
 #### Aggregating TAPS by Hexagon level
 
@@ -1309,6 +1433,16 @@ tap_out_hex <- honeycomb %>%
 kable(head(tap_out_hex))
 ```
 
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `tap_out_hex` as it contains the data for propulsiveness variable.
+
+```{r}
+write_rds(tap_out_hex, "data/rds/tap_out_hex202310.rds")
+```
+:::
+
 ::: {.callout-warning collapse="true"}
 #### Data clear point
 
@@ -1321,5 +1455,475 @@ rm(train_tap_out)
 rm(train_tap_out_with_names)
 rm(tap_out_exit)
 rm(station_codes_names)
+```
+:::
+
+### Deriving HDB population
+
+::: {.callout-note collapse="true"}
+#### Load point
+
+We can run from this point by loading these data.
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+attractiveness <- read_rds("data/rds/attractiveness_no_hdb.rds")
+```
+:::
+
+Next, we will derive the population data for each zone. We will use aspatial dataset provided, `hdb.csv`.
+
+We will initialize data to store `hdb_vars` from `honeycomb`.
+
+```{r}
+hdb_vars <- honeycomb
+```
+
+#### Importing the data
+
+We will import the aspatial `hdb.csv`.
+
+```{r}
+hdb_csv <- read_csv("data/aspatial/hdb.csv")
+kable(head(hdb_csv))
+```
+
+::: {.callout-tip appearance="minimal"}
+Despite being an aspatial dataset, there are columns where we can derive geospatial data from, `lng` and `lat`.
+:::
+
+We will first convert this to a `sf` data type, which uses **WGS 84** and transform it to **SVY21**.
+
+```{r}
+hdb_sf <- hdb_csv %>% st_as_sf(coords = c("lng", "lat"),
+                               crs = 4326) %>%
+  st_transform(crs = 3414)
+```
+
+::: {.callout-important collapse="true" appearance="simple"}
+#### Visual inspection
+
+As we haven't used this dataset before, we will do a quick visual inspection to check if the points are within Singapore.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary", alpha = 0.5) +
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white", title = "Hexagons", alpha = 1) +
+  tm_layout(main.title = "Map of HDB Blocks in Singapore",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_compass(type="8star", size = 2, bg.color = "white", bg.alpha = 0.5) +
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.5) +
+  tm_shape(hdb_sf) +
+  tm_dots(col = "red", size = 0.001, title = "HDB Blocks") +
+  tm_grid(alpha = 0.2)
+```
+:::
+
+#### Adding *HDB_COUNT*
+
+This variable will contain the number of **HDB blocks** in a zone. We will use the same methods to count the number locations in the zone, by using `lengths()` and `st_intersects()`.
+
+We will use this as attractiveness variable, and will include all HDB block types (commercial, hawker, residential) as all of them are attractive destinations for eating out, meeting family/friends, and errands.
+
+```{r}
+hdb_vars$HDB_COUNT <- lengths(st_intersects(hdb_vars, hdb_sf))
+```
+
+We will also add this back to `attractiveness` now that we have finally derived the value. We have to remove the geometry for `hdb_vars` to enable the join.
+
+```{r}
+attractiveness <- left_join(attractiveness,
+                            st_drop_geometry(hdb_vars))
+kable(head(attractiveness))
+```
+
+#### Removing unnecessary data
+
+To derive the population, we will only retain the rows and columns relevant to our calculations.
+
+We will only retain the **residential**, the **total_dwelling_units** column, and lastly, the geometry.
+
+```{r}
+hdb_filtered_sf <- hdb_sf %>%
+  filter(residential == "Y") %>%
+  select(total_dwelling_units)
+```
+
+#### Adding *HDB_DWELLING_COUNT*
+
+While `HDB_COUNT` can be a population proxy, we need to consider that HDB blocks have different sizes. For example, taller and wider blocks may have more units compared to shorter blocks, and therefore higher population.
+
+As such, we will use `total_dwelling_units` multiplied by **3.09** to improve our population estimate.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+##### Relevance of 3.09
+
+According to the [2022 official statistics](https://www.singstat.gov.sg/find-data/search-by-theme/households/households/latest-data) from Department of Statistics, the average household size is **3.09 person**.
+
+Although the HDBs have different unit sizes (1 to 5 bedroom), which can provide more accurate population estimate, we do not have data on how many people actually live in each so we will just use the average household size multiplied by dwellings.
+
+We are not able to get a more accurate summary with the data available for us as there are also private residences (condos, landed properties) that are not contained in this dataset.
+:::
+
+We need to aggregate the sum of `total_dwelling_units` per hexagon, and doing a `left_join()` with `hdb_vars`.
+
+```{r}
+hdb_vars <- hdb_vars %>%
+  left_join(
+    st_intersection(hdb_filtered_sf, hdb_vars) %>%
+      st_drop_geometry() %>%
+      group_by(HEX_ID) %>%
+      summarise(HDB_RESIDENT_COUNT = sum(total_dwelling_units))
+  )
+kable(hdb_vars[160:165,])
+```
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `hdb_vars` as it contains the data for propulsiveness variable. We will also update `attractiveness` as we added `HDB_COUNT`.
+
+```{r}
+write_rds(hdb_vars, "data/rds/hdb_vars.rds")
+write_rds(attractiveness, "data/rds/attractiveness.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We do not need the intermediate data used to derive `hdb_vars` anymore so we can remove them.
+
+```{r}
+#| eval: true
+rm(hdb_csv)
+rm(hdb_sf)
+rm(hdb_filtered_sf)
+```
+:::
+
+### Propulsiveness variables
+
+::: {.callout-note collapse="true"}
+#### Load point
+
+We can run from this point by loading these data.
+
+```{r}
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+hdb_vars <- read_rds("data/rds/hdb_vars.rds")
+dest_bus_hex <- read_rds("data/rds/dest_bus_hex202310.rds")
+tap_out_hex <- read_rds("data/rds/tap_out_hex202310.rds")
+```
+:::
+
+We will first initiate `propulsiveness` from `honeycomb`.
+
+```{r}
+propulsiveness <- honeycomb
+```
+
+We will then add the passenger/population values we just derived by using a combination of `st_drop_geometry` and `left_join().`
+
+::: panel-tabset
+#### HDB
+
+```{r}
+propulsiveness <- propulsiveness %>%
+  left_join(st_drop_geometry(hdb_vars)) %>%
+  select(HEX_ID, HDB_RESIDENT_COUNT)
+```
+
+#### Bus
+
+```{r}
+propulsiveness <- propulsiveness %>%
+  left_join(st_drop_geometry(dest_bus_hex)) %>%
+  rename(BUS_ALIGHT_COUNT = TRIPS)
+```
+
+#### Train
+
+```{r}
+propulsiveness <- propulsiveness %>%
+  left_join(st_drop_geometry(tap_out_hex)) %>%
+  rename(TRAIN_ALIGHT_COUNT = TAPS)
+```
+:::
+
+At this point, there are some `NA` values. As these are independent variables, we will set a value for them instead of excluding rows due to empty values. We will set them to **0**.
+
+```{r}
+propulsiveness[is.na(propulsiveness)] <- 0
+kable(head(propulsiveness))
+```
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `propulsiveness` as it contains the data for propulsiveness variables.
+
+```{r}
+write_rds(propulsiveness, "data/rds/propulsiveness202310.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We can now remove the data that we use to derive `propulsiveness` from the environment.
+
+```{r}
+#| eval: true
+rm(dest_bus_hex)
+rm(hdb_vars)
+rm(tap_out_hex)
+```
+:::
+
+### Generating distance table
+
+::: {.callout-note collapse="true"}
+#### Load point
+
+We can run from this point by loading these data.
+
+```{r}
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+```
+:::
+
+Now that we have the attractive and propulsive forces, we can finally prepare the data for the **distance decay** component of the model.
+
+#### Generating distance matrix
+
+We will use `spDists()` to generate the matrix from our `honeycomb`, which requires a *Spatial* data frame. We also need to name the columns and rows to the corresponding `HEX_ID` of the hexagons.
+
+```{r}
+dist_mat <- spDists(as(honeycomb, "Spatial"),
+                    longlat = FALSE)
+colnames(dist_mat) <- paste0(honeycomb$HEX_ID)
+rownames(dist_mat) <- paste0(honeycomb$HEX_ID)
+kable(head(dist_mat, n=c(8, 8)))
+```
+
+::: {.callout-tip appearance="minimal"}
+As expected, many of the distances are **multiples of 750** as we set our hexagon size to 750m edge-to-edge. This also means that the distance between centroids of adjacent hexagons is **750m**.
+:::
+
+#### Generating a pivot table
+
+To generate data with the specifications we defined in [Data Outputs], we must generate a pivot table from our distance matrix, `dist_mat`.
+
+We will use `melt()`, for this purpose and rename the columns to names we defined in our modelling data shape.
+
+```{r}
+dist_tbl <- melt(dist_mat) %>%
+  rename(DISTANCE = value) %>%
+  rename(ORIG_HEX_ID = Var1) %>%
+  rename(DEST_HEX_ID = Var2)
+kable(head(dist_tbl))
+```
+
+#### Setting intra-zonal distances
+
+Intra-zonal distances are currently **0**. This can be a result of passengers taking a short bus ride to the next stop. We have to set these to a value other than 0.
+
+::: {.callout-important collapse="true" appearance="simple"}
+##### Why can't we just keep them as 0?
+
+As we are going to use **log-based Poisson models**, *log* operations will be applied to all independent variables (including distance).
+
+$log(0) = undefined$ so we have to set it to a value **greater than 0**, as distances are **positive** in this context.
+:::
+
+::: {.callout-tip collapse="true" appearance="simple"}
+##### What do we use as intra-zonal distance? Answer: 200m
+
+To consider the intra-zonal distance for this context, we need to consider why people board and alight within the same zone.
+
+The most plausible explanation is people riding the bus to the immediate next stop. With this thought process, we can base the intra-zonal distance from some of the closest bus stops within the same route, **School of the Arts** (Stop ID: 08079) and **Peace Ctr** (Stop ID: 07011).
+
+![](images/sota_to_peace_ctr.png){fig-align="center"}
+
+Bus routes like [**147**](https://www.transitlink.com.sg/eservice/eguide/service_route.php?service=147)and [**166**](https://www.transitlink.com.sg/eservice/eguide/service_route.php?service=166) pass by these bus stops so it is possible for the above scenario to happen here. As these may not be closest bus stops within the same route, we will round the value down to **200m**.
+:::
+
+We will set the intra-zonal distances to **200m**.
+
+```{r}
+dist_tbl$DISTANCE[dist_tbl$ORIG_HEX_ID == dist_tbl$DEST_HEX_ID] <- 200
+summary(dist_tbl$DISTANCE)
+```
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `dist_tbl` as it contains the data for the distance decay component of the model.
+
+```{r}
+write_rds(dist_tbl, "data/rds/dist_tbl.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We can now remove the data that we use to derive `dist_tbl` from the environment.
+
+```{r}
+#| eval: true
+rm(dist_mat)
+```
+:::
+
+### Putting everything together
+
+::: {.callout-note collapse="true"}
+#### Load point
+
+We will load saved data containing the components of the model data.
+
+```{r}
+honeycomb <- read_rds("data/rds/honeycomb.rds")
+od_hex <- read_rds("data/rds/od_hex202310.rds")
+dist_tbl <- read_rds("data/rds/dist_tbl.rds")
+attractiveness <- read_rds("data/rds/attractiveness.rds")
+propulsiveness <- read_rds("data/rds/propulsiveness202310.rds")
+```
+:::
+
+Now that we have all the components, we will now generate the aspatial `data` that contains the following columns:
+
+-   `ORIG_HEX_ID`: ID corresponding to the origin zone
+
+-   `DEST_HEX_ID`: ID corresponding to the destination zone
+
+-   `DISTANCE`: Distance between the (centroids of) origin and destination zones
+
+-   `TRIPS`: Number of bus trips between the origin and destination zones
+
+-   `DEST_*_COUNT`: Values from \[Attractiveness Variables Table (attractiveness)\]
+
+-   `ORIG_*_COUNT`: Values from \[Propulsiveness Variables Table (propulsiveness)\]
+
+We will join the tables to generate this data.
+
+::: panel-tabset
+#### Distance
+
+`dist_tbl` covers all the pairs of hexagons from `honeycomb`. Hence, its number of rows is equal to the **square of number of hexagons** in `honeycomb`.
+
+```{r}
+nrow(dist_tbl) == nrow(honeycomb)^2
+```
+
+With that, we will use it as the base for `model_data`.
+
+```{r}
+model_data <- dist_tbl
+```
+
+#### Trips
+
+We will get the number of trips from `od_hex` and will join it with `model_data`.
+
+```{r}
+model_data <- left_join(model_data, od_hex)
+```
+
+#### Propulsive
+
+Propulsive forces come from the origin zone so we will join `propulsiveness` with `model_data` on `ORIG_HEX_ID`. We will also add the `ORIG_` prefix to the columns added in by `propulsiveness`.
+
+```{r}
+model_data <- left_join(
+  model_data,
+  propulsiveness %>%
+    st_drop_geometry() %>%
+    rename_with(~paste("ORIG_", .x, sep = ""))
+  )
+```
+
+#### Attractive
+
+Attractive forces come from the destination zone so we will join `attractiveness` with `model_data` on `DEST_HEX_ID`. We will also add the `DEST_` prefix to the columns added in by `attractiveness`.
+
+```{r}
+model_data <- left_join(
+  model_data,
+  attractiveness %>%
+    st_drop_geometry() %>%
+    rename_with(~paste("DEST_", .x, sep = ""))
+  )
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We can now remove the data that we use to derive `model_data` from the environment.
+
+```{r}
+#| eval: true
+rm(attractiveness)
+rm(propulsiveness)
+rm(dist_tbl)
+rm(od_hex)
+```
+:::
+
+### Finishing touches
+
+Let's take a look at our `model_data`.
+
+```{r}
+summary(model_data)
+```
+
+We will make finishing touches on `model_data`, so that they are compatible with modelling. We need to remove the 0's as we will apply *log* function to them, which will result to *undefined*. We will set them to **0.99**
+
+```{r}
+model_data[model_data == 0] <- 0.99
+```
+
+Also, some values of `TRIPS` are `NA`. We will also set them to `0`. We are not applying *log* to `TRIPS` in the model as it is the dependent variable so they are fine to be `0`.
+
+```{r}
+model_data$TRIPS[is.na(model_data$TRIPS)] <- 0
+```
+
+Let's check the data again.
+
+```{r}
+summary(model_data)
+```
+
+::: {.callout-tip collapse="true"}
+#### Save point
+
+Let's save `model_data` as it contains the data we need for our models.
+
+```{r}
+write_rds(model_data, "data/rds/model_data.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+#### Data clear point
+
+We won't need the `model_data` for a while so we can remove it from the environment.
+
+```{r}
+#| eval: true
+rm(model_data)
 ```
 :::
