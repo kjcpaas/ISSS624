@@ -288,7 +288,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#visualizing-propulsive-forces" id="toc-visualizing-propulsive-forces" class="nav-link" data-scroll-target="#visualizing-propulsive-forces">Visualizing propulsive forces</a></li>
   <li><a href="#visualizing-attractive-forces" id="toc-visualizing-attractive-forces" class="nav-link" data-scroll-target="#visualizing-attractive-forces">Visualizing attractive forces</a></li>
   </ul></li>
-  <li><a href="#spatial-interaction-modelling-3" id="toc-spatial-interaction-modelling-3" class="nav-link" data-scroll-target="#spatial-interaction-modelling-3">Spatial Interaction Modelling</a></li>
+  <li><a href="#spatial-interaction-modelling-3" id="toc-spatial-interaction-modelling-3" class="nav-link" data-scroll-target="#spatial-interaction-modelling-3">Spatial Interaction Modelling</a>
+  <ul>
+  <li><a href="#about-the-models" id="toc-about-the-models" class="nav-link" data-scroll-target="#about-the-models">About the models</a></li>
+  <li><a href="#generating-the-models" id="toc-generating-the-models" class="nav-link" data-scroll-target="#generating-the-models">Generating the models</a></li>
+  <li><a href="#model-comparisons" id="toc-model-comparisons" class="nav-link" data-scroll-target="#model-comparisons">Model Comparisons</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -354,10 +359,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <p>We will generate 4 <em>log</em>-based Poisson models:</p>
 <ul>
-<li><p>origin-constrained model</p></li>
-<li><p>destination-constrained model</p></li>
+<li><p>origin constrained model</p></li>
+<li><p>destination constrained model</p></li>
 <li><p>unconstrained model</p></li>
-<li><p>doubly-constrained model</p></li>
+<li><p>doubly constrained model</p></li>
 </ul>
 <p>We need the following to start this analysis:</p>
 <ul>
@@ -828,6 +833,7 @@ Directory structure
 <li><p><a href="https://cran.r-project.org/web/packages/knitr/"><strong>knitr</strong></a>: for prettifying presentation</p></li>
 <li><p><a href="https://cran.r-project.org/web/packages/stplanr/index.html"><strong>stplanr</strong></a>: for generating flow lines</p></li>
 <li><p><a href="https://cran.r-project.org/web/packages/reshape2/index.html"><strong>reshape2</strong></a>: for generating pivot tables from matrix</p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/performance/index.html"><strong>performance</strong></a>: for model comparisons</p></li>
 </ul>
 </div>
 <div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
@@ -852,7 +858,7 @@ Directory structure
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2)</span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_style</span>(<span class="st">"natural"</span>)</span>
@@ -1232,7 +1238,7 @@ Code Explanation
 <h3 class="anchored" data-anchor-id="assigning-id-to-each-hexagon">Assigning id to each hexagon</h3>
 <p>Now that we have hexagons properly generated, we will assign id for each hexagon to be used as a unique identifier. We will store this id under the <code>HEX_ID</code> column, and can be used in joining data frames.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>honeycomb<span class="sc">$</span>HEX_ID <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"H%04d"</span>, <span class="fu">seq_len</span>(<span class="fu">nrow</span>(honeycomb))) <span class="sc">%&gt;%</span> <span class="fu">as.factor</span>()</span>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>honeycomb<span class="sc">$</span>HEX_ID <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"H%04d"</span>, <span class="fu">seq_len</span>(<span class="fu">nrow</span>(honeycomb)))</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(honeycomb))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
@@ -4658,14 +4664,13 @@ Data clear point
 <div class="cell">
 <div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  ORIG_HEX_ID     DEST_HEX_ID        TRIPS             DISTANCE    
- H0515  :  307   H0515  :  314   Min.   :    1.00   Min.   :  200  
- H0725  :  291   H0537  :  300   1st Qu.:    3.00   1st Qu.: 2704  
- H0518  :  285   H0527  :  297   Median :   12.00   Median : 5250  
- H0527  :  282   H0725  :  297   Mean   :   95.78   Mean   : 6118  
- H0488  :  278   H0518  :  290   3rd Qu.:   48.00   3rd Qu.: 8518  
- H0648  :  268   H0447  :  280   Max.   :12377.00   Max.   :24784  
- (Other):58124   (Other):58057                                     
+<pre><code> ORIG_HEX_ID        DEST_HEX_ID            TRIPS             DISTANCE    
+ Length:59835       Length:59835       Min.   :    1.00   Min.   :  200  
+ Class :character   Class :character   1st Qu.:    3.00   1st Qu.: 2704  
+ Mode  :character   Mode  :character   Median :   12.00   Median : 5250  
+                                       Mean   :   95.78   Mean   : 6118  
+                                       3rd Qu.:   48.00   3rd Qu.: 8518  
+                                       Max.   :12377.00   Max.   :24784  
  ORIG_HDB_RESIDENT_COUNT ORIG_BUS_ALIGHT_COUNT ORIG_TRAIN_ALIGHT_COUNT
  Min.   :   0            Min.   :     0        Min.   :      0        
  1st Qu.:   0            1st Qu.:  3459        1st Qu.:      0        
@@ -4673,7 +4678,6 @@ Data clear point
  Mean   :1850            Mean   : 14147        Mean   :  59925        
  3rd Qu.:3351            3rd Qu.: 16757        3rd Qu.:  29508        
  Max.   :7946            Max.   :108111        Max.   :2229188        
-                                                                      
  DEST_BUS_STOP_COUNT DEST_ENTERTN_COUNT DEST_F_AND_B_COUNT DEST_LEISURE_COUNT
  Min.   : 1.00       Min.   :0.0000     Min.   :  0.000    Min.   : 0.000    
  1st Qu.: 5.00       1st Qu.:0.0000     1st Qu.:  0.000    1st Qu.: 0.000    
@@ -4681,7 +4685,6 @@ Data clear point
  Mean   : 7.96       Mean   :0.3443     Mean   :  5.697    Mean   : 2.337    
  3rd Qu.:10.00       3rd Qu.:0.0000     3rd Qu.:  2.000    3rd Qu.: 3.000    
  Max.   :19.00       Max.   :9.0000     Max.   :133.000    Max.   :41.000    
-                                                                             
  DEST_RETAIL_COUNT DEST_TRAIN_EXITS_COUNT DEST_HDB_COUNT  
  Min.   :   0.00   Min.   : 0.000         Min.   :  0.00  
  1st Qu.:   7.00   1st Qu.: 0.000         1st Qu.:  0.00  
@@ -4689,12 +4692,10 @@ Data clear point
  Mean   :  98.33   Mean   : 1.375         Mean   : 20.81  
  3rd Qu.: 110.00   3rd Qu.: 2.000         3rd Qu.: 36.00  
  Max.   :1678.00   Max.   :13.000         Max.   :103.00  
-                                                          
           geometry    
  LINESTRING   :59835  
  epsg:3414    :    0  
  +proj=tmer...:    0  
-                      
                       
                       
                       </code></pre>
@@ -4704,33 +4705,31 @@ Data clear point
 <div class="cell">
 <div class="sourceCode cell-code" id="cb126"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a>replace_zeroes <span class="ot">&lt;-</span> <span class="cf">function</span>(data, col_name) {</span>
 <span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a>  data[[col_name]][data[[col_name]] <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
-<span id="cb126-3"><a href="#cb126-3" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb126-4"><a href="#cb126-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(data)</span>
-<span id="cb126-5"><a href="#cb126-5" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb126-6"><a href="#cb126-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb126-7"><a href="#cb126-7" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span></span>
-<span id="cb126-8"><a href="#cb126-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_HDB_RESIDENT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-9"><a href="#cb126-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_BUS_ALIGHT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-10"><a href="#cb126-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_TRAIN_ALIGHT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-11"><a href="#cb126-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_ENTERTN_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-12"><a href="#cb126-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_F_AND_B_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-13"><a href="#cb126-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_LEISURE_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-14"><a href="#cb126-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_RETAIL_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-15"><a href="#cb126-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_TRAIN_EXITS_COUNT"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb126-16"><a href="#cb126-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_HDB_COUNT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb126-3"><a href="#cb126-3" aria-hidden="true" tabindex="-1"></a>  data</span>
+<span id="cb126-4"><a href="#cb126-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb126-5"><a href="#cb126-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb126-6"><a href="#cb126-6" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span></span>
+<span id="cb126-7"><a href="#cb126-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_HDB_RESIDENT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-8"><a href="#cb126-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_BUS_ALIGHT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-9"><a href="#cb126-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_TRAIN_ALIGHT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-10"><a href="#cb126-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_ENTERTN_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-11"><a href="#cb126-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_F_AND_B_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-12"><a href="#cb126-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_LEISURE_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-13"><a href="#cb126-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_RETAIL_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-14"><a href="#cb126-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_TRAIN_EXITS_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-15"><a href="#cb126-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_HDB_COUNT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s check the data again.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb127"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  ORIG_HEX_ID     DEST_HEX_ID        TRIPS             DISTANCE    
- H0515  :  307   H0515  :  314   Min.   :    1.00   Min.   :  200  
- H0725  :  291   H0537  :  300   1st Qu.:    3.00   1st Qu.: 2704  
- H0518  :  285   H0527  :  297   Median :   12.00   Median : 5250  
- H0527  :  282   H0725  :  297   Mean   :   95.78   Mean   : 6118  
- H0488  :  278   H0518  :  290   3rd Qu.:   48.00   3rd Qu.: 8518  
- H0648  :  268   H0447  :  280   Max.   :12377.00   Max.   :24784  
- (Other):58124   (Other):58057                                     
+<pre><code> ORIG_HEX_ID        DEST_HEX_ID            TRIPS             DISTANCE    
+ Length:59835       Length:59835       Min.   :    1.00   Min.   :  200  
+ Class :character   Class :character   1st Qu.:    3.00   1st Qu.: 2704  
+ Mode  :character   Mode  :character   Median :   12.00   Median : 5250  
+                                       Mean   :   95.78   Mean   : 6118  
+                                       3rd Qu.:   48.00   3rd Qu.: 8518  
+                                       Max.   :12377.00   Max.   :24784  
  ORIG_HDB_RESIDENT_COUNT ORIG_BUS_ALIGHT_COUNT ORIG_TRAIN_ALIGHT_COUNT
  Min.   :   0.99         Min.   :     0.99     Min.   :      1        
  1st Qu.:   0.99         1st Qu.:  3459.00     1st Qu.:      1        
@@ -4738,7 +4737,6 @@ Data clear point
  Mean   :1850.69         Mean   : 14146.88     Mean   :  59926        
  3rd Qu.:3351.00         3rd Qu.: 16757.00     3rd Qu.:  29508        
  Max.   :7946.00         Max.   :108111.00     Max.   :2229188        
-                                                                      
  DEST_BUS_STOP_COUNT DEST_ENTERTN_COUNT DEST_F_AND_B_COUNT DEST_LEISURE_COUNT
  Min.   : 1.00       Min.   :0.990      Min.   :  0.990    Min.   : 0.990    
  1st Qu.: 5.00       1st Qu.:0.990      1st Qu.:  0.990    1st Qu.: 0.990    
@@ -4746,7 +4744,6 @@ Data clear point
  Mean   : 7.96       Mean   :1.187      Mean   :  6.215    Mean   : 2.726    
  3rd Qu.:10.00       3rd Qu.:0.990      3rd Qu.:  2.000    3rd Qu.: 3.000    
  Max.   :19.00       Max.   :9.000      Max.   :133.000    Max.   :41.000    
-                                                                             
  DEST_RETAIL_COUNT DEST_TRAIN_EXITS_COUNT DEST_HDB_COUNT  
  Min.   :   0.99   Min.   : 0.990         Min.   :  0.99  
  1st Qu.:   7.00   1st Qu.: 0.990         1st Qu.:  0.99  
@@ -4754,12 +4751,10 @@ Data clear point
  Mean   :  98.39   Mean   : 1.981         Mean   : 21.14  
  3rd Qu.: 110.00   3rd Qu.: 2.000         3rd Qu.: 36.00  
  Max.   :1678.00   Max.   :13.000         Max.   :103.00  
-                                                          
           geometry    
  LINESTRING   :59835  
  epsg:3414    :    0  
  +proj=tmer...:    0  
-                      
                       
                       
                       </code></pre>
@@ -4777,7 +4772,7 @@ Save point
 </div>
 <div id="callout-63" class="callout-63-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>Let’s save <code>SIM_data</code> as it contains the data we need for our models.</p>
+<p>Let’s save <code>SIM_data</code> as it contains the data we need for our models. Take note that this contains <strong>intra-zonal pairs</strong>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb129"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(SIM_data, <span class="st">"data/rds/SIM_data202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -4796,9 +4791,10 @@ Data clear point
 </div>
 <div id="callout-64" class="callout-64-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>We won’t need the <code>SIM_data</code> for a while so we can remove it from the environment.</p>
+<p>We won’t need the <code>SIM_data</code> for a while so we can remove it from the environment. We will also remove the helper function <code>replace_zeroes()</code> as we don’t need it anymore.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb130"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb130"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(SIM_data)</span>
+<span id="cb130-2"><a href="#cb130-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(replace_zeroes)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4947,7 +4943,7 @@ Insights
 <p>However, some outliers can be observed like some zone pairs with almost 20km distance between them having close to 99th percentile of <code>TRIP</code> values. In these zone pairs, there could be strong propulsive or attractive forces attracting passengers to ride the bus between those zones.</p>
 </div>
 </div>
-<p>In <strong>doubly-constrained model</strong>, we will observe this relationship more closely as we will build the model <strong>without attractive and propulsive</strong> forces.</p>
+<p>In <strong>doubly constrained model</strong>, we will observe this relationship more closely as we will build the model <strong>without attractive and propulsive</strong> forces.</p>
 </section>
 <section id="visualizing-propulsive-forces" class="level2">
 <h2 class="anchored" data-anchor-id="visualizing-propulsive-forces">Visualizing propulsive forces</h2>
@@ -5060,7 +5056,7 @@ Insights
 <p>Lastly, we get bus alight data from the same data source or flowlines so they are expected to correspond more closely. We should be aware that flow line includes the <strong>destination</strong> so the correspondence may due on the destination, not the origin as we hypothesized.</p>
 </div>
 </div>
-<p>In <strong>destination-constrained model</strong>, the effects of propulsive forces will be highlighted as we will model the interaction <strong>without the attractive forces</strong>.</p>
+<p>In <strong>destination constrained model</strong>, the effects of propulsive forces will be highlighted as we will model the interaction <strong>without the attractive forces</strong>.</p>
 </section>
 <section id="visualizing-attractive-forces" class="level2">
 <h2 class="anchored" data-anchor-id="visualizing-attractive-forces">Visualizing attractive forces</h2>
@@ -5195,7 +5191,7 @@ Insights
 <p>There are also location types that are heavily concentrated in some zones, like the entertainment and F&amp;B, which are heavily concentrated around the <strong>Orchard area</strong>. Conversely, there are much less HDBs in Orchard area. Even though the flowlines are not thick in this area, there are many flowlines, although thin. This means people are coming from various parts of Singapore.</p>
 </div>
 </div>
-<p>In <strong>origin-constrained model</strong>, the effects of attractive forces will be highlighted as we will model the interaction <strong>without the propulsive forces</strong>.</p>
+<p>In <strong>origin constrained model</strong>, the effects of attractive forces will be highlighted as we will model the interaction <strong>without the propulsive forces</strong>.</p>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-72-contents" aria-controls="callout-72" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -5231,7 +5227,9 @@ Data clear point
 <div class="cell">
 <div class="sourceCode cell-code" id="cb151"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(flowlines)</span>
 <span id="cb151-2"><a href="#cb151-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(attractiveness)</span>
-<span id="cb151-3"><a href="#cb151-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(propulsiveness)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb151-3"><a href="#cb151-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(propulsiveness)</span>
+<span id="cb151-4"><a href="#cb151-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(plot_attractive)</span>
+<span id="cb151-5"><a href="#cb151-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(plot_propulsive)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -5240,8 +5238,324 @@ Data clear point
 </section>
 <section id="spatial-interaction-modelling-3" class="level1">
 <h1>Spatial Interaction Modelling</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-74-contents" aria-controls="callout-74" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Load point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-74" class="callout-74-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We can start from this point by loading the relevant datasets.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb152"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/SIM_data202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<p>For our spatial interaction modelling, we will use <em>log-</em>based Poisson gravity models. There are 4 components in our models:</p>
+<ul>
+<li><p><strong>attractive forces</strong>: forces that influence bus passengers to alight at a bus stops</p></li>
+<li><p><strong>propulsive forces</strong>: forces that influence bus passengers to board from specific bus stops</p></li>
+<li><p><strong>distance decay</strong>: this corresponds to the cost of making the trip. In theory, the longer the distance to travel, the less appealing a trip is.</p></li>
+<li><p><strong>trips</strong>: this is the dependent variable and what we want to model.</p></li>
+</ul>
+<p>As we generate the models, we will compare the <strong>actual value</strong> of the trips (from the data we have processed so far) with the values that the models generate.</p>
+<section id="about-the-models" class="level2">
+<h2 class="anchored" data-anchor-id="about-the-models">About the models</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-14-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-14-1" role="tab" aria-controls="tabset-14-1" aria-selected="true">Unconstrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-14-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-14-2" role="tab" aria-controls="tabset-14-2" aria-selected="false">Origin constrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-14-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-14-3" role="tab" aria-controls="tabset-14-3" aria-selected="false">Destination constrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-14-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-14-4" role="tab" aria-controls="tabset-14-4" aria-selected="false">Doubly constrained</a></li></ul>
+<div class="tab-content">
+<div id="tabset-14-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-14-1-tab">
+<p>This will model the <code>TRIPS</code> using all the idependent model components — attractive forces, propulsive forces, distance decay.</p>
+<p>In this model, we will see if all the forces we identified influence the number of trips made between zone pairs.</p>
+<p>The general formula is:</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha lnW_j + \beta ln d_{ij})
+\]</span></p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><span class="math inline">\(\lambda_{ij}\)</span>: Independent variable, corresponding to <code>TRIPS</code> in our context</p>
+<p><span class="math inline">\(\mu lnV_i\)</span>: Propulsive forces (unconstrained)</p>
+<p><span class="math inline">\(\alpha lnW_j\)</span>: Attractive forces (unconstrained)</p>
+<p><span class="math inline">\(\beta ln d_{ij}\)</span>: Distance decay</p>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-14-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-14-2-tab">
+<p>This will model the <code>TRIPS</code> <strong>without the attractive forces</strong>.</p>
+<p>In this model, we will see the highlighted effects of the propulsive forces.</p>
+<p>The general formula is:</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu_i + \alpha lnW_j + \beta ln d_{ij})
+\]</span></p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><span class="math inline">\(\lambda_{ij}\)</span>: Independent variable, corresponding to <code>TRIPS</code> in our context</p>
+<p><span class="math inline">\(\mu_i\)</span>: Propulsive parameter (constrained)</p>
+<p><span class="math inline">\(\alpha lnW_j\)</span>: Attractive forces (unconstrained)</p>
+<p><span class="math inline">\(\beta ln d_{ij}\)</span>: Distance decay</p>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-14-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-14-3-tab">
+<p>This will model the <code>TRIPS</code> <strong>without the propulsive forces</strong>.</p>
+<p>In this model, we will see the highlighted effects of the attractive forces.</p>
+<p>The general formula is:</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha_j + \beta ln d_{ij})
+\]</span></p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><span class="math inline">\(\lambda_{ij}\)</span>: Independent variable, corresponding to <code>TRIPS</code> in our context</p>
+<p><span class="math inline">\(\mu lnV_i\)</span>: Propulsive forces (unconstrained)</p>
+<p><span class="math inline">\(\alpha_j\)</span>: Attractive parameter (constrained)</p>
+<p><span class="math inline">\(\beta ln d_{ij}\)</span>: Distance decay</p>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-14-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-14-4-tab">
+<p>This will model the <code>TRIPS</code> <strong>without the attractive and propulsive forces</strong>.</p>
+<p>In this model, we will see the effects of the distance alone to the trips.</p>
+<p>The general formula is:</p>
+<p><span class="math display">\[
+\lambda_{ij} = exp(k + \mu_i + \alpha_j + \beta ln d_{ij})
+\]</span></p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><span class="math inline">\(\lambda_{ij}\)</span>: Independent variable, corresponding to <code>TRIPS</code> in our context</p>
+<p><span class="math inline">\(\mu_i\)</span>: Propulsive parameter (constrained)</p>
+<p><span class="math inline">\(\alpha_j\)</span>: Attractive parameter (constrained)</p>
+<p><span class="math inline">\(\beta ln d_{ij}\)</span>: Distance decay</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="generating-the-models" class="level2">
+<h2 class="anchored" data-anchor-id="generating-the-models">Generating the models</h2>
+<p>Using the formula we defined above, we will generate the models based on <code>SIM_data</code>. We will use <code>glm()</code> which generate linear models, specifying <code>family = poisson</code> as we are using Poisson gravity models.</p>
+<p>First, we need to <strong>remove intra-zonal zones pairs</strong> from <code>SIM_data</code> as it currently includes those.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb153"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb153-1"><a href="#cb153-1" aria-hidden="true" tabindex="-1"></a>SIM_data_no_intra <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ORIG_HEX_ID <span class="sc">!=</span> DEST_HEX_ID)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-75-contents" aria-controls="callout-75" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Helper function: goodness of fit
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-75" class="callout-75-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We will use the following function to calculate the <strong>goodness of fit</strong>, or <strong>R-squared.</strong> This will calculate how the observed data fits our model by comparing the observed values to the values generated by our models.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb154"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb154-1"><a href="#cb154-1" aria-hidden="true" tabindex="-1"></a>calc_r_squared <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
+<span id="cb154-2"><a href="#cb154-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(model<span class="sc">$</span>data<span class="sc">$</span>TRIPS, model<span class="sc">$</span>fitted.values)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb154-3"><a href="#cb154-3" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>It is quite expensive to generate these models so we will save them right after generation. <code>eval</code> is set to <code>false</code> by default on these code chunks.</p>
+<p>We will trigger these code chunks manually if we want to regenerate the files.</p>
+</div>
+</div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-15-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-15-1" role="tab" aria-controls="tabset-15-1" aria-selected="true">Unconstrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-15-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-15-2" role="tab" aria-controls="tabset-15-2" aria-selected="false">Origin constrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-15-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-15-3" role="tab" aria-controls="tabset-15-3" aria-selected="false">Destination constrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-15-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-15-4" role="tab" aria-controls="tabset-15-4" aria-selected="false">Doubly constrained</a></li></ul>
+<div class="tab-content">
+<div id="tabset-15-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-15-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb155"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a>uncSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb155-2"><a href="#cb155-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
+<span id="cb155-3"><a href="#cb155-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb155-4"><a href="#cb155-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb155-5"><a href="#cb155-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
+<span id="cb155-6"><a href="#cb155-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_ENTERTN_COUNT) <span class="sc">+</span></span>
+<span id="cb155-7"><a href="#cb155-7" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_F_AND_B_COUNT) <span class="sc">+</span></span>
+<span id="cb155-8"><a href="#cb155-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_LEISURE_COUNT) <span class="sc">+</span></span>
+<span id="cb155-9"><a href="#cb155-9" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
+<span id="cb155-10"><a href="#cb155-10" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
+<span id="cb155-11"><a href="#cb155-11" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
+<span id="cb155-12"><a href="#cb155-12" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DISTANCE),</span>
+<span id="cb155-13"><a href="#cb155-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb155-14"><a href="#cb155-14" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data_no_intra,</span>
+<span id="cb155-15"><a href="#cb155-15" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb155-16"><a href="#cb155-16" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(uncSIM, <span class="st">"data/rds/uncSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb156"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb156-1"><a href="#cb156-1" aria-hidden="true" tabindex="-1"></a>uncSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/uncSIM202310.rds"</span>)</span>
+<span id="cb156-2"><a href="#cb156-2" aria-hidden="true" tabindex="-1"></a>uncSIM</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:  glm(formula = TRIPS ~ log(ORIG_HDB_RESIDENT_COUNT) + log(ORIG_BUS_ALIGHT_COUNT) + 
+    log(ORIG_TRAIN_ALIGHT_COUNT) + log(DEST_BUS_STOP_COUNT) + 
+    log(DEST_ENTERTN_COUNT) + log(DEST_F_AND_B_COUNT) + log(DEST_LEISURE_COUNT) + 
+    log(DEST_RETAIL_COUNT) + log(DEST_TRAIN_EXITS_COUNT) + log(DEST_HDB_COUNT) + 
+    log(DISTANCE), family = poisson(link = "log"), data = SIM_data_no_intra, 
+    na.action = na.exclude)
+
+Coefficients:
+                 (Intercept)  log(ORIG_HDB_RESIDENT_COUNT)  
+                     9.13202                       0.01459  
+  log(ORIG_BUS_ALIGHT_COUNT)  log(ORIG_TRAIN_ALIGHT_COUNT)  
+                     0.61999                      -0.01798  
+    log(DEST_BUS_STOP_COUNT)       log(DEST_ENTERTN_COUNT)  
+                     0.21934                      -0.07123  
+     log(DEST_F_AND_B_COUNT)       log(DEST_LEISURE_COUNT)  
+                    -0.03001                      -0.08343  
+      log(DEST_RETAIL_COUNT)   log(DEST_TRAIN_EXITS_COUNT)  
+                     0.12135                       0.58437  
+         log(DEST_HDB_COUNT)                 log(DISTANCE)  
+                     0.18580                      -1.48381  
+
+Degrees of Freedom: 59275 Total (i.e. Null);  59264 Residual
+Null Deviance:      19980000 
+Residual Deviance: 7198000  AIC: 7466000</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_r_squared</span>(uncSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.4184592</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-15-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-15-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb160"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a>orcSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb160-2"><a href="#cb160-2" aria-hidden="true" tabindex="-1"></a>                ORIG_HEX_ID <span class="sc">+</span></span>
+<span id="cb160-3"><a href="#cb160-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
+<span id="cb160-4"><a href="#cb160-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_ENTERTN_COUNT) <span class="sc">+</span></span>
+<span id="cb160-5"><a href="#cb160-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_F_AND_B_COUNT) <span class="sc">+</span></span>
+<span id="cb160-6"><a href="#cb160-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_LEISURE_COUNT) <span class="sc">+</span></span>
+<span id="cb160-7"><a href="#cb160-7" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
+<span id="cb160-8"><a href="#cb160-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
+<span id="cb160-9"><a href="#cb160-9" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
+<span id="cb160-10"><a href="#cb160-10" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DISTANCE),</span>
+<span id="cb160-11"><a href="#cb160-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb160-12"><a href="#cb160-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data_no_intra,</span>
+<span id="cb160-13"><a href="#cb160-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb160-14"><a href="#cb160-14" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(orcSIM, <span class="st">"data/rds/orcSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb161"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb161-1"><a href="#cb161-1" aria-hidden="true" tabindex="-1"></a>orcSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/orcSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb162"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb162-1"><a href="#cb162-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_r_squared</span>(orcSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.4904425</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-15-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-15-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb164"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb164-1"><a href="#cb164-1" aria-hidden="true" tabindex="-1"></a>decSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb164-2"><a href="#cb164-2" aria-hidden="true" tabindex="-1"></a>                DEST_HEX_ID <span class="sc">+</span></span>
+<span id="cb164-3"><a href="#cb164-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
+<span id="cb164-4"><a href="#cb164-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb164-5"><a href="#cb164-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb164-6"><a href="#cb164-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DISTANCE),</span>
+<span id="cb164-7"><a href="#cb164-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb164-8"><a href="#cb164-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data_no_intra,</span>
+<span id="cb164-9"><a href="#cb164-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb164-10"><a href="#cb164-10" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(decSIM, <span class="st">"data/rds/decSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb165"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb165-1"><a href="#cb165-1" aria-hidden="true" tabindex="-1"></a>decSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/decSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb166"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb166-1"><a href="#cb166-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_r_squared</span>(decSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.5393081</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-15-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-15-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb168"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb168-1"><a href="#cb168-1" aria-hidden="true" tabindex="-1"></a>dbcSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb168-2"><a href="#cb168-2" aria-hidden="true" tabindex="-1"></a>                ORIG_HEX_ID <span class="sc">+</span> </span>
+<span id="cb168-3"><a href="#cb168-3" aria-hidden="true" tabindex="-1"></a>                DEST_HEX_ID <span class="sc">+</span></span>
+<span id="cb168-4"><a href="#cb168-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DISTANCE),</span>
+<span id="cb168-5"><a href="#cb168-5" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb168-6"><a href="#cb168-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> SIM_data_no_intra,</span>
+<span id="cb168-7"><a href="#cb168-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb168-8"><a href="#cb168-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(dbcSIM, <span class="st">"data/rds/dbcSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb169"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb169-1"><a href="#cb169-1" aria-hidden="true" tabindex="-1"></a>dbcSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/dbcSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb170"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb170-1"><a href="#cb170-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_r_squared</span>(dbcSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.6103781</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="model-comparisons" class="level2">
+<h2 class="anchored" data-anchor-id="model-comparisons">Model Comparisons</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb172"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb172-1"><a href="#cb172-1" aria-hidden="true" tabindex="-1"></a>model_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb172-2"><a href="#cb172-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unconstrained =</span> uncSIM,</span>
+<span id="cb172-3"><a href="#cb172-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Origin_Constrained =</span> orcSIM,</span>
+<span id="cb172-4"><a href="#cb172-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Destination_Constrained =</span> decSIM,</span>
+<span id="cb172-5"><a href="#cb172-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Doubly_Constrained =</span> dbcSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb173"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb173-1"><a href="#cb173-1" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_performance</span>(model_list,</span>
+<span id="cb173-2"><a href="#cb173-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">metrics =</span> <span class="st">"RMSE"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Comparison of Model Performance Indices
+
+Name                    | Model |    RMSE
+-----------------------------------------
+Unconstrained           |   glm | 288.261
+Origin_Constrained      |   glm | 269.850
+Destination_Constrained |   glm | 257.235
+Doubly_Constrained      |   glm | 236.105</code></pre>
+</div>
+</div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

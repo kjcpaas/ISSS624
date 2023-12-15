@@ -44,13 +44,13 @@ We need the following to start this analysis:
 
 We will generate 4 *log*-based Poisson models:
 
--   origin-constrained model
+-   origin constrained model
 
--   destination-constrained model
+-   destination constrained model
 
 -   unconstrained model
 
--   doubly-constrained model
+-   doubly constrained model
 
 We need the following to start this analysis:
 
@@ -81,7 +81,7 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
 | Variable            | Data Source                                                                                                                                 | Motivation                                               |
-|------------------|-----------------------------------|------------------|
+|------------------|------------------------------------|------------------|
 | `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
 | `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
 | `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
@@ -260,7 +260,7 @@ Contains all the data we need to model the interaction.
 
 -   \[Propulsiveness Variables Table (propulsiveness)\]
 
--   [Flow Lines (flowlines)]
+-   \[Flow Lines (flowlines)\]
 
 **Output data:** `SIM_data` (aspatial)
 
@@ -407,6 +407,8 @@ We will use the following R packages to run the code needed for data analysis.
 
 -   [**reshape2**](https://cran.r-project.org/web/packages/reshape2/index.html): for generating pivot tables from matrix
 
+-   [**performance**](https://cran.r-project.org/web/packages/performance/index.html): for model comparisons
+
 ## Environment Settings
 
 These are the default setting we will use, and initial setup required for the environment.
@@ -426,7 +428,7 @@ We will label this code chunk with `label: setup` so it will always be run even 
 
 ```{r}
 #| label: setup
-pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2)
+pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance)
 #pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)
 tmap_mode("plot")
 tmap_style("natural")
@@ -672,7 +674,7 @@ tm_shape(mpsz) +
 Now that we have hexagons properly generated, we will assign id for each hexagon to be used as a unique identifier. We will store this id under the `HEX_ID` column, and can be used in joining data frames.
 
 ```{r}
-honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb))) %>% as.factor()
+honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb)))
 kable(head(honeycomb))
 ```
 
@@ -1902,8 +1904,7 @@ We will make finishing touches on `SIM_data`, so that they are compatible with m
 ```{r}
 replace_zeroes <- function(data, col_name) {
   data[[col_name]][data[[col_name]] == 0] <- 0.99
-  
-  return(data)
+  data
 }
 
 SIM_data <- SIM_data %>%
@@ -1927,7 +1928,7 @@ summary(SIM_data)
 ::: {.callout-tip collapse="true"}
 #### Save point
 
-Let's save `SIM_data` as it contains the data we need for our models.
+Let's save `SIM_data` as it contains the data we need for our models. Take note that this contains **intra-zonal pairs**.
 
 ```{r}
 write_rds(SIM_data, "data/rds/SIM_data202310.rds")
@@ -1937,11 +1938,12 @@ write_rds(SIM_data, "data/rds/SIM_data202310.rds")
 ::: {.callout-warning collapse="true"}
 #### Data clear point
 
-We won't need the `SIM_data` for a while so we can remove it from the environment.
+We won't need the `SIM_data` for a while so we can remove it from the environment. We will also remove the helper function `replace_zeroes()` as we don't need it anymore.
 
 ```{r}
 #| eval: true
 rm(SIM_data)
+rm(replace_zeroes)
 ```
 :::
 
@@ -2061,7 +2063,7 @@ The *maximum number of trips* **exponentially decrease** as the distance increas
 However, some outliers can be observed like some zone pairs with almost 20km distance between them having close to 99th percentile of `TRIP` values. In these zone pairs, there could be strong propulsive or attractive forces attracting passengers to ride the bus between those zones.
 :::
 
-In **doubly-constrained model**, we will observe this relationship more closely as we will build the model **without attractive and propulsive** forces.
+In **doubly constrained model**, we will observe this relationship more closely as we will build the model **without attractive and propulsive** forces.
 
 ## Visualizing propulsive forces
 
@@ -2146,7 +2148,7 @@ There are less train station exits than bus stops but it can be observed that fl
 Lastly, we get bus alight data from the same data source or flowlines so they are expected to correspond more closely. We should be aware that flow line includes the **destination** so the correspondence may due on the destination, not the origin as we hypothesized.
 :::
 
-In **destination-constrained model**, the effects of propulsive forces will be highlighted as we will model the interaction **without the attractive forces**.
+In **destination constrained model**, the effects of propulsive forces will be highlighted as we will model the interaction **without the attractive forces**.
 
 ## Visualizing attractive forces
 
@@ -2251,7 +2253,7 @@ There are less location types than the others, like entertainment and leisure lo
 There are also location types that are heavily concentrated in some zones, like the entertainment and F&B, which are heavily concentrated around the **Orchard area**. Conversely, there are much less HDBs in Orchard area. Even though the flowlines are not thick in this area, there are many flowlines, although thin. This means people are coming from various parts of Singapore.
 :::
 
-In **origin-constrained model**, the effects of attractive forces will be highlighted as we will model the interaction **without the propulsive forces**.
+In **origin constrained model**, the effects of attractive forces will be highlighted as we will model the interaction **without the propulsive forces**.
 
 ::: {.callout-tip collapse="true"}
 ## Save point
@@ -2273,7 +2275,273 @@ We will clear the data we do not need for the Spatial Interaction Modelling.
 rm(flowlines)
 rm(attractiveness)
 rm(propulsiveness)
+rm(plot_attractive)
+rm(plot_propulsive)
 ```
 :::
 
 # Spatial Interaction Modelling
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+SIM_data <- read_rds("data/rds/SIM_data202310.rds")
+```
+:::
+
+For our spatial interaction modelling, we will use *log-*based Poisson gravity models. There are 4 components in our models:
+
+-   **attractive forces**: forces that influence bus passengers to alight at a bus stops
+
+-   **propulsive forces**: forces that influence bus passengers to board from specific bus stops
+
+-   **distance decay**: this corresponds to the cost of making the trip. In theory, the longer the distance to travel, the less appealing a trip is.
+
+-   **trips**: this is the dependent variable and what we want to model.
+
+As we generate the models, we will compare the **actual value** of the trips (from the data we have processed so far) with the values that the models generate.
+
+## About the models
+
+::: panel-tabset
+### Unconstrained
+
+This will model the `TRIPS` using all the idependent model components --- attractive forces, propulsive forces, distance decay.
+
+In this model, we will see if all the forces we identified influence the number of trips made between zone pairs.
+
+The general formula is:
+
+$$
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha lnW_j + \beta ln d_{ij})
+$$
+
+::: {.callout-note appearance="simple"}
+$\lambda_{ij}$: Independent variable, corresponding to `TRIPS` in our context
+
+$\mu lnV_i$: Propulsive forces (unconstrained)
+
+$\alpha lnW_j$: Attractive forces (unconstrained)
+
+$\beta ln d_{ij}$: Distance decay
+:::
+
+### Origin constrained
+
+This will model the `TRIPS` **without the attractive forces**.
+
+In this model, we will see the highlighted effects of the propulsive forces.
+
+The general formula is:
+
+$$
+\lambda_{ij} = exp(k + \mu_i + \alpha lnW_j + \beta ln d_{ij})
+$$
+
+::: {.callout-note appearance="simple"}
+$\lambda_{ij}$: Independent variable, corresponding to `TRIPS` in our context
+
+$\mu_i$: Propulsive parameter (constrained)
+
+$\alpha lnW_j$: Attractive forces (unconstrained)
+
+$\beta ln d_{ij}$: Distance decay
+:::
+
+### Destination constrained
+
+This will model the `TRIPS` **without the propulsive forces**.
+
+In this model, we will see the highlighted effects of the attractive forces.
+
+The general formula is:
+
+$$
+\lambda_{ij} = exp(k + \mu lnV_i + \alpha_j + \beta ln d_{ij})
+$$
+
+::: {.callout-note appearance="simple"}
+$\lambda_{ij}$: Independent variable, corresponding to `TRIPS` in our context
+
+$\mu lnV_i$: Propulsive forces (unconstrained)
+
+$\alpha_j$: Attractive parameter (constrained)
+
+$\beta ln d_{ij}$: Distance decay
+:::
+
+### Doubly constrained
+
+This will model the `TRIPS` **without the attractive and propulsive forces**.
+
+In this model, we will see the effects of the distance alone to the trips.
+
+The general formula is:
+
+$$
+\lambda_{ij} = exp(k + \mu_i + \alpha_j + \beta ln d_{ij})
+$$
+
+::: {.callout-note appearance="simple"}
+$\lambda_{ij}$: Independent variable, corresponding to `TRIPS` in our context
+
+$\mu_i$: Propulsive parameter (constrained)
+
+$\alpha_j$: Attractive parameter (constrained)
+
+$\beta ln d_{ij}$: Distance decay
+:::
+:::
+
+## Generating the models
+
+Using the formula we defined above, we will generate the models based on `SIM_data`. We will use `glm()` which generate linear models, specifying `family = poisson` as we are using Poisson gravity models.
+
+First, we need to **remove intra-zonal zones pairs** from `SIM_data` as it currently includes those.
+
+```{r}
+SIM_data_no_intra <- SIM_data %>% filter(ORIG_HEX_ID != DEST_HEX_ID)
+```
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Helper function: goodness of fit
+
+We will use the following function to calculate the **goodness of fit**, or **R-squared.** This will calculate how the observed data fits our model by comparing the observed values to the values generated by our models.
+
+```{r}
+calc_r_squared <- function(model) {
+  cor(model$data$TRIPS, model$fitted.values)^2
+}
+```
+:::
+
+::: {.callout-important appearance="simple"}
+It is quite expensive to generate these models so we will save them right after generation. `eval` is set to `false` by default on these code chunks.
+
+We will trigger these code chunks manually if we want to regenerate the files.
+:::
+
+::: panel-tabset
+### Unconstrained
+
+```{r}
+#| eval: false
+uncSIM <- glm(formula = TRIPS ~ 
+                log(ORIG_HDB_RESIDENT_COUNT) +
+                log(ORIG_BUS_ALIGHT_COUNT) +
+                log(ORIG_TRAIN_ALIGHT_COUNT) +
+                log(DEST_BUS_STOP_COUNT) +
+                log(DEST_ENTERTN_COUNT) +
+                log(DEST_F_AND_B_COUNT) +
+                log(DEST_LEISURE_COUNT) +
+                log(DEST_RETAIL_COUNT) +
+                log(DEST_TRAIN_EXITS_COUNT) +
+                log(DEST_HDB_COUNT) +
+                log(DISTANCE),
+              family = poisson(link = "log"),
+              data = SIM_data_no_intra,
+              na.action = na.exclude)
+write_rds(uncSIM, "data/rds/uncSIM202310.rds")
+```
+
+```{r}
+uncSIM <- read_rds("data/rds/uncSIM202310.rds")
+uncSIM
+```
+
+```{r}
+calc_r_squared(uncSIM)
+```
+
+### Origin constrained
+
+```{r}
+#| eval: false
+orcSIM <- glm(formula = TRIPS ~ 
+                ORIG_HEX_ID +
+                log(DEST_BUS_STOP_COUNT) +
+                log(DEST_ENTERTN_COUNT) +
+                log(DEST_F_AND_B_COUNT) +
+                log(DEST_LEISURE_COUNT) +
+                log(DEST_RETAIL_COUNT) +
+                log(DEST_TRAIN_EXITS_COUNT) +
+                log(DEST_HDB_COUNT) +
+                log(DISTANCE),
+              family = poisson(link = "log"),
+              data = SIM_data_no_intra,
+              na.action = na.exclude)
+write_rds(orcSIM, "data/rds/orcSIM202310.rds")
+```
+
+```{r}
+orcSIM <- read_rds("data/rds/orcSIM202310.rds")
+```
+
+```{r}
+calc_r_squared(orcSIM)
+```
+
+### Destination constrained
+
+```{r}
+#| eval: false
+decSIM <- glm(formula = TRIPS ~ 
+                DEST_HEX_ID +
+                log(ORIG_HDB_RESIDENT_COUNT) +
+                log(ORIG_BUS_ALIGHT_COUNT) +
+                log(ORIG_TRAIN_ALIGHT_COUNT) +
+                log(DISTANCE),
+              family = poisson(link = "log"),
+              data = SIM_data_no_intra,
+              na.action = na.exclude)
+write_rds(decSIM, "data/rds/decSIM202310.rds")
+```
+
+```{r}
+decSIM <- read_rds("data/rds/decSIM202310.rds")
+```
+
+```{r}
+calc_r_squared(decSIM)
+```
+
+### Doubly constrained
+
+```{r}
+#| eval: false
+dbcSIM <- glm(formula = TRIPS ~ 
+                ORIG_HEX_ID + 
+                DEST_HEX_ID +
+                log(DISTANCE),
+              family = poisson(link = "log"),
+              data = SIM_data_no_intra,
+              na.action = na.exclude)
+write_rds(dbcSIM, "data/rds/dbcSIM202310.rds")
+```
+
+```{r}
+dbcSIM <- read_rds("data/rds/dbcSIM202310.rds")
+```
+
+```{r}
+calc_r_squared(dbcSIM)
+```
+:::
+
+## Model Comparisons
+
+```{r}
+model_list <- list(
+  Unconstrained = uncSIM,
+  Origin_Constrained = orcSIM,
+  Destination_Constrained = decSIM,
+  Doubly_Constrained = dbcSIM)
+```
+
+```{r}
+compare_performance(model_list,
+                    metrics = "RMSE")
+```
