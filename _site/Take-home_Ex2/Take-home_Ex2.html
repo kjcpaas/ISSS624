@@ -261,7 +261,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#importing-data-sets" id="toc-importing-data-sets" class="nav-link" data-scroll-target="#importing-data-sets">Importing data sets</a></li>
   <li><a href="#adjusting-data-columns" id="toc-adjusting-data-columns" class="nav-link" data-scroll-target="#adjusting-data-columns">Adjusting data columns</a></li>
   <li><a href="#adding-tap-out-information-to-exits" id="toc-adding-tap-out-information-to-exits" class="nav-link" data-scroll-target="#adding-tap-out-information-to-exits">Adding tap out information to exits</a></li>
-  <li><a href="#aggregating-taps-by-hexagon-level" id="toc-aggregating-taps-by-hexagon-level" class="nav-link" data-scroll-target="#aggregating-taps-by-hexagon-level">Aggregating TAPS by Hexagon level</a></li>
+  <li><a href="#aggregating-trips-by-hexagon-level" id="toc-aggregating-trips-by-hexagon-level" class="nav-link" data-scroll-target="#aggregating-trips-by-hexagon-level">Aggregating TRIPS by Hexagon level</a></li>
   </ul></li>
   <li><a href="#deriving-hdb-population" id="toc-deriving-hdb-population" class="nav-link" data-scroll-target="#deriving-hdb-population">Deriving HDB population</a>
   <ul class="collapse">
@@ -286,7 +286,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#visualizing-flow-lines-again" id="toc-visualizing-flow-lines-again" class="nav-link" data-scroll-target="#visualizing-flow-lines-again">Visualizing flow lines again</a></li>
   <li><a href="#plotting-trips-vs.-distance" id="toc-plotting-trips-vs.-distance" class="nav-link" data-scroll-target="#plotting-trips-vs.-distance">Plotting <em>TRIPS</em> vs.&nbsp;<em>DISTANCE</em></a></li>
   <li><a href="#visualizing-propulsive-forces" id="toc-visualizing-propulsive-forces" class="nav-link" data-scroll-target="#visualizing-propulsive-forces">Visualizing propulsive forces</a></li>
+  <li><a href="#visualizing-attractive-forces" id="toc-visualizing-attractive-forces" class="nav-link" data-scroll-target="#visualizing-attractive-forces">Visualizing attractive forces</a></li>
   </ul></li>
+  <li><a href="#spatial-interaction-modelling-3" id="toc-spatial-interaction-modelling-3" class="nav-link" data-scroll-target="#spatial-interaction-modelling-3">Spatial Interaction Modelling</a></li>
   </ul>
 </nav>
     </div>
@@ -319,7 +321,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">December 15, 2023</p>
+      <p class="date-modified">December 16, 2023</p>
     </div>
   </div>
     
@@ -525,7 +527,7 @@ Number of trips between 2 zones (<em>od_hex</em>)
 <p>This contains the number of trips on <strong>weekend/holiday morning peak periods</strong> (11 AM - 2 PM). Data is sourced from <em>Passenger Volume By Origin Destination Bus Stops</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API</p>
 <p>This data will be used generating the flow lines for visualization, and for Spatial Interaction Modelling.</p>
 <p><strong>Prerequisites:</strong> [Honeycomb grid corresponding to bus stop locations (honeycomb)]</p>
-<p><strong>Output data:</strong> <code>od_hex</code> (aspatial)</p>
+<p><strong>Output data:</strong> <code>od_hex</code> (geospatial)</p>
 <p><strong>Columns</strong>:</p>
 <ul>
 <li><p><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</p></li>
@@ -648,7 +650,7 @@ Propulsiveness Variables Table (<em>propulsiveness</em>)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Model Data (<em>model_data</em>)
+Model Data (<em>SIM_data</em>)
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
@@ -661,8 +663,9 @@ Model Data (<em>model_data</em>)
 <li><p>[Number of trips between 2 zones (od_hex)]</p></li>
 <li><p>[Attractiveness Variables Table (attractiveness)]</p></li>
 <li><p>[Propulsiveness Variables Table (propulsiveness)]</p></li>
+<li><p>[Flow Lines (flowlines)]</p></li>
 </ul>
-<p><strong>Output data:</strong> <code>model_data</code> (aspatial)</p>
+<p><strong>Output data:</strong> <code>SIM_data</code> (aspatial)</p>
 <p><strong>Columns</strong>:</p>
 <ul>
 <li><p><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</p></li>
@@ -671,6 +674,7 @@ Model Data (<em>model_data</em>)
 <li><p><code>TRIPS</code>: Number of bus trips between the origin and destination zones</p></li>
 <li><p><code>DEST_*_COUNT</code>: Values from [Attractiveness Variables Table (attractiveness)]</p></li>
 <li><p><code>ORIG_*_COUNT</code>: Values from [Propulsiveness Variables Table (propulsiveness)]</p></li>
+<li><p>Geomtery corresponding to the flowlines</p></li>
 </ul>
 </div>
 </div>
@@ -2521,7 +2525,7 @@ Load point
 </div>
 </div>
 <p>One of our propulsiveness variables is the <strong>number of passengers alighting from a train stations</strong> as they are potential bus passengers, especially if they need to transfer to a bus to reach their final destination.</p>
-<p>For this, we will import the <em>Passenger Volume By Train Stations</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, which contains the number of tap outs from a station every hour. It has a similar structure to <em>Passenger Volume By Origin Destination Bus Stops</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, which we have been using in class so I will not dive deep in to the details on how to get passenger data from them as we are using the same techniques as the bus data.</p>
+<p>For this, we will import the <em>Passenger Volume By Origin Destination Train Stations</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, which contains the number of tap outs from a station every hour. It has a similar structure to <em>Passenger Volume By Origin Destination Bus Stops</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, which we have been using in class so I will not dive deep in to the details on how to get passenger data from them as we are using the same techniques as the bus data.</p>
 <section id="importing-data-sets" class="level4">
 <h4 class="anchored" data-anchor-id="importing-data-sets">Importing data sets</h4>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
@@ -2530,8 +2534,8 @@ Load point
 <div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
 <p>We will import the <code>csv</code> from <em>Passenger Volume By Train Stations</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API, using <code>read_csv()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>train_tap <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/transport_node_train_202310.csv"</span>)</span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>od_train <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/origin_destination_train_202310.csv"</span>)</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(od_train))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <colgroup>
@@ -2539,9 +2543,9 @@ Load point
 <col style="width: 17%">
 <col style="width: 14%">
 <col style="width: 8%">
-<col style="width: 8%">
+<col style="width: 15%">
 <col style="width: 20%">
-<col style="width: 21%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2549,114 +2553,114 @@ Load point
 <th style="text-align: left;">DAY_TYPE</th>
 <th style="text-align: right;">TIME_PER_HOUR</th>
 <th style="text-align: left;">PT_TYPE</th>
-<th style="text-align: left;">PT_CODE</th>
-<th style="text-align: right;">TOTAL_TAP_IN_VOLUME</th>
-<th style="text-align: right;">TOTAL_TAP_OUT_VOLUME</th>
+<th style="text-align: left;">ORIGIN_PT_CODE</th>
+<th style="text-align: left;">DESTINATION_PT_CODE</th>
+<th style="text-align: right;">TOTAL_TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">2023-10</td>
 <td style="text-align: left;">WEEKENDS/HOLIDAY</td>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">9</td>
 <td style="text-align: left;">TRAIN</td>
-<td style="text-align: left;">NS7</td>
-<td style="text-align: right;">10207</td>
-<td style="text-align: right;">11033</td>
+<td style="text-align: left;">EW32</td>
+<td style="text-align: left;">DT24</td>
+<td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">2023-10</td>
 <td style="text-align: left;">WEEKDAY</td>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">6</td>
 <td style="text-align: left;">TRAIN</td>
-<td style="text-align: left;">NS7</td>
-<td style="text-align: right;">20072</td>
-<td style="text-align: right;">13995</td>
+<td style="text-align: left;">BP4</td>
+<td style="text-align: left;">EW31</td>
+<td style="text-align: right;">22</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">2023-10</td>
 <td style="text-align: left;">WEEKENDS/HOLIDAY</td>
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;">TRAIN</td>
-<td style="text-align: left;">SW4</td>
-<td style="text-align: right;">1031</td>
-<td style="text-align: right;">1107</td>
+<td style="text-align: left;">NE15</td>
+<td style="text-align: left;">SW5</td>
+<td style="text-align: right;">51</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">2023-10</td>
 <td style="text-align: left;">WEEKDAY</td>
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;">TRAIN</td>
-<td style="text-align: left;">SW4</td>
-<td style="text-align: right;">1985</td>
-<td style="text-align: right;">2669</td>
+<td style="text-align: left;">SW5</td>
+<td style="text-align: left;">NE15</td>
+<td style="text-align: right;">87</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">2023-10</td>
 <td style="text-align: left;">WEEKENDS/HOLIDAY</td>
-<td style="text-align: right;">10</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;">TRAIN</td>
-<td style="text-align: left;">CC5</td>
-<td style="text-align: right;">1308</td>
-<td style="text-align: right;">2484</td>
+<td style="text-align: left;">SW5</td>
+<td style="text-align: left;">NE15</td>
+<td style="text-align: right;">48</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">2023-10</td>
 <td style="text-align: left;">WEEKDAY</td>
-<td style="text-align: right;">10</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;">TRAIN</td>
-<td style="text-align: left;">CC5</td>
-<td style="text-align: right;">2603</td>
-<td style="text-align: right;">5292</td>
+<td style="text-align: left;">NE15</td>
+<td style="text-align: left;">SW5</td>
+<td style="text-align: right;">73</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>We only need data for <strong>weekend/holidays 11AM - 2PM,</strong> and the columns <code>PT_CODE</code> and <code>TAP_OUT_VOLUME</code> as we are only interested in passengers leaving the train station.</p>
+<p>We only need data for <strong>weekend/holidays 11AM - 2PM,</strong> and the columns <code>DESTINATION_PT_CODE</code> and <code>TOTAL_TRIPS</code> as we are only interested in passengers leaving the train station.</p>
 <p>We will extract this the same way we did in <a href="#filtering-the-relevant-data">Filtering the relevant data</a>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>train_tap_out <span class="ot">&lt;-</span> train_tap <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>od_train_trips <span class="ot">&lt;-</span> od_train <span class="sc">%&gt;%</span></span>
 <span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DAY_TYPE <span class="sc">==</span> <span class="st">"WEEKENDS/HOLIDAY"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>( TIME_PER_HOUR <span class="sc">&gt;=</span> <span class="dv">11</span> <span class="sc">&amp;</span></span>
 <span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>            TIME_PER_HOUR <span class="sc">&lt;</span> <span class="dv">14</span></span>
 <span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>          ) <span class="sc">%&gt;%</span></span>
-<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(PT_CODE) <span class="sc">%&gt;%</span></span>
-<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TAPS =</span> <span class="fu">sum</span>(TOTAL_TAP_OUT_VOLUME)) <span class="sc">%&gt;%</span></span>
-<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">TRAIN_ST_CODE =</span> PT_CODE)</span>
-<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DESTINATION_PT_CODE) <span class="sc">%&gt;%</span></span>
+<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TOTAL_TRIPS)) <span class="sc">%&gt;%</span></span>
+<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">TRAIN_ST_CODE =</span> DESTINATION_PT_CODE)</span>
+<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(od_train_trips))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">TRAIN_ST_CODE</th>
-<th style="text-align: right;">TAPS</th>
+<th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">BP10</td>
-<td style="text-align: right;">3730</td>
+<td style="text-align: right;">3839</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BP11</td>
-<td style="text-align: right;">2882</td>
+<td style="text-align: right;">3011</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">BP12</td>
-<td style="text-align: right;">1893</td>
+<td style="text-align: right;">1972</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BP13</td>
-<td style="text-align: right;">988</td>
+<td style="text-align: right;">982</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">BP2</td>
-<td style="text-align: right;">2720</td>
+<td style="text-align: right;">2757</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BP3</td>
-<td style="text-align: right;">3831</td>
+<td style="text-align: right;">3988</td>
 </tr>
 </tbody>
 </table>
@@ -2674,9 +2678,9 @@ Data clear point
 </div>
 <div id="callout-44" class="callout-44-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>We do not need <code>train_tap</code> anymore as we already extracted the tap out data we need.</p>
+<p>We do not need <code>od_train</code> anymore as we already extracted the tap out data we need.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_tap)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(od_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -2827,7 +2831,7 @@ Recap of <em>train exits</em>
 <h4 class="anchored" data-anchor-id="adjusting-data-columns">Adjusting data columns</h4>
 <p>To connect <code>train_exits</code>, <code>station_code_names</code>, and <code>train_tap_out</code>, we need to make adjustments to the columns.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true"><em>station_code_names</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false"><em>train_tap_out</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false"><em>train_exits</em></a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true"><em>station_code_names</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false"><em>od_train_trips</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false"><em>train_exits</em></a></li></ul>
 <div class="tab-content">
 <div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
 <div class="cell">
@@ -2921,35 +2925,35 @@ Recap of <em>train exits</em>
 </div>
 <div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out[<span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>,]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(od_train_trips[<span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>,]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">TRAIN_ST_CODE</th>
-<th style="text-align: right;">TAPS</th>
+<th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">BP3</td>
-<td style="text-align: right;">3831</td>
+<td style="text-align: right;">3988</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BP4</td>
-<td style="text-align: right;">1700</td>
+<td style="text-align: right;">1752</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">BP5</td>
-<td style="text-align: right;">2294</td>
+<td style="text-align: right;">2324</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BP6/DT1</td>
-<td style="text-align: right;">46054</td>
+<td style="text-align: right;">48165</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">BP7</td>
-<td style="text-align: right;">1116</td>
+<td style="text-align: right;">1120</td>
 </tr>
 </tbody>
 </table>
@@ -2958,37 +2962,37 @@ Recap of <em>train exits</em>
 <p>There are multiple station codes in <code>TRAIN_ST_CODE</code> column, while in <code>station_codes_names</code>, the <code>stn_code</code> column only has 1 station code.</p>
 <p>We have to separate these station codes into their own rows by using <code>separate_rows()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>train_tap_out <span class="ot">&lt;-</span> train_tap_out <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>od_train_trips <span class="ot">&lt;-</span> od_train_trips <span class="sc">%&gt;%</span></span>
 <span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(TRAIN_ST_CODE, <span class="at">sep=</span><span class="st">"/"</span>)</span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out[<span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>,]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(od_train_trips[<span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>,]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">TRAIN_ST_CODE</th>
-<th style="text-align: right;">TAPS</th>
+<th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">BP3</td>
-<td style="text-align: right;">3831</td>
+<td style="text-align: right;">3988</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BP4</td>
-<td style="text-align: right;">1700</td>
+<td style="text-align: right;">1752</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">BP5</td>
-<td style="text-align: right;">2294</td>
+<td style="text-align: right;">2324</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BP6</td>
-<td style="text-align: right;">46054</td>
+<td style="text-align: right;">48165</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">DT1</td>
-<td style="text-align: right;">46054</td>
+<td style="text-align: right;">48165</td>
 </tr>
 </tbody>
 </table>
@@ -3000,9 +3004,9 @@ Recap of <em>train exits</em>
 <i class="callout-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><code>station_codes_names</code> and <code>train_tap_out</code> now have the number of rows so they can be mapped one-to-one.</p>
+<p><code>station_codes_names</code> and <code>od_train_trips</code> now have the number of rows so they can be mapped one-to-one.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(station_codes_names) <span class="sc">==</span> <span class="fu">nrow</span>(train_tap_out)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(station_codes_names) <span class="sc">==</span> <span class="fu">nrow</span>(od_train_trips)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
@@ -3128,49 +3132,49 @@ Recap of <em>train exits</em>
 <section id="adding-tap-out-information-to-exits" class="level4">
 <h4 class="anchored" data-anchor-id="adding-tap-out-information-to-exits">Adding tap out information to exits</h4>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true">Joining <em>station_code_names</em> and <em>train_tap_out</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false">Adding tap out to exits</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true">Joining <em>station_code_names</em> and <em>od_train_trips</em></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false">Adding tap out to exits</a></li></ul>
 <div class="tab-content">
 <div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
-<p>We will join by the station code. Also, as some train stations have multiple station codes, we will remove the duplicates on the station name. This can be accomplished by selecting <code>stn_name</code> and <code>TAPS</code> and applying <code>unique()</code>. It is safe to not include the station code here anymore as <code>trains_exits</code> does not have the station code.</p>
+<p>We will join by the station code. Also, as some train stations have multiple station codes, we will remove the duplicates on the station name. This can be accomplished by selecting <code>stn_name</code> and <code>TRIPS</code> and applying <code>unique()</code>. It is safe to not include the station code here anymore as <code>trains_exits</code> does not have the station code.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>train_tap_out_with_names <span class="ot">&lt;-</span> station_codes_names <span class="sc">%&gt;%</span></span>
-<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(train_tap_out,</span>
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>od_train_trips_with_name <span class="ot">&lt;-</span> station_codes_names <span class="sc">%&gt;%</span></span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(od_train_trips,</span>
 <span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">join_by</span>(stn_code <span class="sc">==</span> TRAIN_ST_CODE)) <span class="sc">%&gt;%</span></span>
-<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(stn_name, TAPS) <span class="sc">%&gt;%</span></span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(stn_name, TRIPS) <span class="sc">%&gt;%</span></span>
 <span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
-<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(train_tap_out_with_names))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(od_train_trips_with_name))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">stn_name</th>
-<th style="text-align: right;">TAPS</th>
+<th style="text-align: right;">TRIPS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">JURONG EAST</td>
-<td style="text-align: right;">130121</td>
+<td style="text-align: right;">130709</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">BUKIT BATOK</td>
-<td style="text-align: right;">31489</td>
+<td style="text-align: right;">32809</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">BUKIT GOMBAK</td>
-<td style="text-align: right;">22847</td>
+<td style="text-align: right;">23429</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">CHOA CHU KANG</td>
-<td style="text-align: right;">47680</td>
+<td style="text-align: right;">48893</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">YEW TEE</td>
-<td style="text-align: right;">30945</td>
+<td style="text-align: right;">33209</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">KRANJI</td>
-<td style="text-align: right;">30021</td>
+<td style="text-align: right;">29480</td>
 </tr>
 </tbody>
 </table>
@@ -3180,25 +3184,25 @@ Recap of <em>train exits</em>
 <div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
 <p>Next, we join <code>train_tap_out_with_names</code> with <code>train_exits</code> to finally add the tap information to exits.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>tap_out_exit <span class="ot">&lt;-</span> train_exits <span class="sc">%&gt;%</span></span>
-<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(train_tap_out_with_names,</span>
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>od_train_exits <span class="ot">&lt;-</span> train_exits <span class="sc">%&gt;%</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(od_train_trips_with_name,</span>
 <span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">join_by</span>(stn_name_short <span class="sc">==</span> stn_name)) <span class="sc">%&gt;%</span></span>
 <span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">STN_NAME =</span> stn_name) <span class="sc">%&gt;%</span></span>
 <span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">EXIT_CODE =</span> exit_code) <span class="sc">%&gt;%</span></span>
-<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(STN_NAME, EXIT_CODE, TAPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(STN_NAME, EXIT_CODE, TRIPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(tap_out_exit))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(od_train_exits))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">STN_NAME</th>
 <th style="text-align: left;">EXIT_CODE</th>
-<th style="text-align: right;">TAPS</th>
+<th style="text-align: right;">TRIPS</th>
 <th style="text-align: left;">geometry</th>
 </tr>
 </thead>
@@ -3206,37 +3210,37 @@ Recap of <em>train exits</em>
 <tr class="odd">
 <td style="text-align: left;">MACPHERSON MRT STATION</td>
 <td style="text-align: left;">Exit A</td>
-<td style="text-align: right;">17002</td>
+<td style="text-align: right;">17282</td>
 <td style="text-align: left;">POINT (34285.07 34322.99)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">MACPHERSON MRT STATION</td>
 <td style="text-align: left;">Exit B</td>
-<td style="text-align: right;">17002</td>
+<td style="text-align: right;">17282</td>
 <td style="text-align: left;">POINT (34382.15 34231.9)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">MACPHERSON MRT STATION</td>
 <td style="text-align: left;">Exit C</td>
-<td style="text-align: right;">17002</td>
+<td style="text-align: right;">17282</td>
 <td style="text-align: left;">POINT (34337.29 34190.6)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">TONGKANG LRT STATION</td>
 <td style="text-align: left;">Exit B</td>
-<td style="text-align: right;">2920</td>
+<td style="text-align: right;">3136</td>
 <td style="text-align: left;">POINT (33872.15 41256.05)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">TONGKANG LRT STATION</td>
 <td style="text-align: left;">Exit A</td>
-<td style="text-align: right;">2920</td>
+<td style="text-align: right;">3136</td>
 <td style="text-align: left;">POINT (33858.54 41234.07)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">RENJONG LRT STATION</td>
 <td style="text-align: left;">Exit A</td>
-<td style="text-align: right;">2431</td>
+<td style="text-align: right;">2506</td>
 <td style="text-align: left;">POINT (34353.45 40959.61)</td>
 </tr>
 </tbody>
@@ -3250,59 +3254,59 @@ Recap of <em>train exits</em>
 <i class="callout-icon"></i>
 </div>
 <div class="callout-body-container">
-<p>We will <strong>not distribute</strong> these taps to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station <strong>as potential passengers</strong> of bus stop from the nearby exits.</p>
+<p>We will <strong>not distribute</strong> these trips to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station <strong>as potential passengers</strong> of bus stop from the nearby exits.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="aggregating-taps-by-hexagon-level" class="level4">
-<h4 class="anchored" data-anchor-id="aggregating-taps-by-hexagon-level">Aggregating TAPS by Hexagon level</h4>
-<p>Finally, we can aggregate the taps on a hexagon level. We will do an <code>st_join()</code> of <code>honeycomb</code> and <code>tap_out_exit</code> as they are both of class <code>sf</code>.</p>
+<section id="aggregating-trips-by-hexagon-level" class="level4">
+<h4 class="anchored" data-anchor-id="aggregating-trips-by-hexagon-level">Aggregating TRIPS by Hexagon level</h4>
+<p>Finally, we can aggregate the trips on a hexagon level. We will do an <code>st_join()</code> of <code>honeycomb</code> and <code>tap_out_exit</code> as they are both of class <code>sf</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>tap_out_hex <span class="ot">&lt;-</span> honeycomb <span class="sc">%&gt;%</span></span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_join</span>(tap_out_exit,</span>
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>od_train_hex <span class="ot">&lt;-</span> honeycomb <span class="sc">%&gt;%</span></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_join</span>(od_train_exits,</span>
 <span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">left =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(HEX_ID) <span class="sc">%&gt;%</span></span>
-<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TAPS =</span> <span class="fu">sum</span>(TAPS))</span>
-<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(tap_out_hex))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">TRIPS =</span> <span class="fu">sum</span>(TRIPS))</span>
+<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(od_train_hex))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th style="text-align: left;">HEX_ID</th>
-<th style="text-align: right;">TAPS</th>
+<th style="text-align: right;">TRIPS</th>
 <th style="text-align: left;">geometry</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">H0028</td>
-<td style="text-align: right;">6016</td>
+<td style="text-align: right;">6390</td>
 <td style="text-align: left;">POLYGON ((6220.122 35142.35…</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">H0032</td>
-<td style="text-align: right;">5322</td>
+<td style="text-align: right;">5962</td>
 <td style="text-align: left;">POLYGON ((6595.122 34492.84…</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">H0038</td>
-<td style="text-align: right;">2660</td>
+<td style="text-align: right;">2676</td>
 <td style="text-align: left;">POLYGON ((7345.122 33193.8,…</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">H0051</td>
-<td style="text-align: right;">3166</td>
+<td style="text-align: right;">3290</td>
 <td style="text-align: left;">POLYGON ((8845.122 33193.8,…</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">H0065</td>
-<td style="text-align: right;">22556</td>
+<td style="text-align: right;">23920</td>
 <td style="text-align: left;">POLYGON ((10720.12 33843.32…</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">H0100</td>
-<td style="text-align: right;">44486</td>
+<td style="text-align: right;">46780</td>
 <td style="text-align: left;">POLYGON ((12970.12 35142.35…</td>
 </tr>
 </tbody>
@@ -3321,9 +3325,9 @@ Save point
 </div>
 <div id="callout-46" class="callout-46-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>Let’s save <code>tap_out_hex</code> as it contains the data for propulsiveness variable.</p>
+<p>Let’s save <code>od_train_hex</code> as it contains the data for propulsiveness variable.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(tap_out_hex, <span class="st">"data/rds/tap_out_hex202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(od_train_hex, <span class="st">"data/rds/od_train_hex202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -3340,12 +3344,12 @@ Data clear point
 </div>
 <div id="callout-47" class="callout-47-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>We do not need the intermediate data used to derive <code>tap_out_hex</code> so we can remove them.</p>
+<p>We do not need the intermediate data used to derive <code>od_train_hex</code> so we can remove them.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_exits)</span>
-<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_tap_out)</span>
-<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(train_tap_out_with_names)</span>
-<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(tap_out_exit)</span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(od_train_exits)</span>
+<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(od_train_trips)</span>
+<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(od_train_trips_with_name)</span>
 <span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(station_codes_names)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
@@ -4043,7 +4047,7 @@ Load point
 <div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb.rds"</span>)</span>
 <span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>hdb_vars <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/hdb_vars.rds"</span>)</span>
 <span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a>dest_bus_hex <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/dest_bus_hex202310.rds"</span>)</span>
-<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a>tap_out_hex <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/tap_out_hex202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a>od_train_hex <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/od_train_hex202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4073,8 +4077,8 @@ Load point
 <div id="tabset-10-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-10-3-tab">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a>propulsiveness <span class="ot">&lt;-</span> propulsiveness <span class="sc">%&gt;%</span></span>
-<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">st_drop_geometry</span>(tap_out_hex)) <span class="sc">%&gt;%</span></span>
-<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">TRAIN_ALIGHT_COUNT =</span> TAPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">st_drop_geometry</span>(od_train_hex)) <span class="sc">%&gt;%</span></span>
+<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">TRAIN_ALIGHT_COUNT =</span> TRIPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4183,7 +4187,7 @@ Data clear point
 <div class="cell">
 <div class="sourceCode cell-code" id="cb109"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(dest_bus_hex)</span>
 <span id="cb109-2"><a href="#cb109-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(hdb_vars)</span>
-<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(tap_out_hex)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(od_train_hex)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4514,7 +4518,7 @@ Load point
 <p>We will load saved data containing the components of the model data.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb.rds"</span>)</span>
-<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a>od_hex <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/od_hex202310.rds"</span>)</span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a>flowlines <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/flowlines202310.rds"</span>)</span>
 <span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a>dist_tbl <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/dist_tbl.rds"</span>)</span>
 <span id="cb117-4"><a href="#cb117-4" aria-hidden="true" tabindex="-1"></a>attractiveness <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/attractiveness.rds"</span>)</span>
 <span id="cb117-5"><a href="#cb117-5" aria-hidden="true" tabindex="-1"></a>propulsiveness <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/propulsiveness202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -4522,7 +4526,7 @@ Load point
 </div>
 </div>
 </div>
-<p>Now that we have all the components, we will now generate the aspatial <code>data</code> that contains the following columns:</p>
+<p>Now that we have all the components, we will now generate the geospatial <code>data</code> that contains the following columns:</p>
 <ul>
 <li><p><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</p></li>
 <li><p><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</p></li>
@@ -4530,50 +4534,97 @@ Load point
 <li><p><code>TRIPS</code>: Number of bus trips between the origin and destination zones</p></li>
 <li><p><code>DEST_*_COUNT</code>: Values from [Attractiveness Variables Table (attractiveness)]</p></li>
 <li><p><code>ORIG_*_COUNT</code>: Values from [Propulsiveness Variables Table (propulsiveness)]</p></li>
+<li><p>Geometry containing the flowlines</p></li>
 </ul>
 <p>We will join the tables to generate this data.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-11-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-1" role="tab" aria-controls="tabset-11-1" aria-selected="true">Distance</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-2" role="tab" aria-controls="tabset-11-2" aria-selected="false">Trips</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-3" role="tab" aria-controls="tabset-11-3" aria-selected="false">Propulsive</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-4" role="tab" aria-controls="tabset-11-4" aria-selected="false">Attractive</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-11-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-1" role="tab" aria-controls="tabset-11-1" aria-selected="true">Flowlines</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-2" role="tab" aria-controls="tabset-11-2" aria-selected="false">Distance</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-3" role="tab" aria-controls="tabset-11-3" aria-selected="false">Propulsive</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-4" role="tab" aria-controls="tabset-11-4" aria-selected="false">Attractive</a></li></ul>
 <div class="tab-content">
 <div id="tabset-11-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-11-1-tab">
-<p><code>dist_tbl</code> covers all the pairs of hexagons from <code>honeycomb</code>. Hence, its number of rows is equal to the <strong>square of number of hexagons</strong> in <code>honeycomb</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb118"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(dist_tbl) <span class="sc">==</span> <span class="fu">nrow</span>(honeycomb)<span class="sc">^</span><span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
+<div class="sourceCode cell-code" id="cb118"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(flowlines))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">ORIG_HEX_ID</th>
+<th style="text-align: left;">DEST_HEX_ID</th>
+<th style="text-align: right;">TRIPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: left;">H0016</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">LINESTRING (4345.122 28430….</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: left;">H0017</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">LINESTRING (4345.122 28430….</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: left;">H0032</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">LINESTRING (4345.122 28430….</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">LINESTRING (4345.122 31028….</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: left;">H0022</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: left;">LINESTRING (4345.122 31028….</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: left;">H0028</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">LINESTRING (4345.122 31028….</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
-<p>With that, we will use it as the base for <code>model_data</code>.</p>
+<p><code>flowline</code> contains both the geometry of the flow lines and the <code>TRIPS</code> data so we will use it as the base of <code>SIM_data</code></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb120"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a>model_data <span class="ot">&lt;-</span> dist_tbl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb119"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> flowlines</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <div id="tabset-11-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-11-2-tab">
-<p>We will get the number of trips from <code>od_hex</code> and will join it with <code>model_data</code>.</p>
+<p><code>dist_tbl</code> covers all the pairs of hexagons from <code>honeycomb</code>. We will do a <code>left_join()</code> with <code>SIM_data</code> so we are only left with the pairs that have flows between them</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb121"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a>model_data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(model_data, od_hex)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb120"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(dist_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <div id="tabset-11-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-11-3-tab">
-<p>Propulsive forces come from the origin zone so we will join <code>propulsiveness</code> with <code>model_data</code> on <code>ORIG_HEX_ID</code>. We will also add the <code>ORIG_</code> prefix to the columns added in by <code>propulsiveness</code>.</p>
+<p>Propulsive forces come from the origin zone so we will join <code>propulsiveness</code> with <code>SIM_data</code> on <code>ORIG_HEX_ID</code>. We will also add the <code>ORIG_</code> prefix to the columns added in by <code>propulsiveness</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb122"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a>model_data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(</span>
-<span id="cb122-2"><a href="#cb122-2" aria-hidden="true" tabindex="-1"></a>  model_data,</span>
-<span id="cb122-3"><a href="#cb122-3" aria-hidden="true" tabindex="-1"></a>  propulsiveness <span class="sc">%&gt;%</span></span>
-<span id="cb122-4"><a href="#cb122-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb122-5"><a href="#cb122-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span><span class="fu">paste</span>(<span class="st">"ORIG_"</span>, .x, <span class="at">sep =</span> <span class="st">""</span>))</span>
-<span id="cb122-6"><a href="#cb122-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb121"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(</span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>  SIM_data,</span>
+<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a>  propulsiveness <span class="sc">%&gt;%</span></span>
+<span id="cb121-4"><a href="#cb121-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb121-5"><a href="#cb121-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span><span class="fu">paste</span>(<span class="st">"ORIG_"</span>, .x, <span class="at">sep =</span> <span class="st">""</span>))</span>
+<span id="cb121-6"><a href="#cb121-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <div id="tabset-11-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-11-4-tab">
-<p>Attractive forces come from the destination zone so we will join <code>attractiveness</code> with <code>model_data</code> on <code>DEST_HEX_ID</code>. We will also add the <code>DEST_</code> prefix to the columns added in by <code>attractiveness</code>.</p>
+<p>Attractive forces come from the destination zone so we will join <code>attractiveness</code> with <code>SIM_data</code> on <code>DEST_HEX_ID</code>. We will also add the <code>DEST_</code> prefix to the columns added in by <code>attractiveness</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb123"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a>model_data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(</span>
-<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a>  model_data,</span>
-<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a>  attractiveness <span class="sc">%&gt;%</span></span>
-<span id="cb123-4"><a href="#cb123-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb123-5"><a href="#cb123-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span><span class="fu">paste</span>(<span class="st">"DEST_"</span>, .x, <span class="at">sep =</span> <span class="st">""</span>))</span>
-<span id="cb123-6"><a href="#cb123-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb122"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(</span>
+<span id="cb122-2"><a href="#cb122-2" aria-hidden="true" tabindex="-1"></a>  SIM_data,</span>
+<span id="cb122-3"><a href="#cb122-3" aria-hidden="true" tabindex="-1"></a>  attractiveness <span class="sc">%&gt;%</span></span>
+<span id="cb122-4"><a href="#cb122-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb122-5"><a href="#cb122-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span><span class="fu">paste</span>(<span class="st">"DEST_"</span>, .x, <span class="at">sep =</span> <span class="st">""</span>))</span>
+<span id="cb122-6"><a href="#cb122-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4590,12 +4641,12 @@ Data clear point
 </div>
 <div id="callout-62" class="callout-62-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>We can now remove the data that we use to derive <code>model_data</code> from the environment.</p>
+<p>We can now remove the data that we use to derive <code>SIM_data</code> from the environment.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(attractiveness)</span>
-<span id="cb124-2"><a href="#cb124-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(propulsiveness)</span>
-<span id="cb124-3"><a href="#cb124-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(dist_tbl)</span>
-<span id="cb124-4"><a href="#cb124-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(od_hex)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb123"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(attractiveness)</span>
+<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(propulsiveness)</span>
+<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(dist_tbl)</span>
+<span id="cb123-4"><a href="#cb123-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(flowlines)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4603,88 +4654,115 @@ Data clear point
 </section>
 <section id="finishing-touches" class="level3">
 <h3 class="anchored" data-anchor-id="finishing-touches">Finishing touches</h3>
-<p>Let’s take a look at our <code>model_data</code>.</p>
+<p>Let’s take a look at our <code>SIM_data</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb125"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  ORIG_HEX_ID      DEST_HEX_ID        DISTANCE         TRIPS        
- H0001  :   831   H0001  :   831   Min.   :  200   Min.   :    1.0  
- H0002  :   831   H0002  :   831   1st Qu.: 8250   1st Qu.:    3.0  
- H0003  :   831   H0003  :   831   Median :13269   Median :   12.0  
- H0004  :   831   H0004  :   831   Mean   :14119   Mean   :   95.8  
- H0005  :   831   H0005  :   831   3rd Qu.:18929   3rd Qu.:   48.0  
- H0006  :   831   H0006  :   831   Max.   :44680   Max.   :12377.0  
- (Other):685575   (Other):685575                   NA's   :630726   
+<pre><code>  ORIG_HEX_ID     DEST_HEX_ID        TRIPS             DISTANCE    
+ H0515  :  307   H0515  :  314   Min.   :    1.00   Min.   :  200  
+ H0725  :  291   H0537  :  300   1st Qu.:    3.00   1st Qu.: 2704  
+ H0518  :  285   H0527  :  297   Median :   12.00   Median : 5250  
+ H0527  :  282   H0725  :  297   Mean   :   95.78   Mean   : 6118  
+ H0488  :  278   H0518  :  290   3rd Qu.:   48.00   3rd Qu.: 8518  
+ H0648  :  268   H0447  :  280   Max.   :12377.00   Max.   :24784  
+ (Other):58124   (Other):58057                                     
  ORIG_HDB_RESIDENT_COUNT ORIG_BUS_ALIGHT_COUNT ORIG_TRAIN_ALIGHT_COUNT
  Min.   :   0            Min.   :     0        Min.   :      0        
- 1st Qu.:   0            1st Qu.:   343        1st Qu.:      0        
- Median :   0            Median :  2579        Median :      0        
- Mean   :1306            Mean   :  7018        Mean   :  22982        
- 3rd Qu.:2289            3rd Qu.:  9025        3rd Qu.:      0        
- Max.   :7946            Max.   :108111        Max.   :2280278        
+ 1st Qu.:   0            1st Qu.:  3459        1st Qu.:      0        
+ Median : 932            Median :  8693        Median :      0        
+ Mean   :1850            Mean   : 14147        Mean   :  59925        
+ 3rd Qu.:3351            3rd Qu.: 16757        3rd Qu.:  29508        
+ Max.   :7946            Max.   :108111        Max.   :2229188        
                                                                       
  DEST_BUS_STOP_COUNT DEST_ENTERTN_COUNT DEST_F_AND_B_COUNT DEST_LEISURE_COUNT
- Min.   : 1.000      Min.   :0.0000     Min.   :  0.000    Min.   : 0.000    
- 1st Qu.: 3.000      1st Qu.:0.0000     1st Qu.:  0.000    1st Qu.: 0.000    
- Median : 6.000      Median :0.0000     Median :  0.000    Median : 0.000    
- Mean   : 6.205      Mean   :0.1336     Mean   :  2.212    Mean   : 1.312    
- 3rd Qu.: 9.000      3rd Qu.:0.0000     3rd Qu.:  1.000    3rd Qu.: 1.000    
- Max.   :19.000      Max.   :9.0000     Max.   :133.000    Max.   :41.000    
+ Min.   : 1.00       Min.   :0.0000     Min.   :  0.000    Min.   : 0.000    
+ 1st Qu.: 5.00       1st Qu.:0.0000     1st Qu.:  0.000    1st Qu.: 0.000    
+ Median : 8.00       Median :0.0000     Median :  0.000    Median : 1.000    
+ Mean   : 7.96       Mean   :0.3443     Mean   :  5.697    Mean   : 2.337    
+ 3rd Qu.:10.00       3rd Qu.:0.0000     3rd Qu.:  2.000    3rd Qu.: 3.000    
+ Max.   :19.00       Max.   :9.0000     Max.   :133.000    Max.   :41.000    
                                                                              
- DEST_RETAIL_COUNT DEST_TRAIN_EXITS_COUNT DEST_HDB_COUNT 
- Min.   :   0.0    Min.   : 0.0000        Min.   :  0.0  
- 1st Qu.:   1.0    1st Qu.: 0.0000        1st Qu.:  0.0  
- Median :   8.0    Median : 0.0000        Median :  0.0  
- Mean   :  44.2    Mean   : 0.6739        Mean   : 14.9  
- 3rd Qu.:  37.0    3rd Qu.: 0.0000        3rd Qu.: 27.0  
- Max.   :1678.0    Max.   :13.0000        Max.   :103.0  
-                                                         </code></pre>
+ DEST_RETAIL_COUNT DEST_TRAIN_EXITS_COUNT DEST_HDB_COUNT  
+ Min.   :   0.00   Min.   : 0.000         Min.   :  0.00  
+ 1st Qu.:   7.00   1st Qu.: 0.000         1st Qu.:  0.00  
+ Median :  31.00   Median : 0.000         Median : 12.00  
+ Mean   :  98.33   Mean   : 1.375         Mean   : 20.81  
+ 3rd Qu.: 110.00   3rd Qu.: 2.000         3rd Qu.: 36.00  
+ Max.   :1678.00   Max.   :13.000         Max.   :103.00  
+                                                          
+          geometry    
+ LINESTRING   :59835  
+ epsg:3414    :    0  
+ +proj=tmer...:    0  
+                      
+                      
+                      
+                      </code></pre>
 </div>
 </div>
-<p>We will make finishing touches on <code>model_data</code>, so that they are compatible with modelling. We need to remove the 0’s as we will apply <em>log</em> function to them, which will result to <em>undefined</em>. We will set them to <strong>0.99</strong></p>
+<p>We will make finishing touches on <code>SIM_data</code>, so that they are compatible with modelling. We need to remove the 0’s as we will apply <em>log</em> function to them, which will result to <em>undefined</em>. We will set them to <strong>0.99</strong> so we are aware that <strong>.</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb127"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a>model_data[model_data <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Also, some values of <code>TRIPS</code> are <code>NA</code>. We will also set them to <code>0</code>. We are not applying <em>log</em> to <code>TRIPS</code> in the model as it is the dependent variable so they are fine to be <code>0</code>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb128"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a>model_data<span class="sc">$</span>TRIPS[<span class="fu">is.na</span>(model_data<span class="sc">$</span>TRIPS)] <span class="ot">&lt;-</span> <span class="dv">0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb126"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a>replace_zeroes <span class="ot">&lt;-</span> <span class="cf">function</span>(data, col_name) {</span>
+<span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a>  data[[col_name]][data[[col_name]] <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
+<span id="cb126-3"><a href="#cb126-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb126-4"><a href="#cb126-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(data)</span>
+<span id="cb126-5"><a href="#cb126-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb126-6"><a href="#cb126-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb126-7"><a href="#cb126-7" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span></span>
+<span id="cb126-8"><a href="#cb126-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_HDB_RESIDENT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-9"><a href="#cb126-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_BUS_ALIGHT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-10"><a href="#cb126-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"ORIG_TRAIN_ALIGHT_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-11"><a href="#cb126-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_ENTERTN_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-12"><a href="#cb126-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_F_AND_B_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-13"><a href="#cb126-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_LEISURE_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-14"><a href="#cb126-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_RETAIL_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-15"><a href="#cb126-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_TRAIN_EXITS_COUNT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb126-16"><a href="#cb126-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replace_zeroes</span>(<span class="st">"DEST_HDB_COUNT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s check the data again.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb129"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb127"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  ORIG_HEX_ID      DEST_HEX_ID        DISTANCE         TRIPS          
- H0001  :   831   H0001  :   831   Min.   :  200   Min.   :    0.000  
- H0002  :   831   H0002  :   831   1st Qu.: 8250   1st Qu.:    0.000  
- H0003  :   831   H0003  :   831   Median :13269   Median :    0.000  
- H0004  :   831   H0004  :   831   Mean   :14119   Mean   :    8.299  
- H0005  :   831   H0005  :   831   3rd Qu.:18929   3rd Qu.:    0.000  
- H0006  :   831   H0006  :   831   Max.   :44680   Max.   :12377.000  
- (Other):685575   (Other):685575                                      
+<pre><code>  ORIG_HEX_ID     DEST_HEX_ID        TRIPS             DISTANCE    
+ H0515  :  307   H0515  :  314   Min.   :    1.00   Min.   :  200  
+ H0725  :  291   H0537  :  300   1st Qu.:    3.00   1st Qu.: 2704  
+ H0518  :  285   H0527  :  297   Median :   12.00   Median : 5250  
+ H0527  :  282   H0725  :  297   Mean   :   95.78   Mean   : 6118  
+ H0488  :  278   H0518  :  290   3rd Qu.:   48.00   3rd Qu.: 8518  
+ H0648  :  268   H0447  :  280   Max.   :12377.00   Max.   :24784  
+ (Other):58124   (Other):58057                                     
  ORIG_HDB_RESIDENT_COUNT ORIG_BUS_ALIGHT_COUNT ORIG_TRAIN_ALIGHT_COUNT
  Min.   :   0.99         Min.   :     0.99     Min.   :      1        
- 1st Qu.:   0.99         1st Qu.:   343.00     1st Qu.:      1        
- Median :   0.99         Median :  2579.00     Median :      1        
- Mean   :1306.43         Mean   :  7017.73     Mean   :  22983        
- 3rd Qu.:2289.00         3rd Qu.:  9025.00     3rd Qu.:      1        
- Max.   :7946.00         Max.   :108111.00     Max.   :2280278        
+ 1st Qu.:   0.99         1st Qu.:  3459.00     1st Qu.:      1        
+ Median : 932.00         Median :  8693.00     Median :      1        
+ Mean   :1850.69         Mean   : 14146.88     Mean   :  59926        
+ 3rd Qu.:3351.00         3rd Qu.: 16757.00     3rd Qu.:  29508        
+ Max.   :7946.00         Max.   :108111.00     Max.   :2229188        
                                                                       
  DEST_BUS_STOP_COUNT DEST_ENTERTN_COUNT DEST_F_AND_B_COUNT DEST_LEISURE_COUNT
- Min.   : 1.000      Min.   :0.990      Min.   :  0.990    Min.   : 0.99     
- 1st Qu.: 3.000      1st Qu.:0.990      1st Qu.:  0.990    1st Qu.: 0.99     
- Median : 6.000      Median :0.990      Median :  0.990    Median : 0.99     
- Mean   : 6.205      Mean   :1.056      Mean   :  2.925    Mean   : 1.87     
- 3rd Qu.: 9.000      3rd Qu.:0.990      3rd Qu.:  1.000    3rd Qu.: 1.00     
- Max.   :19.000      Max.   :9.000      Max.   :133.000    Max.   :41.00     
+ Min.   : 1.00       Min.   :0.990      Min.   :  0.990    Min.   : 0.990    
+ 1st Qu.: 5.00       1st Qu.:0.990      1st Qu.:  0.990    1st Qu.: 0.990    
+ Median : 8.00       Median :0.990      Median :  0.990    Median : 1.000    
+ Mean   : 7.96       Mean   :1.187      Mean   :  6.215    Mean   : 2.726    
+ 3rd Qu.:10.00       3rd Qu.:0.990      3rd Qu.:  2.000    3rd Qu.: 3.000    
+ Max.   :19.00       Max.   :9.000      Max.   :133.000    Max.   :41.000    
                                                                              
  DEST_RETAIL_COUNT DEST_TRAIN_EXITS_COUNT DEST_HDB_COUNT  
  Min.   :   0.99   Min.   : 0.990         Min.   :  0.99  
- 1st Qu.:   1.00   1st Qu.: 0.990         1st Qu.:  0.99  
- Median :   8.00   Median : 0.990         Median :  0.99  
- Mean   :  44.40   Mean   : 1.445         Mean   : 15.42  
- 3rd Qu.:  37.00   3rd Qu.: 0.990         3rd Qu.: 27.00  
+ 1st Qu.:   7.00   1st Qu.: 0.990         1st Qu.:  0.99  
+ Median :  31.00   Median : 0.990         Median : 12.00  
+ Mean   :  98.39   Mean   : 1.981         Mean   : 21.14  
+ 3rd Qu.: 110.00   3rd Qu.: 2.000         3rd Qu.: 36.00  
  Max.   :1678.00   Max.   :13.000         Max.   :103.00  
-                                                          </code></pre>
+                                                          
+          geometry    
+ LINESTRING   :59835  
+ epsg:3414    :    0  
+ +proj=tmer...:    0  
+                      
+                      
+                      
+                      </code></pre>
 </div>
 </div>
 <div class="callout callout-style-default callout-tip callout-titled">
@@ -4699,9 +4777,9 @@ Save point
 </div>
 <div id="callout-63" class="callout-63-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>Let’s save <code>model_data</code> as it contains the data we need for our models.</p>
+<p>Let’s save <code>SIM_data</code> as it contains the data we need for our models.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb131"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(model_data, <span class="st">"data/rds/model_data202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb129"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(SIM_data, <span class="st">"data/rds/SIM_data202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4718,9 +4796,9 @@ Data clear point
 </div>
 <div id="callout-64" class="callout-64-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>We won’t need the <code>model_data</code> for a while so we can remove it from the environment.</p>
+<p>We won’t need the <code>SIM_data</code> for a while so we can remove it from the environment.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb132"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(model_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb130"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4744,12 +4822,12 @@ Load point
 <div class="callout-body-container callout-body">
 <p>We can start from this point by loading the relevant datasets.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb133"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/mpsz.rds"</span>)</span>
-<span id="cb133-2"><a href="#cb133-2" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb.rds"</span>)</span>
-<span id="cb133-3"><a href="#cb133-3" aria-hidden="true" tabindex="-1"></a>flowlines <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/flowlines202310.rds"</span>)</span>
-<span id="cb133-4"><a href="#cb133-4" aria-hidden="true" tabindex="-1"></a>model_data <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/model_data202310.rds"</span>)</span>
-<span id="cb133-5"><a href="#cb133-5" aria-hidden="true" tabindex="-1"></a>propulsiveness <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/propulsiveness202310.rds"</span>)</span>
-<span id="cb133-6"><a href="#cb133-6" aria-hidden="true" tabindex="-1"></a>attractiveness <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/attractiveness.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb131"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/mpsz.rds"</span>)</span>
+<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a>honeycomb <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/honeycomb.rds"</span>)</span>
+<span id="cb131-3"><a href="#cb131-3" aria-hidden="true" tabindex="-1"></a>flowlines <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/flowlines202310.rds"</span>)</span>
+<span id="cb131-4"><a href="#cb131-4" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/SIM_data202310.rds"</span>)</span>
+<span id="cb131-5"><a href="#cb131-5" aria-hidden="true" tabindex="-1"></a>propulsiveness <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/propulsiveness202310.rds"</span>)</span>
+<span id="cb131-6"><a href="#cb131-6" aria-hidden="true" tabindex="-1"></a>attractiveness <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/attractiveness.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4759,14 +4837,14 @@ Load point
 <p>We already did initial visualization of the flow lines in <a href="#initial-inspection-of-the-flow-lines">Initial inspection of the flow lines</a>. However, there plot is very messy because of the number of lines.</p>
 <p>We will remove intra-zonal flows to reduce the number of flow lines.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb134"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a>flowlines_no_intra <span class="ot">&lt;-</span> flowlines <span class="sc">%&gt;%</span></span>
-<span id="cb134-2"><a href="#cb134-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ORIG_HEX_ID <span class="sc">!=</span> DEST_HEX_ID)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb132"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a>flowlines_no_intra <span class="ot">&lt;-</span> flowlines <span class="sc">%&gt;%</span></span>
+<span id="cb132-2"><a href="#cb132-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ORIG_HEX_ID <span class="sc">!=</span> DEST_HEX_ID)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We need to look at the busiest zone pairs more closely so we will filter those with lower traffic.</p>
 <p>We will use <code>quantile()</code> to find and appropriate cut-off number.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb135"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb135-1"><a href="#cb135-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(flowlines_no_intra<span class="sc">$</span>TRIPS,</span>
-<span id="cb135-2"><a href="#cb135-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>, <span class="fl">0.99</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb133"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(flowlines_no_intra<span class="sc">$</span>TRIPS,</span>
+<span id="cb133-2"><a href="#cb133-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>, <span class="fl">0.99</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     80%      90%      95%      99%     100% 
    66.00   171.00   376.25  1510.00 12377.00 </code></pre>
@@ -4776,33 +4854,33 @@ Load point
 <div class="cell">
 <details>
 <summary><strong>Show the code</strong></summary>
-<div class="sourceCode cell-code" id="cb137"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
-<span id="cb137-2"><a href="#cb137-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb137-3"><a href="#cb137-3" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb137-4"><a href="#cb137-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
-<span id="cb137-5"><a href="#cb137-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb137-6"><a href="#cb137-6" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb137-7"><a href="#cb137-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(flowlines_no_intra <span class="sc">%&gt;%</span> <span class="fu">filter</span>(TRIPS <span class="sc">&gt;</span> <span class="dv">376</span>)) <span class="sc">+</span></span>
-<span id="cb137-8"><a href="#cb137-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>(<span class="at">lwd =</span> <span class="st">"TRIPS"</span>,</span>
-<span id="cb137-9"><a href="#cb137-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb137-10"><a href="#cb137-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">col =</span> <span class="st">"red"</span>,</span>
-<span id="cb137-11"><a href="#cb137-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">scale =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>),</span>
-<span id="cb137-12"><a href="#cb137-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">title.lwd =</span> <span class="st">"# of bus trips"</span>,</span>
-<span id="cb137-13"><a href="#cb137-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
-<span id="cb137-14"><a href="#cb137-14" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb137-15"><a href="#cb137-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Top 5% Bus Passenger flow for Weekends/Holidays 11 AM - 2PM (October 2023)"</span>,</span>
-<span id="cb137-16"><a href="#cb137-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
-<span id="cb137-17"><a href="#cb137-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
-<span id="cb137-18"><a href="#cb137-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
-<span id="cb137-19"><a href="#cb137-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
-<span id="cb137-20"><a href="#cb137-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
-<span id="cb137-21"><a href="#cb137-21" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb137-22"><a href="#cb137-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb137-23"><a href="#cb137-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb137-24"><a href="#cb137-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb135"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb135-1"><a href="#cb135-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb135-2"><a href="#cb135-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb135-3"><a href="#cb135-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb135-4"><a href="#cb135-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb135-5"><a href="#cb135-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Hexagons"</span>, <span class="at">alpha =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb135-6"><a href="#cb135-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb135-7"><a href="#cb135-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(flowlines_no_intra <span class="sc">%&gt;%</span> <span class="fu">filter</span>(TRIPS <span class="sc">&gt;</span> <span class="dv">376</span>)) <span class="sc">+</span></span>
+<span id="cb135-8"><a href="#cb135-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>(<span class="at">lwd =</span> <span class="st">"TRIPS"</span>,</span>
+<span id="cb135-9"><a href="#cb135-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb135-10"><a href="#cb135-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">col =</span> <span class="st">"red"</span>,</span>
+<span id="cb135-11"><a href="#cb135-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">scale =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>),</span>
+<span id="cb135-12"><a href="#cb135-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">title.lwd =</span> <span class="st">"# of bus trips"</span>,</span>
+<span id="cb135-13"><a href="#cb135-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb135-14"><a href="#cb135-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb135-15"><a href="#cb135-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Top 5% Bus Passenger flow for Weekends/Holidays 11 AM - 2PM (October 2023)"</span>,</span>
+<span id="cb135-16"><a href="#cb135-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb135-17"><a href="#cb135-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb135-18"><a href="#cb135-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb135-19"><a href="#cb135-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb135-20"><a href="#cb135-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb135-21"><a href="#cb135-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb135-22"><a href="#cb135-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb135-23"><a href="#cb135-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb135-24"><a href="#cb135-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-119-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-118-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="callout callout-style-simple callout-tip callout-titled">
@@ -4826,21 +4904,31 @@ Insights
 <div class="cell">
 <details>
 <summary><strong>Show the code</strong></summary>
-<div class="sourceCode cell-code" id="cb138"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(model_data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(TRIPS <span class="sc">&gt;</span> <span class="dv">0</span>),</span>
-<span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> DISTANCE, <span class="at">y =</span> TRIPS)) <span class="sc">+</span></span>
-<span id="cb138-3"><a href="#cb138-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb138-4"><a href="#cb138-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fl">376.25</span>, <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb138-5"><a href="#cb138-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="dv">20000</span>,</span>
-<span id="cb138-6"><a href="#cb138-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="dv">600</span>, <span class="at">label =</span> <span class="st">"95th percentile"</span>,</span>
-<span id="cb138-7"><a href="#cb138-7" aria-hidden="true" tabindex="-1"></a>           <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.1</span>, <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb138-8"><a href="#cb138-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">1510</span>, <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb138-9"><a href="#cb138-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="dv">20000</span>,</span>
-<span id="cb138-10"><a href="#cb138-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="dv">1800</span>, <span class="at">label =</span> <span class="st">"99th percentile"</span>,</span>
-<span id="cb138-11"><a href="#cb138-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.1</span>, <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb138-12"><a href="#cb138-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Number of Trips as a Function of Distance"</span>,</span>
-<span id="cb138-13"><a href="#cb138-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Distance (m)"</span>,</span>
-<span id="cb138-14"><a href="#cb138-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Number of Trips"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb136"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb136-1"><a href="#cb136-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(SIM_data,</span>
+<span id="cb136-2"><a href="#cb136-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> DISTANCE, <span class="at">y =</span> TRIPS)) <span class="sc">+</span></span>
+<span id="cb136-3"><a href="#cb136-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb136-4"><a href="#cb136-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fl">376.25</span>, <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb136-5"><a href="#cb136-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="dv">20000</span>,</span>
+<span id="cb136-6"><a href="#cb136-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="dv">600</span>, <span class="at">label =</span> <span class="st">"95th percentile"</span>,</span>
+<span id="cb136-7"><a href="#cb136-7" aria-hidden="true" tabindex="-1"></a>           <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.1</span>, <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb136-8"><a href="#cb136-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">1510</span>, <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb136-9"><a href="#cb136-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="dv">20000</span>,</span>
+<span id="cb136-10"><a href="#cb136-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="dv">1800</span>, <span class="at">label =</span> <span class="st">"99th percentile"</span>,</span>
+<span id="cb136-11"><a href="#cb136-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.1</span>, <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb136-12"><a href="#cb136-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Number of Trips as a Function of Distance"</span>,</span>
+<span id="cb136-13"><a href="#cb136-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Distance (m)"</span>,</span>
+<span id="cb136-14"><a href="#cb136-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Number of Trips"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-119-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Plotting it in a <em>log</em> scale shows a more linear relationship.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb137"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(SIM_data,</span>
+<span id="cb137-2"><a href="#cb137-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">log</span>(DISTANCE), <span class="at">y =</span> <span class="fu">log</span>(TRIPS))) <span class="sc">+</span></span>
+<span id="cb137-3"><a href="#cb137-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb137-4"><a href="#cb137-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-120-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -4855,13 +4943,25 @@ Insights
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>As we can see in this plot, the distance decay can still be seen in the plot, as the <em>maximum number of trips</em> decrease as the distance increases.</p>
+<p>The <em>maximum number of trips</em> <strong>exponentially decrease</strong> as the distance increases, which means that generally, the farther the distance, the less trips there are.</p>
 <p>However, some outliers can be observed like some zone pairs with almost 20km distance between them having close to 99th percentile of <code>TRIP</code> values. In these zone pairs, there could be strong propulsive or attractive forces attracting passengers to ride the bus between those zones.</p>
 </div>
 </div>
+<p>In <strong>doubly-constrained model</strong>, we will observe this relationship more closely as we will build the model <strong>without attractive and propulsive</strong> forces.</p>
 </section>
 <section id="visualizing-propulsive-forces" class="level2">
 <h2 class="anchored" data-anchor-id="visualizing-propulsive-forces">Visualizing propulsive forces</h2>
+<p>We will plot the propulsive forces in their own choropleth maps so we can see if the top 5% busiest flows correspond to areas we hypothesize to have high propulsive forces, of influence the number of trips started from the origin.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>We will use tabsets so that we can compare each map by switching tabs.</p>
+</div>
+</div>
+</div>
 <div class="callout callout-style-simple callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-68-contents" aria-controls="callout-68" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -4876,39 +4976,42 @@ Helper function
 <div class="callout-body-container callout-body">
 <p>We will use the following function to plot the maps in this section.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb139"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a>plot_propulsive <span class="ot">&lt;-</span> <span class="cf">function</span>(var_name, title_comp) {</span>
-<span id="cb139-2"><a href="#cb139-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
-<span id="cb139-3"><a href="#cb139-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"white"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>) <span class="sc">+</span></span>
-<span id="cb139-4"><a href="#cb139-4" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb139-5"><a href="#cb139-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
-<span id="cb139-6"><a href="#cb139-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
-<span id="cb139-7"><a href="#cb139-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(propulsiveness <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">across</span>(var_name, <span class="sc">~</span>. <span class="sc">&gt;</span> <span class="dv">0</span>))) <span class="sc">+</span></span>
-<span id="cb139-8"><a href="#cb139-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(var_name, <span class="at">palette =</span> <span class="st">"Greens"</span>, <span class="at">style =</span> <span class="st">"quantile"</span>) <span class="sc">+</span></span>
-<span id="cb139-9"><a href="#cb139-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb139-10"><a href="#cb139-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(flowlines_no_intra <span class="sc">%&gt;%</span> <span class="fu">filter</span>(TRIPS <span class="sc">&gt;</span> <span class="dv">376</span>)) <span class="sc">+</span></span>
-<span id="cb139-11"><a href="#cb139-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>(<span class="at">lwd =</span> <span class="st">"TRIPS"</span>,</span>
-<span id="cb139-12"><a href="#cb139-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb139-13"><a href="#cb139-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">col =</span> <span class="st">"red"</span>,</span>
-<span id="cb139-14"><a href="#cb139-14" aria-hidden="true" tabindex="-1"></a>           <span class="at">scale =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">10</span>),</span>
-<span id="cb139-15"><a href="#cb139-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">title.lwd =</span> <span class="st">"# of bus trips"</span>,</span>
-<span id="cb139-16"><a href="#cb139-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">n =</span> <span class="dv">6</span>,</span>
-<span id="cb139-17"><a href="#cb139-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb139-18"><a href="#cb139-18" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb139-19"><a href="#cb139-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="fu">paste</span>(<span class="st">"Top 5% Bus Passenger Flows and "</span>, title_comp),</span>
-<span id="cb139-20"><a href="#cb139-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
-<span id="cb139-21"><a href="#cb139-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
-<span id="cb139-22"><a href="#cb139-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
-<span id="cb139-23"><a href="#cb139-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
-<span id="cb139-24"><a href="#cb139-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
-<span id="cb139-25"><a href="#cb139-25" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb139-26"><a href="#cb139-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.7</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
-<span id="cb139-27"><a href="#cb139-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>,</span>
-<span id="cb139-28"><a href="#cb139-28" aria-hidden="true" tabindex="-1"></a>             <span class="at">bg.alpha =</span> <span class="fl">0.5</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
-<span id="cb139-29"><a href="#cb139-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb139-30"><a href="#cb139-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_credits</span>(<span class="st">"*Passenger data from weekend/holidays 11AM - 2PM</span><span class="sc">\n</span><span class="st">(October 2023)"</span>,</span>
-<span id="cb139-31"><a href="#cb139-31" aria-hidden="true" tabindex="-1"></a>             <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.7</span>,</span>
-<span id="cb139-32"><a href="#cb139-32" aria-hidden="true" tabindex="-1"></a>             <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span>
-<span id="cb139-33"><a href="#cb139-33" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb138"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a>plot_propulsive <span class="ot">&lt;-</span> <span class="cf">function</span>(var_name, title_comp) {</span>
+<span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb138-3"><a href="#cb138-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>) <span class="sc">+</span></span>
+<span id="cb138-4"><a href="#cb138-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb138-5"><a href="#cb138-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Adding this layer underneath propulsiveness as we removed 0s. from the map</span></span>
+<span id="cb138-6"><a href="#cb138-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># so it won't skew the legend</span></span>
+<span id="cb138-7"><a href="#cb138-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb138-8"><a href="#cb138-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb138-9"><a href="#cb138-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb138-10"><a href="#cb138-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(propulsiveness <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">if_any</span>(var_name, <span class="sc">~</span>. <span class="sc">&gt;=</span> <span class="dv">1</span>))) <span class="sc">+</span></span>
+<span id="cb138-11"><a href="#cb138-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(var_name, <span class="at">palette =</span> <span class="st">"Blues"</span>, <span class="at">style =</span> <span class="st">"quantile"</span>) <span class="sc">+</span></span>
+<span id="cb138-12"><a href="#cb138-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb138-13"><a href="#cb138-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(flowlines_no_intra <span class="sc">%&gt;%</span> <span class="fu">filter</span>(TRIPS <span class="sc">&gt;</span> <span class="dv">376</span>)) <span class="sc">+</span></span>
+<span id="cb138-14"><a href="#cb138-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>(<span class="at">lwd =</span> <span class="st">"TRIPS"</span>,</span>
+<span id="cb138-15"><a href="#cb138-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb138-16"><a href="#cb138-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">col =</span> <span class="st">"red"</span>,</span>
+<span id="cb138-17"><a href="#cb138-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">scale =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">10</span>),</span>
+<span id="cb138-18"><a href="#cb138-18" aria-hidden="true" tabindex="-1"></a>           <span class="at">title.lwd =</span> <span class="st">"# of bus trips"</span>,</span>
+<span id="cb138-19"><a href="#cb138-19" aria-hidden="true" tabindex="-1"></a>           <span class="at">n =</span> <span class="dv">6</span>,</span>
+<span id="cb138-20"><a href="#cb138-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb138-21"><a href="#cb138-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb138-22"><a href="#cb138-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="fu">paste</span>(<span class="st">"Top 5% Bus Passenger Flows and"</span>, title_comp),</span>
+<span id="cb138-23"><a href="#cb138-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb138-24"><a href="#cb138-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb138-25"><a href="#cb138-25" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb138-26"><a href="#cb138-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb138-27"><a href="#cb138-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb138-28"><a href="#cb138-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb138-29"><a href="#cb138-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.7</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb138-30"><a href="#cb138-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>,</span>
+<span id="cb138-31"><a href="#cb138-31" aria-hidden="true" tabindex="-1"></a>             <span class="at">bg.alpha =</span> <span class="fl">0.5</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb138-32"><a href="#cb138-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb138-33"><a href="#cb138-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_credits</span>(<span class="st">"*Passenger data from weekend/holidays 11AM - 2PM</span><span class="sc">\n</span><span class="st">(October 2023)"</span>,</span>
+<span id="cb138-34"><a href="#cb138-34" aria-hidden="true" tabindex="-1"></a>             <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.7</span>,</span>
+<span id="cb138-35"><a href="#cb138-35" aria-hidden="true" tabindex="-1"></a>             <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span>
+<span id="cb138-36"><a href="#cb138-36" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -4918,7 +5021,7 @@ Helper function
 <div class="tab-content">
 <div id="tabset-12-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-12-1-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb140"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"HDB_RESIDENT_COUNT"</span>, <span class="st">"HDB Population"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb139"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"HDB_RESIDENT_COUNT"</span>, <span class="st">"HDB Population"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-122-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -4926,7 +5029,7 @@ Helper function
 </div>
 <div id="tabset-12-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-12-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb141"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"TRAIN_ALIGHT_COUNT"</span>, <span class="st">"Potential Transfers from Train"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb140"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"TRAIN_ALIGHT_COUNT"</span>, <span class="st">"Potential Transfers from Train"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-123-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -4934,7 +5037,7 @@ Helper function
 </div>
 <div id="tabset-12-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-12-3-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb142"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"BUS_ALIGHT_COUNT"</span>, <span class="st">"Potential Transfers from Bus"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb141"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"BUS_ALIGHT_COUNT"</span>, <span class="st">"Potential Transfers from Bus"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-124-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -4942,9 +5045,203 @@ Helper function
 </div>
 </div>
 </div>
-
-
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Upon visual inspection, HDB population and bus alights from zones correspond more closely with our flowlines. Residential areas have a lot of potential passengers in those areas.</p>
+<p>There are less train station exits than bus stops but it can be observed that flowlines also converge on some zones where train stations are.</p>
+<p>Lastly, we get bus alight data from the same data source or flowlines so they are expected to correspond more closely. We should be aware that flow line includes the <strong>destination</strong> so the correspondence may due on the destination, not the origin as we hypothesized.</p>
+</div>
+</div>
+<p>In <strong>destination-constrained model</strong>, the effects of propulsive forces will be highlighted as we will model the interaction <strong>without the attractive forces</strong>.</p>
 </section>
+<section id="visualizing-attractive-forces" class="level2">
+<h2 class="anchored" data-anchor-id="visualizing-attractive-forces">Visualizing attractive forces</h2>
+<p>We will plot the attractive forces in their own choropleth maps so we can see if the top 5% busiest flows correspond to areas we hypothesize have high attractive forces, influencing passengers to make trip to those zonoe..</p>
+<p>We will use tabsets so that we can compare each map by switching tabs.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-70-contents" aria-controls="callout-70" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Helper function
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-70" class="callout-70-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We will use the following function to plot the maps in this section.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb142"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a>plot_attractive <span class="ot">&lt;-</span> <span class="cf">function</span>(var_name, title_comp) {</span>
+<span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(mpsz) <span class="sc">+</span></span>
+<span id="cb142-3"><a href="#cb142-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="st">"green"</span>, <span class="at">title =</span> <span class="st">"Singapore Boundary"</span>) <span class="sc">+</span></span>
+<span id="cb142-4"><a href="#cb142-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb142-5"><a href="#cb142-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Adding this layer underneath attractiveness as we removed 0s. from the map</span></span>
+<span id="cb142-6"><a href="#cb142-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># so it won't skew the legend</span></span>
+<span id="cb142-7"><a href="#cb142-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(honeycomb) <span class="sc">+</span></span>
+<span id="cb142-8"><a href="#cb142-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb142-9"><a href="#cb142-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb142-10"><a href="#cb142-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(attractiveness <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">if_any</span>(var_name, <span class="sc">~</span>. <span class="sc">&gt;=</span> <span class="dv">1</span>))) <span class="sc">+</span></span>
+<span id="cb142-11"><a href="#cb142-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(var_name, <span class="at">palette =</span> <span class="st">"Purples"</span>, <span class="at">style =</span> <span class="st">"quantile"</span>) <span class="sc">+</span></span>
+<span id="cb142-12"><a href="#cb142-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb142-13"><a href="#cb142-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(flowlines_no_intra <span class="sc">%&gt;%</span> <span class="fu">filter</span>(TRIPS <span class="sc">&gt;</span> <span class="dv">376</span>)) <span class="sc">+</span></span>
+<span id="cb142-14"><a href="#cb142-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>(<span class="at">lwd =</span> <span class="st">"TRIPS"</span>,</span>
+<span id="cb142-15"><a href="#cb142-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
+<span id="cb142-16"><a href="#cb142-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">col =</span> <span class="st">"red"</span>,</span>
+<span id="cb142-17"><a href="#cb142-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">scale =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">10</span>),</span>
+<span id="cb142-18"><a href="#cb142-18" aria-hidden="true" tabindex="-1"></a>           <span class="at">title.lwd =</span> <span class="st">"# of bus trips"</span>,</span>
+<span id="cb142-19"><a href="#cb142-19" aria-hidden="true" tabindex="-1"></a>           <span class="at">n =</span> <span class="dv">6</span>,</span>
+<span id="cb142-20"><a href="#cb142-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb142-21"><a href="#cb142-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb142-22"><a href="#cb142-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="fu">paste</span>(<span class="st">"Top 5% Bus Passenger Flows and"</span>, title_comp),</span>
+<span id="cb142-23"><a href="#cb142-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb142-24"><a href="#cb142-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="fl">1.0</span>,</span>
+<span id="cb142-25"><a href="#cb142-25" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="fl">0.35</span>, </span>
+<span id="cb142-26"><a href="#cb142-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb142-27"><a href="#cb142-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb142-28"><a href="#cb142-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb142-29"><a href="#cb142-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scale_bar</span>(<span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.7</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb142-30"><a href="#cb142-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">bg.color =</span> <span class="st">"white"</span>,</span>
+<span id="cb142-31"><a href="#cb142-31" aria-hidden="true" tabindex="-1"></a>             <span class="at">bg.alpha =</span> <span class="fl">0.5</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb142-32"><a href="#cb142-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb142-33"><a href="#cb142-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_credits</span>(<span class="st">"*Passenger data from weekend/holidays 11AM - 2PM</span><span class="sc">\n</span><span class="st">(October 2023)"</span>,</span>
+<span id="cb142-34"><a href="#cb142-34" aria-hidden="true" tabindex="-1"></a>             <span class="at">bg.color =</span> <span class="st">"white"</span>, <span class="at">bg.alpha =</span> <span class="fl">0.7</span>,</span>
+<span id="cb142-35"><a href="#cb142-35" aria-hidden="true" tabindex="-1"></a>             <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span>
+<span id="cb142-36"><a href="#cb142-36" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-13-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-1" role="tab" aria-controls="tabset-13-1" aria-selected="true">Bus Stops</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-13-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-2" role="tab" aria-controls="tabset-13-2" aria-selected="false">Train Stations</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-13-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-3" role="tab" aria-controls="tabset-13-3" aria-selected="false">HDBs</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-13-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-4" role="tab" aria-controls="tabset-13-4" aria-selected="false">Entertainment</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-13-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-5" role="tab" aria-controls="tabset-13-5" aria-selected="false">F&amp;B</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-13-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-6" role="tab" aria-controls="tabset-13-6" aria-selected="false">Leisure &amp; Recreaction</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-13-7-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-7" role="tab" aria-controls="tabset-13-7" aria-selected="false">Retail</a></li></ul>
+<div class="tab-content">
+<div id="tabset-13-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-13-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb143"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"BUS_STOP_COUNT"</span>, <span class="st">"Number of Bus Stops"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-126-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-13-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-13-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb144"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"TRAIN_EXITS_COUNT"</span>, <span class="st">"Number of Train Stations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-127-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-13-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-13-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb145"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"HDB_COUNT"</span>, <span class="st">"Number of HDB blocks"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-128-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-13-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-13-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb146"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb146-1"><a href="#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"ENTERTN_COUNT"</span>, <span class="st">"Number of Entertainment Locations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-129-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-13-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-13-5-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb147"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"F_AND_B_COUNT"</span>, <span class="st">"Number of F&amp;B Outlets"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-130-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-13-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-13-6-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb148"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb148-1"><a href="#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"LEISURE_COUNT"</span>, <span class="st">"Number of Leisure &amp; Recreation Locations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-131-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-13-7" class="tab-pane" role="tabpanel" aria-labelledby="tabset-13-7-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb149"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"RETAIL_COUNT"</span>, <span class="st">"Number of Retail Outlets"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-132-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>There are less location types than the others, like entertainment and leisure locations.</p>
+<p>There are also location types that are heavily concentrated in some zones, like the entertainment and F&amp;B, which are heavily concentrated around the <strong>Orchard area</strong>. Conversely, there are much less HDBs in Orchard area. Even though the flowlines are not thick in this area, there are many flowlines, although thin. This means people are coming from various parts of Singapore.</p>
+</div>
+</div>
+<p>In <strong>origin-constrained model</strong>, the effects of attractive forces will be highlighted as we will model the interaction <strong>without the propulsive forces</strong>.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-72-contents" aria-controls="callout-72" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Save point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-72" class="callout-72-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Let’s save <code>flowlines_no_intra</code> as we will use it for modelling,</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb150"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb150-1"><a href="#cb150-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(SIM_data, <span class="st">"data/rds/flowlines_no_intra202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-73-contents" aria-controls="callout-73" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-73" class="callout-73-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We will clear the data we do not need for the Spatial Interaction Modelling.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb151"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(flowlines)</span>
+<span id="cb151-2"><a href="#cb151-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(attractiveness)</span>
+<span id="cb151-3"><a href="#cb151-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(propulsiveness)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="spatial-interaction-modelling-3" class="level1">
+<h1>Spatial Interaction Modelling</h1>
+
+
 </section>
 
 </main> <!-- /main -->

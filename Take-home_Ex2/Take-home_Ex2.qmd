@@ -81,7 +81,7 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
 | Variable            | Data Source                                                                                                                                 | Motivation                                               |
-|------------------|-------------------------------------|------------------|
+|------------------|-----------------------------------|------------------|
 | `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
 | `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
 | `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
@@ -150,7 +150,7 @@ This data will be used generating the flow lines for visualization, and for Spat
 
 **Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\]
 
-**Output data:** `od_hex` (aspatial)
+**Output data:** `od_hex` (geospatial)
 
 **Columns**:
 
@@ -246,7 +246,7 @@ This table contains the values of the [Propulsiveness] variables. Data sources a
 :::
 
 ::: {.callout-note collapse="true" appearance="minimal"}
-#### Model Data (*model_data*)
+#### Model Data (*SIM_data*)
 
 Contains all the data we need to model the interaction.
 
@@ -260,7 +260,9 @@ Contains all the data we need to model the interaction.
 
 -   \[Propulsiveness Variables Table (propulsiveness)\]
 
-**Output data:** `model_data` (aspatial)
+-   [Flow Lines (flowlines)]
+
+**Output data:** `SIM_data` (aspatial)
 
 **Columns**:
 
@@ -275,6 +277,8 @@ Contains all the data we need to model the interaction.
 -   `DEST_*_COUNT`: Values from \[Attractiveness Variables Table (attractiveness)\]
 
 -   `ORIG_*_COUNT`: Values from \[Propulsiveness Variables Table (propulsiveness)\]
+
+-   Geomtery corresponding to the flowlines
 :::
 :::
 
@@ -1256,7 +1260,7 @@ train_exits <- read_rds("data/rds/train_exits.rds")
 
 One of our propulsiveness variables is the **number of passengers alighting from a train stations** as they are potential bus passengers, especially if they need to transfer to a bus to reach their final destination.
 
-For this, we will import the *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, which contains the number of tap outs from a station every hour. It has a similar structure to *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, which we have been using in class so I will not dive deep in to the details on how to get passenger data from them as we are using the same techniques as the bus data.
+For this, we will import the *Passenger Volume By Origin Destination Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, which contains the number of tap outs from a station every hour. It has a similar structure to *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, which we have been using in class so I will not dive deep in to the details on how to get passenger data from them as we are using the same techniques as the bus data.
 
 #### Importing data sets
 
@@ -1266,34 +1270,34 @@ For this, we will import the *Passenger Volume By Train Stations* from [LTA Data
 We will import the `csv` from *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, using `read_csv()`.
 
 ```{r}
-train_tap <- read_csv("data/aspatial/transport_node_train_202310.csv")
-kable(head(train_tap))
+od_train <- read_csv("data/aspatial/origin_destination_train_202310.csv")
+kable(head(od_train))
 ```
 
-We only need data for **weekend/holidays 11AM - 2PM,** and the columns `PT_CODE` and `TAP_OUT_VOLUME` as we are only interested in passengers leaving the train station.
+We only need data for **weekend/holidays 11AM - 2PM,** and the columns `DESTINATION_PT_CODE` and `TOTAL_TRIPS` as we are only interested in passengers leaving the train station.
 
 We will extract this the same way we did in [Filtering the relevant data].
 
 ```{r}
-train_tap_out <- train_tap %>%
+od_train_trips <- od_train %>%
   filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
   filter( TIME_PER_HOUR >= 11 &
             TIME_PER_HOUR < 14
           ) %>%
-  group_by(PT_CODE) %>%
-  summarise(TAPS = sum(TOTAL_TAP_OUT_VOLUME)) %>%
-  rename(TRAIN_ST_CODE = PT_CODE)
-kable(head(train_tap_out))
+  group_by(DESTINATION_PT_CODE) %>%
+  summarise(TRIPS = sum(TOTAL_TRIPS)) %>%
+  rename(TRAIN_ST_CODE = DESTINATION_PT_CODE)
+kable(head(od_train_trips))
 ```
 
 ::: {.callout-warning collapse="true"}
 ###### Data clear point
 
-We do not need `train_tap` anymore as we already extracted the tap out data we need.
+We do not need `od_train` anymore as we already extracted the tap out data we need.
 
 ```{r}
 #| eval: true
-rm(train_tap)
+rm(od_train)
 ```
 :::
 
@@ -1343,10 +1347,10 @@ station_codes_names <- station_codes_names %>%
 kable(head(station_codes_names))
 ```
 
-##### *train_tap_out*
+##### *od_train_trips*
 
 ```{r}
-kable(head(train_tap_out[6:10,]))
+kable(head(od_train_trips[6:10,]))
 ```
 
 There are multiple station codes in `TRAIN_ST_CODE` column, while in `station_codes_names`, the `stn_code` column only has 1 station code.
@@ -1354,16 +1358,16 @@ There are multiple station codes in `TRAIN_ST_CODE` column, while in `station_co
 We have to separate these station codes into their own rows by using `separate_rows()`.
 
 ```{r}
-train_tap_out <- train_tap_out %>%
+od_train_trips <- od_train_trips %>%
   separate_rows(TRAIN_ST_CODE, sep="/")
-kable(head(train_tap_out[6:10,]))
+kable(head(od_train_trips[6:10,]))
 ```
 
 ::: {.callout-tip appearance="simple"}
-`station_codes_names` and `train_tap_out` now have the number of rows so they can be mapped one-to-one.
+`station_codes_names` and `od_train_trips` now have the number of rows so they can be mapped one-to-one.
 
 ```{r}
-nrow(station_codes_names) == nrow(train_tap_out)
+nrow(station_codes_names) == nrow(od_train_trips)
 ```
 :::
 
@@ -1387,17 +1391,17 @@ kable(head(train_exits))
 #### Adding tap out information to exits
 
 ::: panel-tabset
-##### Joining *station_code_names* and *train_tap_out*
+##### Joining *station_code_names* and *od_train_trips*
 
-We will join by the station code. Also, as some train stations have multiple station codes, we will remove the duplicates on the station name. This can be accomplished by selecting `stn_name` and `TAPS` and applying `unique()`. It is safe to not include the station code here anymore as `trains_exits` does not have the station code.
+We will join by the station code. Also, as some train stations have multiple station codes, we will remove the duplicates on the station name. This can be accomplished by selecting `stn_name` and `TRIPS` and applying `unique()`. It is safe to not include the station code here anymore as `trains_exits` does not have the station code.
 
 ```{r}
-train_tap_out_with_names <- station_codes_names %>%
-  left_join(train_tap_out,
+od_train_trips_with_name <- station_codes_names %>%
+  left_join(od_train_trips,
             by = join_by(stn_code == TRAIN_ST_CODE)) %>%
-  select(stn_name, TAPS) %>%
+  select(stn_name, TRIPS) %>%
   unique()
-kable(head(train_tap_out_with_names))
+kable(head(od_train_trips_with_name))
 ```
 
 ##### Adding tap out to exits
@@ -1405,59 +1409,59 @@ kable(head(train_tap_out_with_names))
 Next, we join `train_tap_out_with_names` with `train_exits` to finally add the tap information to exits.
 
 ```{r}
-tap_out_exit <- train_exits %>%
-  left_join(train_tap_out_with_names,
+od_train_exits <- train_exits %>%
+  left_join(od_train_trips_with_name,
             by = join_by(stn_name_short == stn_name)) %>%
   rename(STN_NAME = stn_name) %>%
   rename(EXIT_CODE = exit_code) %>%
-  select(STN_NAME, EXIT_CODE, TAPS)
+  select(STN_NAME, EXIT_CODE, TRIPS)
 ```
 :::
 
 ```{r}
-kable(head(tap_out_exit))
+kable(head(od_train_exits))
 ```
 
 We now have the number of tap outs from station, that we can use as propulsive variable on the exits.
 
 ::: {.callout-note appearance="simple"}
-We will **not distribute** these taps to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station **as potential passengers** of bus stop from the nearby exits.
+We will **not distribute** these trips to the number of exits as we cannot be accurate on the volume of people taking specific exits. We can consider the people tapping out from a station **as potential passengers** of bus stop from the nearby exits.
 :::
 
-#### Aggregating TAPS by Hexagon level
+#### Aggregating TRIPS by Hexagon level
 
-Finally, we can aggregate the taps on a hexagon level. We will do an `st_join()` of `honeycomb` and `tap_out_exit` as they are both of class `sf`.
+Finally, we can aggregate the trips on a hexagon level. We will do an `st_join()` of `honeycomb` and `tap_out_exit` as they are both of class `sf`.
 
 ```{r}
-tap_out_hex <- honeycomb %>%
-  st_join(tap_out_exit,
+od_train_hex <- honeycomb %>%
+  st_join(od_train_exits,
           left = FALSE) %>%
   group_by(HEX_ID) %>%
-  summarise(TAPS = sum(TAPS))
-kable(head(tap_out_hex))
+  summarise(TRIPS = sum(TRIPS))
+kable(head(od_train_hex))
 ```
 
 ::: {.callout-tip collapse="true"}
 #### Save point
 
-Let's save `tap_out_hex` as it contains the data for propulsiveness variable.
+Let's save `od_train_hex` as it contains the data for propulsiveness variable.
 
 ```{r}
-write_rds(tap_out_hex, "data/rds/tap_out_hex202310.rds")
+write_rds(od_train_hex, "data/rds/od_train_hex202310.rds")
 ```
 :::
 
 ::: {.callout-warning collapse="true"}
 #### Data clear point
 
-We do not need the intermediate data used to derive `tap_out_hex` so we can remove them.
+We do not need the intermediate data used to derive `od_train_hex` so we can remove them.
 
 ```{r}
 #| eval: true
 rm(train_exits)
-rm(train_tap_out)
-rm(train_tap_out_with_names)
-rm(tap_out_exit)
+rm(od_train_exits)
+rm(od_train_trips)
+rm(od_train_trips_with_name)
 rm(station_codes_names)
 ```
 :::
@@ -1625,7 +1629,7 @@ We can run from this point by loading these data.
 honeycomb <- read_rds("data/rds/honeycomb.rds")
 hdb_vars <- read_rds("data/rds/hdb_vars.rds")
 dest_bus_hex <- read_rds("data/rds/dest_bus_hex202310.rds")
-tap_out_hex <- read_rds("data/rds/tap_out_hex202310.rds")
+od_train_hex <- read_rds("data/rds/od_train_hex202310.rds")
 ```
 :::
 
@@ -1658,8 +1662,8 @@ propulsiveness <- propulsiveness %>%
 
 ```{r}
 propulsiveness <- propulsiveness %>%
-  left_join(st_drop_geometry(tap_out_hex)) %>%
-  rename(TRAIN_ALIGHT_COUNT = TAPS)
+  left_join(st_drop_geometry(od_train_hex)) %>%
+  rename(TRAIN_ALIGHT_COUNT = TRIPS)
 ```
 :::
 
@@ -1689,7 +1693,7 @@ We can now remove the data that we use to derive `propulsiveness` from the envir
 #| eval: true
 rm(dest_bus_hex)
 rm(hdb_vars)
-rm(tap_out_hex)
+rm(od_train_hex)
 ```
 :::
 
@@ -1798,14 +1802,14 @@ We will load saved data containing the components of the model data.
 
 ```{r}
 honeycomb <- read_rds("data/rds/honeycomb.rds")
-od_hex <- read_rds("data/rds/od_hex202310.rds")
+flowlines <- read_rds("data/rds/flowlines202310.rds")
 dist_tbl <- read_rds("data/rds/dist_tbl.rds")
 attractiveness <- read_rds("data/rds/attractiveness.rds")
 propulsiveness <- read_rds("data/rds/propulsiveness202310.rds")
 ```
 :::
 
-Now that we have all the components, we will now generate the aspatial `data` that contains the following columns:
+Now that we have all the components, we will now generate the geospatial `data` that contains the following columns:
 
 -   `ORIG_HEX_ID`: ID corresponding to the origin zone
 
@@ -1819,38 +1823,38 @@ Now that we have all the components, we will now generate the aspatial `data` th
 
 -   `ORIG_*_COUNT`: Values from \[Propulsiveness Variables Table (propulsiveness)\]
 
+-   Geometry containing the flowlines
+
 We will join the tables to generate this data.
 
 ::: panel-tabset
+#### Flowlines
+
+```{r}
+kable(head(flowlines))
+```
+
+`flowline` contains both the geometry of the flow lines and the `TRIPS` data so we will use it as the base of `SIM_data`
+
+```{r}
+SIM_data <- flowlines
+```
+
 #### Distance
 
-`dist_tbl` covers all the pairs of hexagons from `honeycomb`. Hence, its number of rows is equal to the **square of number of hexagons** in `honeycomb`.
+`dist_tbl` covers all the pairs of hexagons from `honeycomb`. We will do a `left_join()` with `SIM_data` so we are only left with the pairs that have flows between them
 
 ```{r}
-nrow(dist_tbl) == nrow(honeycomb)^2
-```
-
-With that, we will use it as the base for `model_data`.
-
-```{r}
-model_data <- dist_tbl
-```
-
-#### Trips
-
-We will get the number of trips from `od_hex` and will join it with `model_data`.
-
-```{r}
-model_data <- left_join(model_data, od_hex)
+SIM_data <- SIM_data %>% left_join(dist_tbl)
 ```
 
 #### Propulsive
 
-Propulsive forces come from the origin zone so we will join `propulsiveness` with `model_data` on `ORIG_HEX_ID`. We will also add the `ORIG_` prefix to the columns added in by `propulsiveness`.
+Propulsive forces come from the origin zone so we will join `propulsiveness` with `SIM_data` on `ORIG_HEX_ID`. We will also add the `ORIG_` prefix to the columns added in by `propulsiveness`.
 
 ```{r}
-model_data <- left_join(
-  model_data,
+SIM_data <- left_join(
+  SIM_data,
   propulsiveness %>%
     st_drop_geometry() %>%
     rename_with(~paste("ORIG_", .x, sep = ""))
@@ -1859,11 +1863,11 @@ model_data <- left_join(
 
 #### Attractive
 
-Attractive forces come from the destination zone so we will join `attractiveness` with `model_data` on `DEST_HEX_ID`. We will also add the `DEST_` prefix to the columns added in by `attractiveness`.
+Attractive forces come from the destination zone so we will join `attractiveness` with `SIM_data` on `DEST_HEX_ID`. We will also add the `DEST_` prefix to the columns added in by `attractiveness`.
 
 ```{r}
-model_data <- left_join(
-  model_data,
+SIM_data <- left_join(
+  SIM_data,
   attractiveness %>%
     st_drop_geometry() %>%
     rename_with(~paste("DEST_", .x, sep = ""))
@@ -1874,61 +1878,70 @@ model_data <- left_join(
 ::: {.callout-warning collapse="true"}
 #### Data clear point
 
-We can now remove the data that we use to derive `model_data` from the environment.
+We can now remove the data that we use to derive `SIM_data` from the environment.
 
 ```{r}
 #| eval: true
 rm(attractiveness)
 rm(propulsiveness)
 rm(dist_tbl)
-rm(od_hex)
+rm(flowlines)
 ```
 :::
 
 ### Finishing touches
 
-Let's take a look at our `model_data`.
+Let's take a look at our `SIM_data`.
 
 ```{r}
-summary(model_data)
+summary(SIM_data)
 ```
 
-We will make finishing touches on `model_data`, so that they are compatible with modelling. We need to remove the 0's as we will apply *log* function to them, which will result to *undefined*. We will set them to **0.99**
+We will make finishing touches on `SIM_data`, so that they are compatible with modelling. We need to remove the 0's as we will apply *log* function to them, which will result to *undefined*. We will set them to **0.99** so we are aware that **.**
 
 ```{r}
-model_data[model_data == 0] <- 0.99
-```
+replace_zeroes <- function(data, col_name) {
+  data[[col_name]][data[[col_name]] == 0] <- 0.99
+  
+  return(data)
+}
 
-Also, some values of `TRIPS` are `NA`. We will also set them to `0`. We are not applying *log* to `TRIPS` in the model as it is the dependent variable so they are fine to be `0`.
-
-```{r}
-model_data$TRIPS[is.na(model_data$TRIPS)] <- 0
+SIM_data <- SIM_data %>%
+  replace_zeroes("ORIG_HDB_RESIDENT_COUNT") %>%
+  replace_zeroes("ORIG_BUS_ALIGHT_COUNT") %>%
+  replace_zeroes("ORIG_TRAIN_ALIGHT_COUNT") %>%
+  replace_zeroes("DEST_ENTERTN_COUNT") %>%
+  replace_zeroes("DEST_F_AND_B_COUNT") %>%
+  replace_zeroes("DEST_LEISURE_COUNT") %>%
+  replace_zeroes("DEST_RETAIL_COUNT") %>%
+  replace_zeroes("DEST_TRAIN_EXITS_COUNT") %>%
+  replace_zeroes("DEST_HDB_COUNT")
 ```
 
 Let's check the data again.
 
 ```{r}
-summary(model_data)
+summary(SIM_data)
 ```
 
 ::: {.callout-tip collapse="true"}
 #### Save point
 
-Let's save `model_data` as it contains the data we need for our models.
+Let's save `SIM_data` as it contains the data we need for our models.
 
 ```{r}
-write_rds(model_data, "data/rds/model_data202310.rds")
+write_rds(SIM_data, "data/rds/SIM_data202310.rds")
 ```
 :::
 
 ::: {.callout-warning collapse="true"}
 #### Data clear point
 
-We won't need the `model_data` for a while so we can remove it from the environment.
+We won't need the `SIM_data` for a while so we can remove it from the environment.
 
 ```{r}
 #| eval: true
-rm(model_data)
+rm(SIM_data)
 ```
 :::
 
@@ -1943,7 +1956,7 @@ We can start from this point by loading the relevant datasets.
 mpsz <- read_rds("data/rds/mpsz.rds")
 honeycomb <- read_rds("data/rds/honeycomb.rds")
 flowlines <- read_rds("data/rds/flowlines202310.rds")
-model_data <- read_rds("data/rds/model_data202310.rds")
+SIM_data <- read_rds("data/rds/SIM_data202310.rds")
 propulsiveness <- read_rds("data/rds/propulsiveness202310.rds")
 attractiveness <- read_rds("data/rds/attractiveness.rds")
 ```
@@ -2015,7 +2028,7 @@ From the previous map, we can see that longer distances do not deter people from
 ```{r}
 #| code-fold: true
 #| code-summary: "**Show the code**"
-ggplot(model_data %>% filter(TRIPS > 0),
+ggplot(SIM_data,
        aes(x = DISTANCE, y = TRIPS)) +
   geom_point() +
   geom_hline(yintercept = 376.25, color = "red", linetype = "dashed") +
@@ -2031,15 +2044,32 @@ ggplot(model_data %>% filter(TRIPS > 0),
        y = "Number of Trips")
 ```
 
+Plotting it in a *log* scale shows a more linear relationship.
+
+```{r}
+ggplot(SIM_data,
+       aes(x = log(DISTANCE), y = log(TRIPS))) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
 ::: {.callout-tip appearance="simple"}
 ### Insights
 
-As we can see in this plot, the distance decay can still be seen in the plot, as the *maximum number of trips* decrease as the distance increases.
+The *maximum number of trips* **exponentially decrease** as the distance increases, which means that generally, the farther the distance, the less trips there are.
 
 However, some outliers can be observed like some zone pairs with almost 20km distance between them having close to 99th percentile of `TRIP` values. In these zone pairs, there could be strong propulsive or attractive forces attracting passengers to ride the bus between those zones.
 :::
 
+In **doubly-constrained model**, we will observe this relationship more closely as we will build the model **without attractive and propulsive** forces.
+
 ## Visualizing propulsive forces
+
+We will plot the propulsive forces in their own choropleth maps so we can see if the top 5% busiest flows correspond to areas we hypothesize to have high propulsive forces, of influence the number of trips started from the origin.
+
+::: {.callout-note appearance="simple"}
+We will use tabsets so that we can compare each map by switching tabs.
+:::
 
 ::: {.callout-tip collapse="true" appearance="simple"}
 ### Helper function
@@ -2049,12 +2079,15 @@ We will use the following function to plot the maps in this section.
 ```{r}
 plot_propulsive <- function(var_name, title_comp) {
   tm_shape(mpsz) +
-  tm_polygons("white", title = "Singapore Boundary") +
+  tm_polygons("green", title = "Singapore Boundary") +
   
+  # Adding this layer underneath propulsiveness as we removed 0s. from the map
+  # so it won't skew the legend
   tm_shape(honeycomb) +
   tm_polygons(col = "white") +
-  tm_shape(propulsiveness %>% filter(across(var_name, ~. > 0))) +
-  tm_polygons(var_name, palette = "Greens", style = "quantile") +
+  
+  tm_shape(propulsiveness %>% filter(if_any(var_name, ~. >= 1))) +
+  tm_polygons(var_name, palette = "Blues", style = "quantile") +
     
   tm_shape(flowlines_no_intra %>% filter(TRIPS > 376)) +
   tm_lines(lwd = "TRIPS",
@@ -2065,7 +2098,7 @@ plot_propulsive <- function(var_name, title_comp) {
            n = 6,
            alpha = 0.5) +
   
-  tm_layout(main.title = paste("Top 5% Bus Passenger Flows and ", title_comp),
+  tm_layout(main.title = paste("Top 5% Bus Passenger Flows and", title_comp),
             main.title.position = "center",
             main.title.size = 1.0,
             legend.height = 0.35, 
@@ -2102,3 +2135,145 @@ plot_propulsive("TRAIN_ALIGHT_COUNT", "Potential Transfers from Train")
 plot_propulsive("BUS_ALIGHT_COUNT", "Potential Transfers from Bus")
 ```
 :::
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+Upon visual inspection, HDB population and bus alights from zones correspond more closely with our flowlines. Residential areas have a lot of potential passengers in those areas.
+
+There are less train station exits than bus stops but it can be observed that flowlines also converge on some zones where train stations are.
+
+Lastly, we get bus alight data from the same data source or flowlines so they are expected to correspond more closely. We should be aware that flow line includes the **destination** so the correspondence may due on the destination, not the origin as we hypothesized.
+:::
+
+In **destination-constrained model**, the effects of propulsive forces will be highlighted as we will model the interaction **without the attractive forces**.
+
+## Visualizing attractive forces
+
+We will plot the attractive forces in their own choropleth maps so we can see if the top 5% busiest flows correspond to areas we hypothesize have high attractive forces, influencing passengers to make trip to those zonoe..
+
+We will use tabsets so that we can compare each map by switching tabs.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Helper function
+
+We will use the following function to plot the maps in this section.
+
+```{r}
+plot_attractive <- function(var_name, title_comp) {
+  tm_shape(mpsz) +
+  tm_polygons("green", title = "Singapore Boundary") +
+  
+  # Adding this layer underneath attractiveness as we removed 0s. from the map
+  # so it won't skew the legend
+  tm_shape(honeycomb) +
+  tm_polygons(col = "white") +
+  
+  tm_shape(attractiveness %>% filter(if_any(var_name, ~. >= 1))) +
+  tm_polygons(var_name, palette = "Purples", style = "quantile") +
+    
+  tm_shape(flowlines_no_intra %>% filter(TRIPS > 376)) +
+  tm_lines(lwd = "TRIPS",
+           style = "quantile",
+           col = "red",
+           scale = c(0.1, 1, 3, 5, 7, 10),
+           title.lwd = "# of bus trips",
+           n = 6,
+           alpha = 0.5) +
+  
+  tm_layout(main.title = paste("Top 5% Bus Passenger Flows and", title_comp),
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.height = 0.35, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  
+  tm_scale_bar(bg.color = "white", bg.alpha = 0.7, position = c("right", "top")) +
+  tm_compass(type="8star", size = 2, bg.color = "white",
+             bg.alpha = 0.5, position = c("right", "top")) +
+  tm_grid(alpha = 0.2) +
+  tm_credits("*Passenger data from weekend/holidays 11AM - 2PM\n(October 2023)",
+             bg.color = "white", bg.alpha = 0.7,
+             position = c("left", "bottom"))
+}
+```
+:::
+
+::: panel-tabset
+### Bus Stops
+
+```{r}
+plot_attractive("BUS_STOP_COUNT", "Number of Bus Stops")
+```
+
+### Train Stations
+
+```{r}
+plot_attractive("TRAIN_EXITS_COUNT", "Number of Train Stations")
+```
+
+### HDBs
+
+```{r}
+plot_attractive("HDB_COUNT", "Number of HDB blocks")
+```
+
+### Entertainment
+
+```{r}
+plot_attractive("ENTERTN_COUNT", "Number of Entertainment Locations")
+```
+
+### F&B
+
+```{r}
+plot_attractive("F_AND_B_COUNT", "Number of F&B Outlets")
+```
+
+### Leisure & Recreaction
+
+```{r}
+plot_attractive("LEISURE_COUNT", "Number of Leisure & Recreation Locations")
+```
+
+### Retail
+
+```{r}
+plot_attractive("RETAIL_COUNT", "Number of Retail Outlets")
+```
+:::
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+There are less location types than the others, like entertainment and leisure locations.
+
+There are also location types that are heavily concentrated in some zones, like the entertainment and F&B, which are heavily concentrated around the **Orchard area**. Conversely, there are much less HDBs in Orchard area. Even though the flowlines are not thick in this area, there are many flowlines, although thin. This means people are coming from various parts of Singapore.
+:::
+
+In **origin-constrained model**, the effects of attractive forces will be highlighted as we will model the interaction **without the propulsive forces**.
+
+::: {.callout-tip collapse="true"}
+## Save point
+
+Let's save `flowlines_no_intra` as we will use it for modelling,
+
+```{r}
+write_rds(SIM_data, "data/rds/flowlines_no_intra202310.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+## Data clear point
+
+We will clear the data we do not need for the Spatial Interaction Modelling.
+
+```{r}
+#| eval: true
+rm(flowlines)
+rm(attractiveness)
+rm(propulsiveness)
+```
+:::
+
+# Spatial Interaction Modelling
