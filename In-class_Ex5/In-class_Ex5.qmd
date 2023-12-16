@@ -1,0 +1,31 @@
+---
+title: "In-class Ex 5: Spatial Economic Interaction Models"
+author: "Kristine Joy Paas"
+date: "16 December 2023"
+date-modified: "last-modified"
+format: html
+execute: 
+  echo: true
+  eval: true
+  warning: false
+---
+
+# Setup Environment
+
+-   [**spflow**](https://lukece.github.io/spflow/): R package for Spatial Economic Interaction Models
+
+::: callout-important
+We will the development version of `spflow`, which has major updates to syntax. (use at own risk)
+
+It is not yet available on <https://cran.r-project.org/>, so we will download it from Github.
+:::
+
+```{r}
+#| label: setup
+devtools::install_github("LukeCe/spflow")
+pacman::p_load(tmap, sf, spdep, sp, Matrix, knitr, tidyverse)
+tmap_mode("plot")
+tmap_style("natural")
+```
+
+# 

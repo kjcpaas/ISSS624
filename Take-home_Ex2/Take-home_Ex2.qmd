@@ -81,7 +81,7 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
 | Variable            | Data Source                                                                                                                                 | Motivation                                               |
-|------------------|------------------------------------|------------------|
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
 | `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
 | `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
 | `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
@@ -95,7 +95,7 @@ Attractiveness variables are factors that can motivate people to go to their des
 Propulsiveness variables are factors that influence people to ride the bus from specific zones. This is based on the **number** **of potential passengers** at the origin zones.
 
 | Variable             | Data Source                                                                                                                          | Motivation                                                                                        |
-|------------------|-------------------------------|-----------------------|
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
 | `BUS_ALIGHT_COUNT`   | *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API | Passengers who alight from a bus stop within can transfer to another bus to reach                 |
 | `TRAIN_ALIGHT_COUNT` | *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API               | Passengers who alight from a train station can transfer to a bus to reach their final destination |
 | `HDB_RESIDENT_COUNT` | `hdb.csv` aspatial data provided on E-learn                                                                                          | Residents in an area are potential bus passengers as they leave their homes                       |
@@ -2432,11 +2432,11 @@ We will trigger these code chunks manually if we want to regenerate the files.
 uncSIM <- glm(formula = TRIPS ~ 
                 log(ORIG_HDB_RESIDENT_COUNT) +
                 log(ORIG_BUS_ALIGHT_COUNT) +
-                log(ORIG_TRAIN_ALIGHT_COUNT) +
+                #log(ORIG_TRAIN_ALIGHT_COUNT) +
                 log(DEST_BUS_STOP_COUNT) +
-                log(DEST_ENTERTN_COUNT) +
-                log(DEST_F_AND_B_COUNT) +
-                log(DEST_LEISURE_COUNT) +
+                #log(DEST_ENTERTN_COUNT) +
+                #log(DEST_F_AND_B_COUNT) +
+                #log(DEST_LEISURE_COUNT) +
                 log(DEST_RETAIL_COUNT) +
                 log(DEST_TRAIN_EXITS_COUNT) +
                 log(DEST_HDB_COUNT) +
@@ -2463,9 +2463,9 @@ calc_r_squared(uncSIM)
 orcSIM <- glm(formula = TRIPS ~ 
                 ORIG_HEX_ID +
                 log(DEST_BUS_STOP_COUNT) +
-                log(DEST_ENTERTN_COUNT) +
-                log(DEST_F_AND_B_COUNT) +
-                log(DEST_LEISURE_COUNT) +
+                #log(DEST_ENTERTN_COUNT) +
+                #log(DEST_F_AND_B_COUNT) +
+                #log(DEST_LEISURE_COUNT) +
                 log(DEST_RETAIL_COUNT) +
                 log(DEST_TRAIN_EXITS_COUNT) +
                 log(DEST_HDB_COUNT) +
@@ -2491,7 +2491,7 @@ calc_r_squared(orcSIM)
 decSIM <- glm(formula = TRIPS ~ 
                 DEST_HEX_ID +
                 log(ORIG_HDB_RESIDENT_COUNT) +
-                log(ORIG_BUS_ALIGHT_COUNT) +
+                #log(ORIG_BUS_ALIGHT_COUNT) +
                 log(ORIG_TRAIN_ALIGHT_COUNT) +
                 log(DISTANCE),
               family = poisson(link = "log"),

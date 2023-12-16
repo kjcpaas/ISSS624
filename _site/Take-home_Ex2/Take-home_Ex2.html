@@ -183,6 +183,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../In-class_Ex4/In-class_Ex4B.html" rel="" target="">
  <span class="dropdown-text">4B: SIM</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../In-class_Ex5/In-class_Ex5.qmd" rel="" target="">
+ <span class="dropdown-text">5: Spatial Economic Interaction Models</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -5404,11 +5408,11 @@ Helper function: goodness of fit
 <div class="sourceCode cell-code" id="cb155"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a>uncSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
 <span id="cb155-2"><a href="#cb155-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
 <span id="cb155-3"><a href="#cb155-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
-<span id="cb155-4"><a href="#cb155-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb155-4"><a href="#cb155-4" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(ORIG_TRAIN_ALIGHT_COUNT) +</span></span>
 <span id="cb155-5"><a href="#cb155-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
-<span id="cb155-6"><a href="#cb155-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_ENTERTN_COUNT) <span class="sc">+</span></span>
-<span id="cb155-7"><a href="#cb155-7" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_F_AND_B_COUNT) <span class="sc">+</span></span>
-<span id="cb155-8"><a href="#cb155-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_LEISURE_COUNT) <span class="sc">+</span></span>
+<span id="cb155-6"><a href="#cb155-6" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(DEST_ENTERTN_COUNT) +</span></span>
+<span id="cb155-7"><a href="#cb155-7" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(DEST_F_AND_B_COUNT) +</span></span>
+<span id="cb155-8"><a href="#cb155-8" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(DEST_LEISURE_COUNT) +</span></span>
 <span id="cb155-9"><a href="#cb155-9" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
 <span id="cb155-10"><a href="#cb155-10" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
 <span id="cb155-11"><a href="#cb155-11" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
@@ -5424,35 +5428,29 @@ Helper function: goodness of fit
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:  glm(formula = TRIPS ~ log(ORIG_HDB_RESIDENT_COUNT) + log(ORIG_BUS_ALIGHT_COUNT) + 
-    log(ORIG_TRAIN_ALIGHT_COUNT) + log(DEST_BUS_STOP_COUNT) + 
-    log(DEST_ENTERTN_COUNT) + log(DEST_F_AND_B_COUNT) + log(DEST_LEISURE_COUNT) + 
-    log(DEST_RETAIL_COUNT) + log(DEST_TRAIN_EXITS_COUNT) + log(DEST_HDB_COUNT) + 
-    log(DISTANCE), family = poisson(link = "log"), data = SIM_data_no_intra, 
-    na.action = na.exclude)
+    log(DEST_BUS_STOP_COUNT) + log(DEST_RETAIL_COUNT) + log(DEST_TRAIN_EXITS_COUNT) + 
+    log(DEST_HDB_COUNT) + log(DISTANCE), family = poisson(link = "log"), 
+    data = SIM_data_no_intra, na.action = na.exclude)
 
 Coefficients:
                  (Intercept)  log(ORIG_HDB_RESIDENT_COUNT)  
-                     9.13202                       0.01459  
-  log(ORIG_BUS_ALIGHT_COUNT)  log(ORIG_TRAIN_ALIGHT_COUNT)  
-                     0.61999                      -0.01798  
-    log(DEST_BUS_STOP_COUNT)       log(DEST_ENTERTN_COUNT)  
-                     0.21934                      -0.07123  
-     log(DEST_F_AND_B_COUNT)       log(DEST_LEISURE_COUNT)  
-                    -0.03001                      -0.08343  
+                     9.66179                       0.02624  
+  log(ORIG_BUS_ALIGHT_COUNT)      log(DEST_BUS_STOP_COUNT)  
+                     0.54166                       0.20701  
       log(DEST_RETAIL_COUNT)   log(DEST_TRAIN_EXITS_COUNT)  
-                     0.12135                       0.58437  
+                     0.08963                       0.53360  
          log(DEST_HDB_COUNT)                 log(DISTANCE)  
-                     0.18580                      -1.48381  
+                     0.21655                      -1.47662  
 
-Degrees of Freedom: 59275 Total (i.e. Null);  59264 Residual
+Degrees of Freedom: 59275 Total (i.e. Null);  59268 Residual
 Null Deviance:      19980000 
-Residual Deviance: 7198000  AIC: 7466000</code></pre>
+Residual Deviance: 7281000  AIC: 7549000</code></pre>
 </div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_r_squared</span>(uncSIM)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.4184592</code></pre>
+<pre><code>[1] 0.395517</code></pre>
 </div>
 </div>
 </div>
@@ -5461,9 +5459,9 @@ Residual Deviance: 7198000  AIC: 7466000</code></pre>
 <div class="sourceCode cell-code" id="cb160"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a>orcSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
 <span id="cb160-2"><a href="#cb160-2" aria-hidden="true" tabindex="-1"></a>                ORIG_HEX_ID <span class="sc">+</span></span>
 <span id="cb160-3"><a href="#cb160-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
-<span id="cb160-4"><a href="#cb160-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_ENTERTN_COUNT) <span class="sc">+</span></span>
-<span id="cb160-5"><a href="#cb160-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_F_AND_B_COUNT) <span class="sc">+</span></span>
-<span id="cb160-6"><a href="#cb160-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_LEISURE_COUNT) <span class="sc">+</span></span>
+<span id="cb160-4"><a href="#cb160-4" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(DEST_ENTERTN_COUNT) +</span></span>
+<span id="cb160-5"><a href="#cb160-5" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(DEST_F_AND_B_COUNT) +</span></span>
+<span id="cb160-6"><a href="#cb160-6" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(DEST_LEISURE_COUNT) +</span></span>
 <span id="cb160-7"><a href="#cb160-7" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
 <span id="cb160-8"><a href="#cb160-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
 <span id="cb160-9"><a href="#cb160-9" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
@@ -5488,7 +5486,7 @@ Residual Deviance: 7198000  AIC: 7466000</code></pre>
 <div class="sourceCode cell-code" id="cb164"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb164-1"><a href="#cb164-1" aria-hidden="true" tabindex="-1"></a>decSIM <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
 <span id="cb164-2"><a href="#cb164-2" aria-hidden="true" tabindex="-1"></a>                DEST_HEX_ID <span class="sc">+</span></span>
 <span id="cb164-3"><a href="#cb164-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
-<span id="cb164-4"><a href="#cb164-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb164-4"><a href="#cb164-4" aria-hidden="true" tabindex="-1"></a>                <span class="co">#log(ORIG_BUS_ALIGHT_COUNT) +</span></span>
 <span id="cb164-5"><a href="#cb164-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
 <span id="cb164-6"><a href="#cb164-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">log</span>(DISTANCE),</span>
 <span id="cb164-7"><a href="#cb164-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
@@ -5547,7 +5545,7 @@ Residual Deviance: 7198000  AIC: 7466000</code></pre>
 
 Name                    | Model |    RMSE
 -----------------------------------------
-Unconstrained           |   glm | 288.261
+Unconstrained           |   glm | 293.842
 Origin_Constrained      |   glm | 269.850
 Destination_Constrained |   glm | 257.235
 Doubly_Constrained      |   glm | 236.105</code></pre>
