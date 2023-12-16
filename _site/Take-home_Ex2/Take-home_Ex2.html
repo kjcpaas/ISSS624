@@ -184,7 +184,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="dropdown-text">4B: SIM</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../In-class_Ex5/In-class_Ex5.qmd" rel="" target="">
+    <a class="dropdown-item" href="../In-class_Ex5/In-class_Ex5.html" rel="" target="">
  <span class="dropdown-text">5: Spatial Economic Interaction Models</span></a>
   </li>  
     </ul>
@@ -508,8 +508,8 @@ Honeycomb grid corresponding to bus stop locations (<em>honeycomb)</em>
 <div id="callout-2" class="callout-2-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>Sourced from the <code>shp</code> <a href="https://datamall.lta.gov.sg/content/datamall/en/static-data.html#:~:text=drop%20off%20passengers.-,203%20kB,-Last%20Update%3A%C2%A0Jul"><em>Bus Stop Locations</em></a> dataset from LTA DataMall. This consist of hexagons with a distance of <strong>375m</strong> from the center to the midpoint of the edge as the <a href="https://tmg.utoronto.ca/files/Reports/Traffic-Zone-Guidance_March-2021_Final.pdf">traffic analysis zone (TAZ)</a>.</p>
-<p>We only consider the bus stops within Singapore so we have to ensure that the bus stops included here are within the [Singapore Boundary geometry (mpsz)].</p>
-<p><strong>Prerequisites:</strong> [Singapore Boundary geometry (mpsz)]</p>
+<p>We only consider the bus stops within Singapore so we have to ensure that the bus stops included here are within the <em>Singapore Boundary geometry (mpsz)</em>.</p>
+<p><strong>Prerequisites:</strong> <em>Singapore Boundary geometry (mpsz)</em></p>
 <p><strong>Output data:</strong> <code>honeycomb</code> (geospatial)</p>
 <p><strong>Columns:</strong></p>
 <ul>
@@ -535,13 +535,13 @@ Number of trips between 2 zones (<em>od_hex</em>)
 <div class="callout-body-container callout-body">
 <p>This contains the number of trips on <strong>weekend/holiday morning peak periods</strong> (11 AM - 2 PM). Data is sourced from <em>Passenger Volume By Origin Destination Bus Stops</em> from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">LTA DataMall</a> via API</p>
 <p>This data will be used generating the flow lines for visualization, and for Spatial Interaction Modelling.</p>
-<p><strong>Prerequisites:</strong> [Honeycomb grid corresponding to bus stop locations (honeycomb)]</p>
+<p><strong>Prerequisites:</strong> <em>Honeycomb grid corresponding to bus stop locations (honeycomb)</em></p>
 <p><strong>Output data:</strong> <code>od_hex</code> (geospatial)</p>
 <p><strong>Columns</strong>:</p>
 <ul>
-<li><p><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</p></li>
-<li><p><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</p></li>
-<li><p><code>TRIPS</code>: Number of bus trips between the origin and destination zones</p></li>
+<li><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</li>
+<li><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</li>
+<li><code>TRIPS</code>: Number of bus trips between the origin and destination zones</li>
 </ul>
 </div>
 </div>
@@ -559,46 +559,20 @@ Flow Lines (<em>flowlines</em>)
 <div id="callout-4" class="callout-4-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>This contains the flow lines derived from the pairs of zones in [Number of trips between 2 zones (od_hex)]. It will be used to visualize the flow patterns.</p>
-<p><strong>Prerequisites:</strong> [Number of trips between 2 zones (od_hex)]</p>
+<p><strong>Prerequisites:</strong> <em>Number of trips between 2 zones (od_hex)</em></p>
 <p><strong>Output data:</strong> <code>flowlines</code></p>
 <p><strong>Columns</strong>:</p>
 <ul>
-<li><p><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</p></li>
-<li><p><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</p></li>
-<li><p><code>TRIPS</code>: Number of bus trips between the origin and destination zones</p></li>
-<li><p>Geometry of the line between the origin and destination zones</p></li>
+<li><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</li>
+<li><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</li>
+<li><code>TRIPS</code>: Number of bus trips between the origin and destination zones</li>
+<li>Geometry of the line between the origin and destination zones</li>
 </ul>
 </div>
 </div>
 </div>
-</div>
-<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
 <div class="callout callout-style-simple callout-note no-icon callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Zone distance table (<em>dist_tbl</em>)
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-5" class="callout-5-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<p>This table contains the distances between all the pair of zones. This corresponds to the <strong>distance decay</strong> component of our model</p>
-<p><strong>Prerequisites:</strong> [Honeycomb grid corresponding to bus stop locations (honeycomb)]</p>
-<p><strong>Output data:</strong> <code>dist_tbl</code> (aspatial)</p>
-<p><strong>Columns</strong>:</p>
-<ul>
-<li><p><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</p></li>
-<li><p><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</p></li>
-<li><p><code>DISTANCE</code>: Distance between the (centroids of) origin and destination zones</p></li>
-</ul>
-</div>
-</div>
-</div>
-<div class="callout callout-style-simple callout-note no-icon callout-titled">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon no-icon"></i>
 </div>
@@ -607,10 +581,10 @@ Attractiveness Variables Table (<em>attractiveness</em>)
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>This table contains the values of the <a href="#attractiveness">Attractiveness</a> variables. Data sources are defined in the <a href="#attractiveness">Attractiveness</a> section.</p>
-<p><strong>Prerequisites:</strong> [Honeycomb grid corresponding to bus stop locations (honeycomb)], prepared data from identified data sources</p>
+<p>This table contains the values of the <a href="#attractiveness">Attractiveness</a> variables. Data sources are defined in the <a href="#attractiveness">Attractiveness</a> section. We will also use this data to plot the attractive forces for visualizing spatial interactions.</p>
+<p><strong>Prerequisites:</strong> <em>Honeycomb grid corresponding to bus stop locations (honeycomb)</em>, prepared data from identified data sources</p>
 <p><strong>Output data:</strong> <code>attractiveness</code> (geospatial)</p>
 <p><strong>Columns</strong>:</p>
 <ul>
@@ -628,7 +602,7 @@ Attractiveness Variables Table (<em>attractiveness</em>)
 </div>
 </div>
 <div class="callout callout-style-simple callout-note no-icon callout-titled">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon no-icon"></i>
 </div>
@@ -637,18 +611,44 @@ Propulsiveness Variables Table (<em>propulsiveness</em>)
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>This table contains the values of the <a href="#propulsiveness">Propulsiveness</a> variables. Data sources are defined in the <a href="#propulsiveness">Propulsiveness</a> section.</p>
-<p><strong>Prerequisites:</strong> [Honeycomb grid corresponding to bus stop locations (honeycomb)], prepared data from identified data sources</p>
+<p>This table contains the values of the <a href="#propulsiveness">Propulsiveness</a> variables. Data sources are defined in the <a href="#propulsiveness">Propulsiveness</a> section. We will also use this data to plot the propulsive forces for visualizing spatial interactions.</p>
+<p><strong>Prerequisites:</strong> <em>Honeycomb grid corresponding to bus stop locations (honeycomb)</em>, prepared data from identified data sources</p>
 <p><strong>Output data:</strong> <code>propulsiveness</code> (geospatial)</p>
 <p><strong>Columns</strong>:</p>
 <ul>
-<li><p><code>HEX_ID</code>: ID corresponding to the zone</p></li>
-<li><p><code>BUS_ALIGHT_COUNT</code>: Number of bus passengers alighting from a zone</p></li>
-<li><p><code>TRAIN_ALIGHT_COUNT</code>: Number of train passengers alighting from a zone</p></li>
-<li><p><code>HDB_RESIDENT_COUNT</code>: Number of residents in a zone</p></li>
-<li><p>Geometry of the hexagons corresponding to the traffic analysis zone</p></li>
+<li><code>HEX_ID</code>: ID corresponding to the zone</li>
+<li><code>BUS_ALIGHT_COUNT</code>: Number of bus passengers alighting from a zone</li>
+<li><code>TRAIN_ALIGHT_COUNT</code>: Number of train passengers alighting from a zone</li>
+<li><code>HDB_RESIDENT_COUNT</code>: Number of residents in a zone</li>
+<li>Geometry of the hexagons corresponding to the traffic analysis zone</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="callout callout-style-simple callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Zone distance table (<em>dist_tbl</em>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>This table contains the distances between all the pair of zones. This corresponds to the <strong>distance decay</strong> component of our model</p>
+<p><strong>Prerequisites:</strong> <em>Honeycomb grid corresponding to bus stop locations (honeycomb)</em></p>
+<p><strong>Output data:</strong> <code>dist_tbl</code> (aspatial)</p>
+<p><strong>Columns</strong>:</p>
+<ul>
+<li><code>ORIG_HEX_ID</code>: ID corresponding to the origin zone</li>
+<li><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</li>
+<li><code>DISTANCE</code>: Distance between the (centroids of) origin and destination zones</li>
 </ul>
 </div>
 </div>
@@ -668,11 +668,10 @@ Model Data (<em>SIM_data</em>)
 <p>Contains all the data we need to model the interaction.</p>
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><p>[Zone distance table (dist_tbl)]</p></li>
-<li><p>[Number of trips between 2 zones (od_hex)]</p></li>
-<li><p>[Attractiveness Variables Table (attractiveness)]</p></li>
-<li><p>[Propulsiveness Variables Table (propulsiveness)]</p></li>
-<li><p>[Flow Lines (flowlines)]</p></li>
+<li><em>Zone distance table (dist_tbl)</em></li>
+<li><em>Attractiveness Variables Table (attractiveness)</em></li>
+<li><em>Propulsiveness Variables Table (propulsiveness)</em></li>
+<li><em>Flow Lines (flowlines)</em></li>
 </ul>
 <p><strong>Output data:</strong> <code>SIM_data</code> (aspatial)</p>
 <p><strong>Columns</strong>:</p>
@@ -681,8 +680,8 @@ Model Data (<em>SIM_data</em>)
 <li><p><code>DEST_HEX_ID</code>: ID corresponding to the destination zone</p></li>
 <li><p><code>DISTANCE</code>: Distance between the (centroids of) origin and destination zones</p></li>
 <li><p><code>TRIPS</code>: Number of bus trips between the origin and destination zones</p></li>
-<li><p><code>DEST_*_COUNT</code>: Values from [Attractiveness Variables Table (attractiveness)]</p></li>
-<li><p><code>ORIG_*_COUNT</code>: Values from [Propulsiveness Variables Table (propulsiveness)]</p></li>
+<li><p><code>DEST_*_COUNT</code>: Values from <em>Attractiveness Variables Table (attractiveness)</em></p></li>
+<li><p><code>ORIG_*_COUNT</code>: Values from <em>Propulsiveness Variables Table (propulsiveness)</em></p></li>
 <li><p>Geomtery corresponding to the flowlines</p></li>
 </ul>
 </div>
@@ -753,7 +752,8 @@ Data clear point
 <div class="tab-content">
 <div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
 <p>Using the data sources identified in <a href="#data-outputs">Data Outputs</a>, we will download the datasets and add them into our <code>data/</code> directory.</p>
-<p>We will also prepare the <code>data/rds/</code> directory to save the data we from our <a href="#load-point">Load point</a>. After the setup we are left with the directory structure below.</p>
+<p>We will also prepare the <code>data/rds/</code> directory to save important or expesive data, such as those we load from our <a href="#load-point">Load point</a>.</p>
+<p>After the setup we are left with the directory structure below.</p>
 <div class="callout callout-style-simple callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -800,15 +800,15 @@ Directory structure
 <span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── MPSZ-2019.qmd</span>
 <span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── MPSZ-2019.shp</span>
 <span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── MPSZ-2019.shx</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.cpg</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.dbf</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.lyr</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.prj</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.sbn</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.sbx</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.shp</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.shp.xml</span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── RapidTransitSystemStation.shx</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.cpg</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.dbf</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.lyr</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.prj</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.sbn</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.sbx</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.shp</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.shp.xml</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Train_Station_Exit_Layer.shx</span>
 <span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Retails.cpg</span>
 <span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Retails.dbf</span>
 <span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span>   ├── Retails.prj</span>
@@ -831,21 +831,21 @@ Directory structure
 <div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
 <p>We will use the following R packages to run the code needed for data analysis.</p>
 <ul>
-<li><p><a href="https://cran.r-project.org/web/packages/tmap/index.html"><strong>tmap</strong></a>: for thematic mapping</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/sf/index.html"><strong>sf</strong></a>: for geospatial data handling</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/tidyverse/index.html"><strong>tidyverse</strong></a>: for non-spatial data handling</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/knitr/"><strong>knitr</strong></a>: for prettifying presentation</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/stplanr/index.html"><strong>stplanr</strong></a>: for generating flow lines</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/reshape2/index.html"><strong>reshape2</strong></a>: for generating pivot tables from matrix</p></li>
-<li><p><a href="https://cran.r-project.org/web/packages/performance/index.html"><strong>performance</strong></a>: for model comparisons</p></li>
+<li><a href="https://cran.r-project.org/web/packages/tmap/index.html"><strong>tmap</strong></a>: for thematic mapping</li>
+<li><a href="https://cran.r-project.org/web/packages/sf/index.html"><strong>sf</strong></a>: for geospatial data handling</li>
+<li><a href="https://cran.r-project.org/web/packages/tidyverse/index.html"><strong>tidyverse</strong></a>: for non-spatial data handling</li>
+<li><a href="https://cran.r-project.org/web/packages/knitr/"><strong>knitr</strong></a>: for prettifying presentation</li>
+<li><a href="https://cran.r-project.org/web/packages/stplanr/index.html"><strong>stplanr</strong></a>: for generating flow lines</li>
+<li><a href="https://cran.r-project.org/web/packages/reshape2/index.html"><strong>reshape2</strong></a>: for generating pivot tables from matrix</li>
+<li><a href="https://cran.r-project.org/web/packages/performance/index.html"><strong>performance</strong></a>: for model comparisons</li>
 </ul>
 </div>
 <div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
 <p>These are the default setting we will use, and initial setup required for the environment.</p>
 <ul>
-<li><p><code>tmap_mode</code> to <strong>plot</strong>: for plotting simple maps</p></li>
-<li><p><code>tmap_style</code> to <strong>natural</strong>: for my preferred mapping style</p></li>
-<li><p>set <strong>seed</strong> for reproducibility of results</p></li>
+<li><code>tmap_mode</code> to <strong>plot</strong>: for plotting simple maps</li>
+<li><code>tmap_style</code> to <strong>natural</strong>: for my preferred mapping style</li>
+<li>set <strong>seed</strong> for the <em>random number generator</em> so our results are deterministic (for reproduceability)</li>
 </ul>
 </div>
 </div>
@@ -863,10 +863,9 @@ Directory structure
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_style</span>(<span class="st">"natural"</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_style</span>(<span class="st">"natural"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="data-wrangling" class="level1">
@@ -876,7 +875,7 @@ Directory structure
 <p>We will use this as a guide to do our complex data wrangling tasks.</p>
 <section id="utility-1" class="level2">
 <h2 class="anchored" data-anchor-id="utility-1">Utility</h2>
-<p>We will first start by preparing the data needed for utility, [Singapore Boundary geometry (mpsz)] and [Honeycomb grid corresponding to bus stop locations (honeycomb)].</p>
+<p>We will first start by preparing the data needed for utility, <em>Singapore Boundary geometry (mpsz)</em> and <em>Honeycomb grid corresponding to bus stop locations (honeycomb)</em>. (see <a href="#data-outputs">Data Outputs</a>)</p>
 <section id="importing-the-datasets" class="level3">
 <h3 class="anchored" data-anchor-id="importing-the-datasets">Importing the datasets</h3>
 <p>We will import the datasets needed to prepare the utility data.</p>
@@ -1242,7 +1241,7 @@ Code Explanation
 <h3 class="anchored" data-anchor-id="assigning-id-to-each-hexagon">Assigning id to each hexagon</h3>
 <p>Now that we have hexagons properly generated, we will assign id for each hexagon to be used as a unique identifier. We will store this id under the <code>HEX_ID</code> column, and can be used in joining data frames.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>honeycomb<span class="sc">$</span>HEX_ID <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"H%04d"</span>, <span class="fu">seq_len</span>(<span class="fu">nrow</span>(honeycomb)))</span>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>honeycomb<span class="sc">$</span>HEX_ID <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"H%04d"</span>, <span class="fu">seq_len</span>(<span class="fu">nrow</span>(honeycomb))) <span class="sc">%&gt;%</span> <span class="fu">as.factor</span>()</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(honeycomb))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
@@ -1782,10 +1781,21 @@ Data clear point
 <section id="generating-the-flow-lines" class="level3">
 <h3 class="anchored" data-anchor-id="generating-the-flow-lines">Generating the flow lines</h3>
 <p>First, we will generate the flow lines using <code>od2line()</code>. <code>honeycomb</code> will be supplied as the <code>zone</code> as it contains the hexagons we are using as the <strong>traffic analysis zones</strong>.</p>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>This operation takes a while so we will save it as soon as it is generated so we set <code>eval</code> to <code>false</code>. Run this code chunk manually to regenerate the code.</p>
+</div>
+</div>
+</div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>flowlines <span class="ot">&lt;-</span> od_hex <span class="sc">%&gt;%</span> <span class="fu">od2line</span>(</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  honeycomb,</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">zone_code =</span> <span class="st">"HEX_ID"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">zone_code =</span> <span class="st">"HEX_ID"</span>)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(flowlines, <span class="st">"data/rds/flowlines202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="initial-inspection-of-the-flow-lines" class="level4">
 <h4 class="anchored" data-anchor-id="initial-inspection-of-the-flow-lines">Initial inspection of the flow lines</h4>
@@ -1819,7 +1829,7 @@ Data clear point
 <span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="callout callout-style-simple callout-tip callout-titled">
@@ -1966,7 +1976,7 @@ Visual Inspection
 <span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-35-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -2023,7 +2033,7 @@ Visual Inspection
 <span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-39-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -2078,7 +2088,7 @@ Visual Inspection
 <span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-41-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-42-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -2134,7 +2144,7 @@ Visual Inspection
 <span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-44-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-45-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -2253,7 +2263,7 @@ Visual Inspection
 <span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-49-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-50-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -3771,7 +3781,7 @@ Visual inspection
 <span id="cb95-15"><a href="#cb95-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-82-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-83-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -4668,13 +4678,14 @@ Data clear point
 <div class="cell">
 <div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> ORIG_HEX_ID        DEST_HEX_ID            TRIPS             DISTANCE    
- Length:59835       Length:59835       Min.   :    1.00   Min.   :  200  
- Class :character   Class :character   1st Qu.:    3.00   1st Qu.: 2704  
- Mode  :character   Mode  :character   Median :   12.00   Median : 5250  
-                                       Mean   :   95.78   Mean   : 6118  
-                                       3rd Qu.:   48.00   3rd Qu.: 8518  
-                                       Max.   :12377.00   Max.   :24784  
+<pre><code>  ORIG_HEX_ID     DEST_HEX_ID        TRIPS             DISTANCE    
+ H0515  :  307   H0515  :  314   Min.   :    1.00   Min.   :  200  
+ H0725  :  291   H0537  :  300   1st Qu.:    3.00   1st Qu.: 2704  
+ H0518  :  285   H0527  :  297   Median :   12.00   Median : 5250  
+ H0527  :  282   H0725  :  297   Mean   :   95.78   Mean   : 6118  
+ H0488  :  278   H0518  :  290   3rd Qu.:   48.00   3rd Qu.: 8518  
+ H0648  :  268   H0447  :  280   Max.   :12377.00   Max.   :24784  
+ (Other):58124   (Other):58057                                     
  ORIG_HDB_RESIDENT_COUNT ORIG_BUS_ALIGHT_COUNT ORIG_TRAIN_ALIGHT_COUNT
  Min.   :   0            Min.   :     0        Min.   :      0        
  1st Qu.:   0            1st Qu.:  3459        1st Qu.:      0        
@@ -4682,6 +4693,7 @@ Data clear point
  Mean   :1850            Mean   : 14147        Mean   :  59925        
  3rd Qu.:3351            3rd Qu.: 16757        3rd Qu.:  29508        
  Max.   :7946            Max.   :108111        Max.   :2229188        
+                                                                      
  DEST_BUS_STOP_COUNT DEST_ENTERTN_COUNT DEST_F_AND_B_COUNT DEST_LEISURE_COUNT
  Min.   : 1.00       Min.   :0.0000     Min.   :  0.000    Min.   : 0.000    
  1st Qu.: 5.00       1st Qu.:0.0000     1st Qu.:  0.000    1st Qu.: 0.000    
@@ -4689,6 +4701,7 @@ Data clear point
  Mean   : 7.96       Mean   :0.3443     Mean   :  5.697    Mean   : 2.337    
  3rd Qu.:10.00       3rd Qu.:0.0000     3rd Qu.:  2.000    3rd Qu.: 3.000    
  Max.   :19.00       Max.   :9.0000     Max.   :133.000    Max.   :41.000    
+                                                                             
  DEST_RETAIL_COUNT DEST_TRAIN_EXITS_COUNT DEST_HDB_COUNT  
  Min.   :   0.00   Min.   : 0.000         Min.   :  0.00  
  1st Qu.:   7.00   1st Qu.: 0.000         1st Qu.:  0.00  
@@ -4696,10 +4709,12 @@ Data clear point
  Mean   :  98.33   Mean   : 1.375         Mean   : 20.81  
  3rd Qu.: 110.00   3rd Qu.: 2.000         3rd Qu.: 36.00  
  Max.   :1678.00   Max.   :13.000         Max.   :103.00  
+                                                          
           geometry    
  LINESTRING   :59835  
  epsg:3414    :    0  
  +proj=tmer...:    0  
+                      
                       
                       
                       </code></pre>
@@ -4727,13 +4742,14 @@ Data clear point
 <div class="cell">
 <div class="sourceCode cell-code" id="cb127"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(SIM_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> ORIG_HEX_ID        DEST_HEX_ID            TRIPS             DISTANCE    
- Length:59835       Length:59835       Min.   :    1.00   Min.   :  200  
- Class :character   Class :character   1st Qu.:    3.00   1st Qu.: 2704  
- Mode  :character   Mode  :character   Median :   12.00   Median : 5250  
-                                       Mean   :   95.78   Mean   : 6118  
-                                       3rd Qu.:   48.00   3rd Qu.: 8518  
-                                       Max.   :12377.00   Max.   :24784  
+<pre><code>  ORIG_HEX_ID     DEST_HEX_ID        TRIPS             DISTANCE    
+ H0515  :  307   H0515  :  314   Min.   :    1.00   Min.   :  200  
+ H0725  :  291   H0537  :  300   1st Qu.:    3.00   1st Qu.: 2704  
+ H0518  :  285   H0527  :  297   Median :   12.00   Median : 5250  
+ H0527  :  282   H0725  :  297   Mean   :   95.78   Mean   : 6118  
+ H0488  :  278   H0518  :  290   3rd Qu.:   48.00   3rd Qu.: 8518  
+ H0648  :  268   H0447  :  280   Max.   :12377.00   Max.   :24784  
+ (Other):58124   (Other):58057                                     
  ORIG_HDB_RESIDENT_COUNT ORIG_BUS_ALIGHT_COUNT ORIG_TRAIN_ALIGHT_COUNT
  Min.   :   0.99         Min.   :     0.99     Min.   :      1        
  1st Qu.:   0.99         1st Qu.:  3459.00     1st Qu.:      1        
@@ -4741,6 +4757,7 @@ Data clear point
  Mean   :1850.69         Mean   : 14146.88     Mean   :  59926        
  3rd Qu.:3351.00         3rd Qu.: 16757.00     3rd Qu.:  29508        
  Max.   :7946.00         Max.   :108111.00     Max.   :2229188        
+                                                                      
  DEST_BUS_STOP_COUNT DEST_ENTERTN_COUNT DEST_F_AND_B_COUNT DEST_LEISURE_COUNT
  Min.   : 1.00       Min.   :0.990      Min.   :  0.990    Min.   : 0.990    
  1st Qu.: 5.00       1st Qu.:0.990      1st Qu.:  0.990    1st Qu.: 0.990    
@@ -4748,6 +4765,7 @@ Data clear point
  Mean   : 7.96       Mean   :1.187      Mean   :  6.215    Mean   : 2.726    
  3rd Qu.:10.00       3rd Qu.:0.990      3rd Qu.:  2.000    3rd Qu.: 3.000    
  Max.   :19.00       Max.   :9.000      Max.   :133.000    Max.   :41.000    
+                                                                             
  DEST_RETAIL_COUNT DEST_TRAIN_EXITS_COUNT DEST_HDB_COUNT  
  Min.   :   0.99   Min.   : 0.990         Min.   :  0.99  
  1st Qu.:   7.00   1st Qu.: 0.990         1st Qu.:  0.99  
@@ -4755,10 +4773,12 @@ Data clear point
  Mean   :  98.39   Mean   : 1.981         Mean   : 21.14  
  3rd Qu.: 110.00   3rd Qu.: 2.000         3rd Qu.: 36.00  
  Max.   :1678.00   Max.   :13.000         Max.   :103.00  
+                                                          
           geometry    
  LINESTRING   :59835  
  epsg:3414    :    0  
  +proj=tmer...:    0  
+                      
                       
                       
                       </code></pre>
@@ -4880,7 +4900,7 @@ Load point
 <span id="cb135-24"><a href="#cb135-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_grid</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-118-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-119-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="callout callout-style-simple callout-tip callout-titled">
@@ -4920,7 +4940,7 @@ Insights
 <span id="cb136-14"><a href="#cb136-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Number of Trips"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-119-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-120-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>Plotting it in a <em>log</em> scale shows a more linear relationship.</p>
@@ -4930,7 +4950,7 @@ Insights
 <span id="cb137-3"><a href="#cb137-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
 <span id="cb137-4"><a href="#cb137-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-120-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-121-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="callout callout-style-simple callout-tip callout-titled">
@@ -5023,7 +5043,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb139"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"HDB_RESIDENT_COUNT"</span>, <span class="st">"HDB Population"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-122-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-123-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5031,7 +5051,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb140"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"TRAIN_ALIGHT_COUNT"</span>, <span class="st">"Potential Transfers from Train"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-123-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-124-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5039,7 +5059,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb141"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_propulsive</span>(<span class="st">"BUS_ALIGHT_COUNT"</span>, <span class="st">"Potential Transfers from Bus"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-124-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-125-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5127,7 +5147,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb143"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"BUS_STOP_COUNT"</span>, <span class="st">"Number of Bus Stops"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-126-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-127-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5135,7 +5155,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb144"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"TRAIN_EXITS_COUNT"</span>, <span class="st">"Number of Train Stations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-127-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-128-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5143,7 +5163,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb145"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"HDB_COUNT"</span>, <span class="st">"Number of HDB blocks"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-128-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-129-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5151,7 +5171,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb146"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb146-1"><a href="#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"ENTERTN_COUNT"</span>, <span class="st">"Number of Entertainment Locations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-129-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-130-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5159,7 +5179,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb147"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"F_AND_B_COUNT"</span>, <span class="st">"Number of F&amp;B Outlets"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-130-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-131-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5167,7 +5187,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb148"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb148-1"><a href="#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"LEISURE_COUNT"</span>, <span class="st">"Number of Leisure &amp; Recreation Locations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-131-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-132-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
@@ -5175,7 +5195,7 @@ Helper function
 <div class="cell">
 <div class="sourceCode cell-code" id="cb149"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_attractive</span>(<span class="st">"RETAIL_COUNT"</span>, <span class="st">"Number of Retail Outlets"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-132-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-133-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>

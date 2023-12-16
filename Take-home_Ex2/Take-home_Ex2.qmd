@@ -81,7 +81,7 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
 | Variable            | Data Source                                                                                                                                 | Motivation                                               |
-|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
+|-----------------|---------------------------------------|-----------------|
 | `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
 | `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
 | `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
@@ -95,7 +95,7 @@ Attractiveness variables are factors that can motivate people to go to their des
 Propulsiveness variables are factors that influence people to ride the bus from specific zones. This is based on the **number** **of potential passengers** at the origin zones.
 
 | Variable             | Data Source                                                                                                                          | Motivation                                                                                        |
-|----------------------|--------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+|-----------------|--------------------------------|-----------------------|
 | `BUS_ALIGHT_COUNT`   | *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API | Passengers who alight from a bus stop within can transfer to another bus to reach                 |
 | `TRAIN_ALIGHT_COUNT` | *Passenger Volume By Train Stations* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API               | Passengers who alight from a train station can transfer to a bus to reach their final destination |
 | `HDB_RESIDENT_COUNT` | `hdb.csv` aspatial data provided on E-learn                                                                                          | Residents in an area are potential bus passengers as they leave their homes                       |
@@ -127,9 +127,9 @@ We will be using `tmap_mode("plot")` instead of `tmap_mode("view")` to make the 
 
 Sourced from the `shp` [*Bus Stop Locations*](https://datamall.lta.gov.sg/content/datamall/en/static-data.html#:~:text=drop%20off%20passengers.-,203%20kB,-Last%20Update%3A%C2%A0Jul) dataset from LTA DataMall. This consist of hexagons with a distance of **375m** from the center to the midpoint of the edge as the [traffic analysis zone (TAZ)](https://tmg.utoronto.ca/files/Reports/Traffic-Zone-Guidance_March-2021_Final.pdf).
 
-We only consider the bus stops within Singapore so we have to ensure that the bus stops included here are within the \[Singapore Boundary geometry (mpsz)\].
+We only consider the bus stops within Singapore so we have to ensure that the bus stops included here are within the *Singapore Boundary geometry (mpsz)*.
 
-**Prerequisites:** \[Singapore Boundary geometry (mpsz)\]
+**Prerequisites:** *Singapore Boundary geometry (mpsz)*
 
 **Output data:** `honeycomb` (geospatial)
 
@@ -148,16 +148,14 @@ This contains the number of trips on **weekend/holiday morning peak periods** (1
 
 This data will be used generating the flow lines for visualization, and for Spatial Interaction Modelling.
 
-**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\]
+**Prerequisites:** *Honeycomb grid corresponding to bus stop locations (honeycomb)*
 
 **Output data:** `od_hex` (geospatial)
 
 **Columns**:
 
 -   `ORIG_HEX_ID`: ID corresponding to the origin zone
-
 -   `DEST_HEX_ID`: ID corresponding to the destination zone
-
 -   `TRIPS`: Number of bus trips between the origin and destination zones
 :::
 
@@ -166,47 +164,24 @@ This data will be used generating the flow lines for visualization, and for Spat
 
 This contains the flow lines derived from the pairs of zones in \[Number of trips between 2 zones (od_hex)\]. It will be used to visualize the flow patterns.
 
-**Prerequisites:** \[Number of trips between 2 zones (od_hex)\]
+**Prerequisites:** *Number of trips between 2 zones (od_hex)*
 
 **Output data:** `flowlines`
 
 **Columns**:
 
 -   `ORIG_HEX_ID`: ID corresponding to the origin zone
-
 -   `DEST_HEX_ID`: ID corresponding to the destination zone
-
 -   `TRIPS`: Number of bus trips between the origin and destination zones
-
 -   Geometry of the line between the origin and destination zones
-:::
-
-### Spatial Interaction Modelling
-
-::: {.callout-note collapse="true" appearance="minimal"}
-#### Zone distance table (*dist_tbl*)
-
-This table contains the distances between all the pair of zones. This corresponds to the **distance decay** component of our model
-
-**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\]
-
-**Output data:** `dist_tbl` (aspatial)
-
-**Columns**:
-
--   `ORIG_HEX_ID`: ID corresponding to the origin zone
-
--   `DEST_HEX_ID`: ID corresponding to the destination zone
-
--   `DISTANCE`: Distance between the (centroids of) origin and destination zones
 :::
 
 ::: {.callout-note collapse="true" appearance="minimal"}
 #### Attractiveness Variables Table (*attractiveness*)
 
-This table contains the values of the [Attractiveness] variables. Data sources are defined in the [Attractiveness] section.
+This table contains the values of the [Attractiveness] variables. Data sources are defined in the [Attractiveness] section. We will also use this data to plot the attractive forces for visualizing spatial interactions.
 
-**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\], prepared data from identified data sources
+**Prerequisites:** *Honeycomb grid corresponding to bus stop locations (honeycomb)*, prepared data from identified data sources
 
 **Output data:** `attractiveness` (geospatial)
 
@@ -226,23 +201,37 @@ This table contains the values of the [Attractiveness] variables. Data sources a
 ::: {.callout-note collapse="true" appearance="minimal"}
 #### Propulsiveness Variables Table (*propulsiveness*)
 
-This table contains the values of the [Propulsiveness] variables. Data sources are defined in the [Propulsiveness] section.
+This table contains the values of the [Propulsiveness] variables. Data sources are defined in the [Propulsiveness] section. We will also use this data to plot the propulsive forces for visualizing spatial interactions.
 
-**Prerequisites:** \[Honeycomb grid corresponding to bus stop locations (honeycomb)\], prepared data from identified data sources
+**Prerequisites:** *Honeycomb grid corresponding to bus stop locations (honeycomb)*, prepared data from identified data sources
 
 **Output data:** `propulsiveness` (geospatial)
 
 **Columns**:
 
 -   `HEX_ID`: ID corresponding to the zone
-
 -   `BUS_ALIGHT_COUNT`: Number of bus passengers alighting from a zone
-
 -   `TRAIN_ALIGHT_COUNT`: Number of train passengers alighting from a zone
-
 -   `HDB_RESIDENT_COUNT`: Number of residents in a zone
-
 -   Geometry of the hexagons corresponding to the traffic analysis zone
+:::
+
+### Spatial Interaction Modelling
+
+::: {.callout-note collapse="true" appearance="minimal"}
+#### Zone distance table (*dist_tbl*)
+
+This table contains the distances between all the pair of zones. This corresponds to the **distance decay** component of our model
+
+**Prerequisites:** *Honeycomb grid corresponding to bus stop locations (honeycomb)*
+
+**Output data:** `dist_tbl` (aspatial)
+
+**Columns**:
+
+-   `ORIG_HEX_ID`: ID corresponding to the origin zone
+-   `DEST_HEX_ID`: ID corresponding to the destination zone
+-   `DISTANCE`: Distance between the (centroids of) origin and destination zones
 :::
 
 ::: {.callout-note collapse="true" appearance="minimal"}
@@ -252,15 +241,10 @@ Contains all the data we need to model the interaction.
 
 **Prerequisites:**
 
--   \[Zone distance table (dist_tbl)\]
-
--   \[Number of trips between 2 zones (od_hex)\]
-
--   \[Attractiveness Variables Table (attractiveness)\]
-
--   \[Propulsiveness Variables Table (propulsiveness)\]
-
--   \[Flow Lines (flowlines)\]
+-   *Zone distance table (dist_tbl)*
+-   *Attractiveness Variables Table (attractiveness)*
+-   *Propulsiveness Variables Table (propulsiveness)*
+-   *Flow Lines (flowlines)*
 
 **Output data:** `SIM_data` (aspatial)
 
@@ -274,9 +258,9 @@ Contains all the data we need to model the interaction.
 
 -   `TRIPS`: Number of bus trips between the origin and destination zones
 
--   `DEST_*_COUNT`: Values from \[Attractiveness Variables Table (attractiveness)\]
+-   `DEST_*_COUNT`: Values from *Attractiveness Variables Table (attractiveness)*
 
--   `ORIG_*_COUNT`: Values from \[Propulsiveness Variables Table (propulsiveness)\]
+-   `ORIG_*_COUNT`: Values from *Propulsiveness Variables Table (propulsiveness)*
 
 -   Geomtery corresponding to the flowlines
 :::
@@ -324,7 +308,9 @@ message <- "This code chunk executed"
 
 Using the data sources identified in [Data Outputs], we will download the datasets and add them into our `data/` directory.
 
-We will also prepare the `data/rds/` directory to save the data we from our [Load point]. After the setup we are left with the directory structure below.
+We will also prepare the `data/rds/` directory to save important or expesive data, such as those we load from our [Load point].
+
+After the setup we are left with the directory structure below.
 
 ::: {.callout-note collapse="true" appearance="simple"}
 ## Directory structure
@@ -364,15 +350,15 @@ Take-home_Ex2/data
 │   ├── MPSZ-2019.qmd
 │   ├── MPSZ-2019.shp
 │   ├── MPSZ-2019.shx
-│   ├── RapidTransitSystemStation.cpg
-│   ├── RapidTransitSystemStation.dbf
-│   ├── RapidTransitSystemStation.lyr
-│   ├── RapidTransitSystemStation.prj
-│   ├── RapidTransitSystemStation.sbn
-│   ├── RapidTransitSystemStation.sbx
-│   ├── RapidTransitSystemStation.shp
-│   ├── RapidTransitSystemStation.shp.xml
-│   ├── RapidTransitSystemStation.shx
+│   ├── Train_Station_Exit_Layer.cpg
+│   ├── Train_Station_Exit_Layer.dbf
+│   ├── Train_Station_Exit_Layer.lyr
+│   ├── Train_Station_Exit_Layer.prj
+│   ├── Train_Station_Exit_Layer.sbn
+│   ├── Train_Station_Exit_Layer.sbx
+│   ├── Train_Station_Exit_Layer.shp
+│   ├── Train_Station_Exit_Layer.shp.xml
+│   ├── Train_Station_Exit_Layer.shx
 │   ├── Retails.cpg
 │   ├── Retails.dbf
 │   ├── Retails.prj
@@ -396,17 +382,11 @@ Take-home_Ex2/data
 We will use the following R packages to run the code needed for data analysis.
 
 -   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html): for thematic mapping
-
 -   [**sf**](https://cran.r-project.org/web/packages/sf/index.html): for geospatial data handling
-
 -   [**tidyverse**](https://cran.r-project.org/web/packages/tidyverse/index.html): for non-spatial data handling
-
 -   [**knitr**](https://cran.r-project.org/web/packages/knitr/): for prettifying presentation
-
 -   [**stplanr**](https://cran.r-project.org/web/packages/stplanr/index.html): for generating flow lines
-
 -   [**reshape2**](https://cran.r-project.org/web/packages/reshape2/index.html): for generating pivot tables from matrix
-
 -   [**performance**](https://cran.r-project.org/web/packages/performance/index.html): for model comparisons
 
 ## Environment Settings
@@ -414,10 +394,8 @@ We will use the following R packages to run the code needed for data analysis.
 These are the default setting we will use, and initial setup required for the environment.
 
 -   `tmap_mode` to **plot**: for plotting simple maps
-
 -   `tmap_style` to **natural**: for my preferred mapping style
-
--   set **seed** for reproducibility of results
+-   set **seed** for the *random number generator* so our results are deterministic (for reproduceability)
 :::
 
 Using the setup tasks identified above, we will now run the setup code.
@@ -429,7 +407,6 @@ We will label this code chunk with `label: setup` so it will always be run even 
 ```{r}
 #| label: setup
 pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance)
-#pacman::p_load(sf, sp, tmap, tidyverse, knitr, sfdep, stplanr, reshape2)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
@@ -445,7 +422,7 @@ We will use this as a guide to do our complex data wrangling tasks.
 
 ## Utility
 
-We will first start by preparing the data needed for utility, \[Singapore Boundary geometry (mpsz)\] and \[Honeycomb grid corresponding to bus stop locations (honeycomb)\].
+We will first start by preparing the data needed for utility, *Singapore Boundary geometry (mpsz)* and *Honeycomb grid corresponding to bus stop locations (honeycomb)*. (see [Data Outputs])
 
 ### Importing the datasets
 
@@ -674,7 +651,7 @@ tm_shape(mpsz) +
 Now that we have hexagons properly generated, we will assign id for each hexagon to be used as a unique identifier. We will store this id under the `HEX_ID` column, and can be used in joining data frames.
 
 ```{r}
-honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb)))
+honeycomb$HEX_ID <- sprintf("H%04d", seq_len(nrow(honeycomb))) %>% as.factor()
 kable(head(honeycomb))
 ```
 
@@ -859,10 +836,23 @@ rm(od_trips_w_hex)
 
 First, we will generate the flow lines using `od2line()`. `honeycomb` will be supplied as the `zone` as it contains the hexagons we are using as the **traffic analysis zones**.
 
+::: {.callout-important appearance="simple"}
+This operation takes a while so we will save it as soon as it is generated so we set `eval` to `false`. Run this code chunk manually to regenerate the code.
+:::
+
 ```{r}
+#| eval: false
 flowlines <- od_hex %>% od2line(
   honeycomb,
   zone_code = "HEX_ID")
+write_rds(flowlines, "data/rds/flowlines202310.rds")
+```
+
+```{r}
+#| echo: false
+
+# Reload silently
+flowlines <- read_rds("data/rds/flowlines202310.rds")
 ```
 
 #### Initial inspection of the flow lines
