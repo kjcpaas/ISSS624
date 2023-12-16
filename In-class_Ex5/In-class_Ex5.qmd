@@ -6,7 +6,7 @@ date-modified: "last-modified"
 format: html
 execute: 
   echo: true
-  eval: false
+  eval: true
   warning: false
 ---
 
@@ -23,7 +23,7 @@ It is not yet available on <https://cran.r-project.org/>, so we will download it
 ```{r}
 #| label: setup
 devtools::install_github("LukeCe/spflow")
-pacman::p_load(tmap, sf, spdep, sp, Matrix, knitr, tidyverse)
+pacman::p_load(tmap, sf, spdep, sp, Matrix, knitr, tidyverse, spflow)
 tmap_mode("plot")
 tmap_style("natural")
 ```
@@ -51,7 +51,6 @@ mpsz_net <- spflow_network(
   node_key_column = "SZ_CODE")
 
 mpsz_net
-)
 ```
 
 ## Creating spflow networks pairs
@@ -104,7 +103,7 @@ cor_formula <- log(1 + TRIPS) ~
 
 cor_mat <- pair_cor(
   mpsz_multi_net,
-  sp_flow_formula = cor_formula,
+  spflow_formula = cor_formula,
   add_lags_x = FALSE
 )
 
@@ -115,4 +114,80 @@ colnames(cor_mat) <- paste0(
 cor_image(cor_mat)
 ```
 
+Some variables are correlated to each other so we will exclude some for them from the formula.
+
+Examples are `D_AGE13_24` and `D_AGE25_64`
+
 # Model Calibration
+
+## The base model
+
+We are using Model 9 from slides (unrestricted model)
+
+```{r}
+base_model <- spflow(
+  spflow_formula = log(1 + TRIPS) ~
+    O_(BUSSTOP_COUNT +
+         AGE25_64) +
+    D_(SCHOOL_COUNT +
+      BUSINESS_COUNT +
+      RETAILS_COUNT +
+      FINSERV_COUNT)+
+    P_(log(DISTANCE + 1)),
+ spflow_networks = mpsz_multi_net)
+base_model
+```
+
+`D_SCHOOL_COUNT` and `D_BUSINESS_COUNT`, the attraction is on the zone itself, not its neighbors
+
+`D_RETAILS_COUNT` not significant at all for both zone and its neighbor (as p-value \> 0.05)
+
+`D_FINSERV_COUNT`, `O_BUSSTOP_COUNT`, `O_AGE25_64` attractive and propulsive forces are contributed by the zone and its neighbors.
+
+## Residual diagnostics
+
+```{r}
+old_par <- par(mfrow = c(1, 3),
+               mar = c(2, 2, 2, 2))
+spflow_moran_plots(base_model)
+```
+
+```{r}
+par(old_par)
+```
+
+```{r}
+corr_residual <- pair_cor(base_model)
+colnames(corr_residual) <- substr(colnames(corr_residual), 1, 3)
+cor_image(corr_residual)
+```
+
+The explanatory variables we used are not correlated so they are valid explanatory variables.
+
+::: callout-note
+Just change the model to generate the reports for the different models. It seems `model_8` based on R-square correlation
+:::
+
+```{r}
+spflow_formula <- log(1 + TRIPS) ~
+  O_(BUSSTOP_COUNT +
+       AGE25_64) +
+  D_(SCHOOL_COUNT +
+       BUSINESS_COUNT +
+       RETAILS_COUNT +
+       FINSERV_COUNT) +
+  P_(log(DISTANCE + 1))
+
+model_control <- spflow_control(
+  estimation_method = "mle",
+  model = "model_8"
+)
+
+mle_model <- spflow(
+  spflow_formula,
+  spflow_networks = mpsz_multi_net,
+  estimation_control = model_control
+)
+
+mle_model
+```

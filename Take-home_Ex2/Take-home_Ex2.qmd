@@ -69,7 +69,7 @@ We use the different variables to generate formula for each model, which will be
 Once the models are generated, we will also compare the models as to which one best fits our data, using **goodness of fit** test or $R^2$ test.
 :::
 
-To perform our modelling, we need to identify the propulsiveness and attractiveness variables we will use for our model.
+To perform our modelling, we need to identify the **propulsiveness** and **attractiveness** variables we will use for our model.
 
 As our data will be based on real-world data, *Passenger Volume By Origin Destination Bus Stops* from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) via API, we can think of possible factors based on our real-world experience.
 
