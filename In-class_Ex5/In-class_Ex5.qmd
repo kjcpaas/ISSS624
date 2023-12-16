@@ -6,7 +6,7 @@ date-modified: "last-modified"
 format: html
 execute: 
   echo: true
-  eval: true
+  eval: false
   warning: false
 ---
 
@@ -28,4 +28,91 @@ tmap_mode("plot")
 tmap_style("natural")
 ```
 
-# 
+# Loading data
+
+```{r}
+mpsz_nb <- read_rds("data/rds/mpsz_nb.rds")
+mpsz_flow <- read_rds("data/rds/mpsz_flow.rds")
+mpsz_var <- read_rds("data/rds/mpsz_var.rds")
+```
+
+For our model, we will use contiguity-based neighborhood structure.
+
+# Preparing spflow objects
+
+## Creating spflow_network
+
+```{r}
+mpsz_net <- spflow_network(
+  id_net = "sg",
+  node_neighborhood =
+    nb2mat(mpsz_nb$by_contiguity),
+  node_data = mpsz_var,
+  node_key_column = "SZ_CODE")
+
+mpsz_net
+)
+```
+
+## Creating spflow networks pairs
+
+```{r}
+mpsz_net_pairs <- spflow_network_pair(
+  id_orig_net = "sg",
+  id_dest_net = "sg",
+  pair_data = mpsz_flow,
+  orig_key_column = "ORIGIN_SZ",
+  dest_key_column = "DESTIN_SZ"
+)
+
+mpsz_net_pairs
+```
+
+## Creating spflow multi-network
+
+::: callout-important
+Output must be N by N, like the dimensions of `mpsz_flow`
+
+```{r}
+nrow(mpsz_var)^2 == nrow(mpsz_flow)
+```
+:::
+
+```{r}
+mpsz_multi_net <- spflow_network_multi(mpsz_net,
+                                       mpsz_net_pairs)
+mpsz_multi_net
+```
+
+## Correlation Analysis
+
+Avoid having more than 2 explanatory variables that are linearly correlated. Otherwise, there will be bias in data. This is why it is important to generate a **correlogram** or **correlation matrix** to check which explanatory variables are correlated.
+
+`P_` refers to impedance
+
+```{r}
+cor_formula <- log(1 + TRIPS) ~
+  BUSSTOP_COUNT +
+  AGE7_12 +
+  AGE13_24 +
+  AGE25_64 +
+  SCHOOL_COUNT +
+  BUSINESS_COUNT +
+  RETAILS_COUNT +
+  FINSERV_COUNT +
+  P_(log(DISTANCE + 1))
+
+cor_mat <- pair_cor(
+  mpsz_multi_net,
+  sp_flow_formula = cor_formula,
+  add_lags_x = FALSE
+)
+
+colnames(cor_mat) <- paste0(
+  substr(
+    colnames(cor_mat), 1, 3), "...")
+
+cor_image(cor_mat)
+```
+
+# Model Calibration

@@ -2209,6 +2209,34 @@
     "href": "In-class_Ex5/In-class_Ex5.html",
     "title": "In-class Ex 5: Spatial Economic Interaction Models",
     "section": "",
-    "text": "Setup Environment\n\nspflow: R package for Spatial Economic Interaction Models\n\n\n\n\n\n\n\nImportant\n\n\n\nWe will the development version of spflow, which has major updates to syntax. (use at own risk)\nIt is not yet available on https://cran.r-project.org/, so we will download it from Github.\n\n\n\ndevtools::install_github(\"LukeCe/spflow\")\npacman::p_load(tmap, sf, spdep, sp, Matrix, knitr, tidyverse)\ntmap_mode(\"plot\")\ntmap_style(\"natural\")"
+    "text": "spflow: R package for Spatial Economic Interaction Models\n\n\n\n\n\n\n\nImportant\n\n\n\nWe will the development version of spflow, which has major updates to syntax. (use at own risk)\nIt is not yet available on https://cran.r-project.org/, so we will download it from Github.\n\n\n\ndevtools::install_github(\"LukeCe/spflow\")\npacman::p_load(tmap, sf, spdep, sp, Matrix, knitr, tidyverse)\ntmap_mode(\"plot\")\ntmap_style(\"natural\")"
+  },
+  {
+    "objectID": "In-class_Ex5/In-class_Ex5.html#creating-spflow_network",
+    "href": "In-class_Ex5/In-class_Ex5.html#creating-spflow_network",
+    "title": "In-class Ex 5: Spatial Economic Interaction Models",
+    "section": "Creating spflow_network",
+    "text": "Creating spflow_network\n\nmpsz_net &lt;- spflow_network(\n  id_net = \"sg\",\n  node_neighborhood =\n    nb2mat(mpsz_nb$by_contiguity),\n  node_data = mpsz_var,\n  node_key_column = \"SZ_CODE\")\n\nmpsz_net\n)"
+  },
+  {
+    "objectID": "In-class_Ex5/In-class_Ex5.html#creating-spflow-networks-pairs",
+    "href": "In-class_Ex5/In-class_Ex5.html#creating-spflow-networks-pairs",
+    "title": "In-class Ex 5: Spatial Economic Interaction Models",
+    "section": "Creating spflow networks pairs",
+    "text": "Creating spflow networks pairs\n\nmpsz_net_pairs &lt;- spflow_network_pair(\n  id_orig_net = \"sg\",\n  id_dest_net = \"sg\",\n  pair_data = mpsz_flow,\n  orig_key_column = \"ORIGIN_SZ\",\n  dest_key_column = \"DESTIN_SZ\"\n)\n\nmpsz_net_pairs"
+  },
+  {
+    "objectID": "In-class_Ex5/In-class_Ex5.html#creating-spflow-multi-network",
+    "href": "In-class_Ex5/In-class_Ex5.html#creating-spflow-multi-network",
+    "title": "In-class Ex 5: Spatial Economic Interaction Models",
+    "section": "Creating spflow multi-network",
+    "text": "Creating spflow multi-network\n\n\n\n\n\n\nImportant\n\n\n\nOutput must be N by N, like the dimensions of mpsz_flow\n\nnrow(mpsz_var)^2 == nrow(mpsz_flow)\n\n\n\n\nmpsz_multi_net &lt;- spflow_network_multi(mpsz_net,\n                                       mpsz_net_pairs)\nmpsz_multi_net"
+  },
+  {
+    "objectID": "In-class_Ex5/In-class_Ex5.html#correlation-analysis",
+    "href": "In-class_Ex5/In-class_Ex5.html#correlation-analysis",
+    "title": "In-class Ex 5: Spatial Economic Interaction Models",
+    "section": "Correlation Analysis",
+    "text": "Correlation Analysis\nAvoid having more than 2 explanatory variables that are linearly correlated. Otherwise, there will be bias in data. This is why it is important to generate a correlogram or correlation matrix to check which explanatory variables are correlated.\nP_ refers to impedance\n\ncor_formula &lt;- log(1 + TRIPS) ~\n  BUSSTOP_COUNT +\n  AGE7_12 +\n  AGE13_24 +\n  AGE25_64 +\n  SCHOOL_COUNT +\n  BUSINESS_COUNT +\n  RETAILS_COUNT +\n  FINSERV_COUNT +\n  P_(log(DISTANCE + 1))\n\ncor_mat &lt;- pair_cor(\n  mpsz_multi_net,\n  sp_flow_formula = cor_formula,\n  add_lags_x = FALSE\n)\n\ncolnames(cor_mat) &lt;- paste0(\n  substr(\n    colnames(cor_mat), 1, 3), \"...\")\n\ncor_image(cor_mat)"
   }
 ]
