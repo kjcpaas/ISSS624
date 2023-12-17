@@ -311,8 +311,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#model-comparison" id="toc-model-comparison" class="nav-link" data-scroll-target="#model-comparison">Model comparison</a></li>
   </ul></li>
-  <li><a href="#inspecting-variable-relationship" id="toc-inspecting-variable-relationship" class="nav-link" data-scroll-target="#inspecting-variable-relationship">Inspecting variable relationship</a></li>
+  <li><a href="#using-other-regression-methods" id="toc-using-other-regression-methods" class="nav-link" data-scroll-target="#using-other-regression-methods">Using other regression methods</a></li>
   </ul></li>
+  <li><a href="#conclusion-1" id="toc-conclusion-1" class="nav-link" data-scroll-target="#conclusion-1">Conclusion</a></li>
   </ul>
 </nav>
     </div>
@@ -345,7 +346,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">December 17, 2023</p>
+      <p class="date-modified">December 18, 2023</p>
     </div>
   </div>
     
@@ -8703,33 +8704,6 @@ Data clear point
 </section>
 <section id="improving-the-models" class="level1">
 <h1>Improving the Models</h1>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-84-contents" aria-controls="callout-84" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Load point
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-84" class="callout-84-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<p>We can start from this point by loading the relevant datasets.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb184"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/SIM_data_no_intra202310.rds"</span>)</span>
-<span id="cb184-2"><a href="#cb184-2" aria-hidden="true" tabindex="-1"></a>uncSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/uncSIM202310.rds"</span>)</span>
-<span id="cb184-3"><a href="#cb184-3" aria-hidden="true" tabindex="-1"></a>dbcSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/dbcSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>We will also load the <code>calc_r_squared()</code> function for model comparison.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb185"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb185-1"><a href="#cb185-1" aria-hidden="true" tabindex="-1"></a>calc_r_squared <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
-<span id="cb185-2"><a href="#cb185-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(model<span class="sc">$</span>data<span class="sc">$</span>TRIPS, model<span class="sc">$</span>fitted.values)<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb185-3"><a href="#cb185-3" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-</div>
 <p>From <a href="#spatial-interaction-modelling">Spatial Interaction Modelling</a>, we found that the <strong>doubly constrained model</strong> is the best out of all the models we created so far. In this part, we will try to improve the models, with the doubly constrained metrics as baseline:</p>
 <p><strong>R-squared</strong>: 0.6103781</p>
 <p><strong>RMSE:</strong> 236.1052</p>
@@ -8752,7 +8726,7 @@ Caution
 <h2 class="anchored" data-anchor-id="opportunities-for-improvement">Opportunities for Improvement</h2>
 <p>To improve our model, we can do the following approaches.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-18-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-18-1" role="tab" aria-controls="tabset-18-1" aria-selected="true">Plot correlation matrix</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-18-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-18-2" role="tab" aria-controls="tabset-18-2" aria-selected="false">Inspect variable relationship</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-18-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-18-3" role="tab" aria-controls="tabset-18-3" aria-selected="false">Use other regression methods</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-18-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-18-1" role="tab" aria-controls="tabset-18-1" aria-selected="true">Plot correlation matrix</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-18-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-18-2" role="tab" aria-controls="tabset-18-2" aria-selected="false">Use other regression methods</a></li></ul>
 <div class="tab-content">
 <div id="tabset-18-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-18-1-tab">
 <p>By plotting correlation matrix, we can see if there are explanatory variables that are closely correlated to each other.</p>
@@ -8760,23 +8734,18 @@ Caution
 <p>When we find explanatory variables that are closely correlated, we will remove some of them from the model.</p>
 </div>
 <div id="tabset-18-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-18-2-tab">
-<p>By applying <em>log</em> to all our explanatory variables, we have assumed that all are exponentially correlated, not linearly correlated.</p>
-<p>By plotting the <code>TRIPS</code> vs explanatory variable, we can more easily visualize if this relation is true.</p>
-<p>If it turns out that the relation is linear and not exponential, we will remove <em>log</em> from the model for that explanatory variable, so that <code>glm()</code> can fit a line better to our data.</p>
-</div>
-<div id="tabset-18-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-18-3-tab">
 <p>We are using <a href="https://stats.oarc.ucla.edu/r/dae/poisson-regression/">Poisson regression</a> method, which is approriate for when the mean and variance of the dependent variable are not extremely different.</p>
 <p>However, this is not the case for our data.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb186"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb186-1"><a href="#cb186-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(SIM_data<span class="sc">$</span>TRIPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb184"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(SIM_data<span class="sc">$</span>TRIPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 92.74146</code></pre>
+<pre><code>[1] 95.7754</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb188"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb188-1"><a href="#cb188-1" aria-hidden="true" tabindex="-1"></a><span class="fu">var</span>(SIM_data<span class="sc">$</span>TRIPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb186"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb186-1"><a href="#cb186-1" aria-hidden="true" tabindex="-1"></a><span class="fu">var</span>(SIM_data<span class="sc">$</span>TRIPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 142840.4</code></pre>
+<pre><code>[1] 151183.2</code></pre>
 </div>
 </div>
 <p><strong>Negative binomial regression</strong> may be more appropriate for our dataset as it is more suitable for over-dispersed data.</p>
@@ -8786,29 +8755,50 @@ Caution
 </section>
 <section id="plotting-correlation-matrix" class="level2">
 <h2 class="anchored" data-anchor-id="plotting-correlation-matrix">Plotting Correlation Matrix</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-85-contents" aria-controls="callout-85" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Load point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-85" class="callout-85-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We can start from this point by loading the relevant datasets.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb188"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb188-1"><a href="#cb188-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/SIM_data_no_intra202310.rds"</span>)</span>
+<span id="cb188-2"><a href="#cb188-2" aria-hidden="true" tabindex="-1"></a>uncSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/uncSIM202310.rds"</span>)</span>
+<span id="cb188-3"><a href="#cb188-3" aria-hidden="true" tabindex="-1"></a>dbcSIM <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/dbcSIM202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
 <p>Let’s plot the correlation matrix using <code>corrplot()</code> we will set a significance level (<span class="math inline">\(\alpha\)</span> value) of <strong>0.05</strong>.</p>
 <div class="cell">
 <details>
 <summary><strong>Show the code</strong></summary>
-<div class="sourceCode cell-code" id="cb190"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb190-1"><a href="#cb190-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="sc">%&gt;%</span></span>
-<span id="cb190-2"><a href="#cb190-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"ORIG_HEX_ID"</span>, <span class="st">"DEST_HEX_ID"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb190-3"><a href="#cb190-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb190-4"><a href="#cb190-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb190-5"><a href="#cb190-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corrplot</span>(</span>
-<span id="cb190-6"><a href="#cb190-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">"lower"</span>,</span>
-<span id="cb190-7"><a href="#cb190-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"square"</span>,</span>
-<span id="cb190-8"><a href="#cb190-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Correlation map of model variables"</span>,</span>
-<span id="cb190-9"><a href="#cb190-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">addCoef.col =</span> <span class="st">"white"</span>,</span>
-<span id="cb190-10"><a href="#cb190-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.cex =</span> <span class="fl">0.5</span>,</span>
-<span id="cb190-11"><a href="#cb190-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.digits =</span> <span class="dv">2</span>,</span>
-<span id="cb190-12"><a href="#cb190-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.col =</span> <span class="st">"black"</span>,</span>
-<span id="cb190-13"><a href="#cb190-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.cex =</span> <span class="fl">0.5</span>,</span>
-<span id="cb190-14"><a href="#cb190-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.srt =</span> <span class="dv">45</span>,</span>
-<span id="cb190-15"><a href="#cb190-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
-<span id="cb190-16"><a href="#cb190-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">insig =</span> <span class="st">"blank"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb189"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb189-1"><a href="#cb189-1" aria-hidden="true" tabindex="-1"></a>SIM_data <span class="sc">%&gt;%</span></span>
+<span id="cb189-2"><a href="#cb189-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"ORIG_HEX_ID"</span>, <span class="st">"DEST_HEX_ID"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb189-3"><a href="#cb189-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb189-4"><a href="#cb189-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb189-5"><a href="#cb189-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corrplot</span>(</span>
+<span id="cb189-6"><a href="#cb189-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">"lower"</span>,</span>
+<span id="cb189-7"><a href="#cb189-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"square"</span>,</span>
+<span id="cb189-8"><a href="#cb189-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Correlation map of model variables"</span>,</span>
+<span id="cb189-9"><a href="#cb189-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">addCoef.col =</span> <span class="st">"white"</span>,</span>
+<span id="cb189-10"><a href="#cb189-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.cex =</span> <span class="fl">0.5</span>,</span>
+<span id="cb189-11"><a href="#cb189-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.digits =</span> <span class="dv">2</span>,</span>
+<span id="cb189-12"><a href="#cb189-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.col =</span> <span class="st">"black"</span>,</span>
+<span id="cb189-13"><a href="#cb189-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.cex =</span> <span class="fl">0.5</span>,</span>
+<span id="cb189-14"><a href="#cb189-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.srt =</span> <span class="dv">45</span>,</span>
+<span id="cb189-15"><a href="#cb189-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
+<span id="cb189-16"><a href="#cb189-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">insig =</span> <span class="st">"blank"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-168-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-167-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>Next, we will remove data with different correlation levels until we determine what will give us the best model performance.</p>
@@ -8821,32 +8811,32 @@ Caution
 <p>To improve the model, we will remove those that have very strong correlation first (<strong>0.8</strong> to <strong>1</strong>).</p>
 <p>Let us remove <code>DEST_LEISURE_COUNT</code>, instead of <code>DEST_F_AND_B_COUNT</code> as it had negative coefficients from our previous model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb191"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb191-1"><a href="#cb191-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_08 <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="st">"DEST_LEISURE_COUNT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb190"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb190-1"><a href="#cb190-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_08 <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="st">"DEST_LEISURE_COUNT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="correlation-matrix" class="level4">
 <h4 class="anchored" data-anchor-id="correlation-matrix">Correlation Matrix</h4>
 <div class="cell">
 <details>
 <summary><strong>Show the code</strong></summary>
-<div class="sourceCode cell-code" id="cb192"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb192-1"><a href="#cb192-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_08 <span class="sc">%&gt;%</span></span>
-<span id="cb192-2"><a href="#cb192-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"ORIG_HEX_ID"</span>, <span class="st">"DEST_HEX_ID"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb192-3"><a href="#cb192-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb192-4"><a href="#cb192-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb192-5"><a href="#cb192-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corrplot</span>(</span>
-<span id="cb192-6"><a href="#cb192-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">"lower"</span>,</span>
-<span id="cb192-7"><a href="#cb192-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"square"</span>,</span>
-<span id="cb192-8"><a href="#cb192-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Correlation map of model variables"</span>,</span>
-<span id="cb192-9"><a href="#cb192-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">addCoef.col =</span> <span class="st">"white"</span>,</span>
-<span id="cb192-10"><a href="#cb192-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.cex =</span> <span class="fl">0.5</span>,</span>
-<span id="cb192-11"><a href="#cb192-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.digits =</span> <span class="dv">2</span>,</span>
-<span id="cb192-12"><a href="#cb192-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.col =</span> <span class="st">"black"</span>,</span>
-<span id="cb192-13"><a href="#cb192-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.cex =</span> <span class="fl">0.5</span>,</span>
-<span id="cb192-14"><a href="#cb192-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.srt =</span> <span class="dv">45</span>,</span>
-<span id="cb192-15"><a href="#cb192-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
-<span id="cb192-16"><a href="#cb192-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">insig =</span> <span class="st">"blank"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb191"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb191-1"><a href="#cb191-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_08 <span class="sc">%&gt;%</span></span>
+<span id="cb191-2"><a href="#cb191-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"ORIG_HEX_ID"</span>, <span class="st">"DEST_HEX_ID"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb191-3"><a href="#cb191-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb191-4"><a href="#cb191-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb191-5"><a href="#cb191-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corrplot</span>(</span>
+<span id="cb191-6"><a href="#cb191-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">"lower"</span>,</span>
+<span id="cb191-7"><a href="#cb191-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"square"</span>,</span>
+<span id="cb191-8"><a href="#cb191-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Correlation map of model variables"</span>,</span>
+<span id="cb191-9"><a href="#cb191-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">addCoef.col =</span> <span class="st">"white"</span>,</span>
+<span id="cb191-10"><a href="#cb191-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.cex =</span> <span class="fl">0.5</span>,</span>
+<span id="cb191-11"><a href="#cb191-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.digits =</span> <span class="dv">2</span>,</span>
+<span id="cb191-12"><a href="#cb191-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.col =</span> <span class="st">"black"</span>,</span>
+<span id="cb191-13"><a href="#cb191-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.cex =</span> <span class="fl">0.5</span>,</span>
+<span id="cb191-14"><a href="#cb191-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.srt =</span> <span class="dv">45</span>,</span>
+<span id="cb191-15"><a href="#cb191-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
+<span id="cb191-16"><a href="#cb191-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">insig =</span> <span class="st">"blank"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-170-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-169-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
@@ -8854,25 +8844,25 @@ Caution
 <h4 class="anchored" data-anchor-id="model-generation">Model generation</h4>
 <p>We do not have variables with correlation &gt;= 0.8 anymore so we can proceed with generating the model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb193"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb193-1"><a href="#cb193-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_08 <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
-<span id="cb193-2"><a href="#cb193-2" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
-<span id="cb193-3"><a href="#cb193-3" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
-<span id="cb193-4"><a href="#cb193-4" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
-<span id="cb193-5"><a href="#cb193-5" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
-<span id="cb193-6"><a href="#cb193-6" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_ENTERTN_COUNT) <span class="sc">+</span></span>
-<span id="cb193-7"><a href="#cb193-7" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_F_AND_B_COUNT) <span class="sc">+</span></span>
-<span id="cb193-8"><a href="#cb193-8" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
-<span id="cb193-9"><a href="#cb193-9" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
-<span id="cb193-10"><a href="#cb193-10" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
-<span id="cb193-11"><a href="#cb193-11" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DISTANCE),</span>
-<span id="cb193-12"><a href="#cb193-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
-<span id="cb193-13"><a href="#cb193-13" aria-hidden="true" tabindex="-1"></a>                         <span class="at">data =</span> SIM_data,</span>
-<span id="cb193-14"><a href="#cb193-14" aria-hidden="true" tabindex="-1"></a>                         <span class="at">na.action =</span> na.exclude)</span>
-<span id="cb193-15"><a href="#cb193-15" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(uncSIM_corr_lt_08, <span class="st">"data/rds/uncSIM_corr_lt_08_202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb192"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb192-1"><a href="#cb192-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_08 <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb192-2"><a href="#cb192-2" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
+<span id="cb192-3"><a href="#cb192-3" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb192-4"><a href="#cb192-4" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb192-5"><a href="#cb192-5" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
+<span id="cb192-6"><a href="#cb192-6" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_ENTERTN_COUNT) <span class="sc">+</span></span>
+<span id="cb192-7"><a href="#cb192-7" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_F_AND_B_COUNT) <span class="sc">+</span></span>
+<span id="cb192-8"><a href="#cb192-8" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
+<span id="cb192-9"><a href="#cb192-9" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
+<span id="cb192-10"><a href="#cb192-10" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
+<span id="cb192-11"><a href="#cb192-11" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DISTANCE),</span>
+<span id="cb192-12"><a href="#cb192-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb192-13"><a href="#cb192-13" aria-hidden="true" tabindex="-1"></a>                         <span class="at">data =</span> SIM_data,</span>
+<span id="cb192-14"><a href="#cb192-14" aria-hidden="true" tabindex="-1"></a>                         <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb192-15"><a href="#cb192-15" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(uncSIM_corr_lt_08, <span class="st">"data/rds/uncSIM_corr_lt_08_202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb194"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_08 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/uncSIM_corr_lt_08_202310.rds"</span>)</span>
-<span id="cb194-2"><a href="#cb194-2" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_08</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb193"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb193-1"><a href="#cb193-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_08 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/uncSIM_corr_lt_08_202310.rds"</span>)</span>
+<span id="cb193-2"><a href="#cb193-2" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_08</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:  glm(formula = TRIPS ~ log(ORIG_HDB_RESIDENT_COUNT) + log(ORIG_BUS_ALIGHT_COUNT) + 
@@ -8907,32 +8897,32 @@ Residual Deviance: 7210000  AIC: 7478000</code></pre>
 <p>Let us remove <code>DEST_F_AND_B_COUNT</code> and <code>DEST_ENTERTN_COUNT</code> as it is the least number of columns to be removed to satisfy the condition.</p>
 <p>We will remove <code>DEST_ENTERTN_COUNT</code> instead of <code>DEST_RETAIL_COUNT</code> as the former had negative coeficient from the previous model, and has less numbers.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb196"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb196-1"><a href="#cb196-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_06 <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"DEST_F_AND_B_COUNT"</span>, <span class="st">"DEST_ENTERTN_COUNT"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb195"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb195-1"><a href="#cb195-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_06 <span class="ot">&lt;-</span> SIM_data <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"DEST_F_AND_B_COUNT"</span>, <span class="st">"DEST_ENTERTN_COUNT"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="correlation-matrix-1" class="level4">
 <h4 class="anchored" data-anchor-id="correlation-matrix-1">Correlation Matrix</h4>
 <div class="cell">
 <details>
 <summary><strong>Show the code</strong></summary>
-<div class="sourceCode cell-code" id="cb197"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb197-1"><a href="#cb197-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_06 <span class="sc">%&gt;%</span></span>
-<span id="cb197-2"><a href="#cb197-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"ORIG_HEX_ID"</span>, <span class="st">"DEST_HEX_ID"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb197-3"><a href="#cb197-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb197-4"><a href="#cb197-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb197-5"><a href="#cb197-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corrplot</span>(</span>
-<span id="cb197-6"><a href="#cb197-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">"lower"</span>,</span>
-<span id="cb197-7"><a href="#cb197-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"square"</span>,</span>
-<span id="cb197-8"><a href="#cb197-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Correlation map of model variables"</span>,</span>
-<span id="cb197-9"><a href="#cb197-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">addCoef.col =</span> <span class="st">"white"</span>,</span>
-<span id="cb197-10"><a href="#cb197-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.cex =</span> <span class="fl">0.5</span>,</span>
-<span id="cb197-11"><a href="#cb197-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.digits =</span> <span class="dv">2</span>,</span>
-<span id="cb197-12"><a href="#cb197-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.col =</span> <span class="st">"black"</span>,</span>
-<span id="cb197-13"><a href="#cb197-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.cex =</span> <span class="fl">0.5</span>,</span>
-<span id="cb197-14"><a href="#cb197-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.srt =</span> <span class="dv">45</span>,</span>
-<span id="cb197-15"><a href="#cb197-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
-<span id="cb197-16"><a href="#cb197-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">insig =</span> <span class="st">"blank"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb196"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb196-1"><a href="#cb196-1" aria-hidden="true" tabindex="-1"></a>SIM_data_corr_lt_06 <span class="sc">%&gt;%</span></span>
+<span id="cb196-2"><a href="#cb196-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">"ORIG_HEX_ID"</span>, <span class="st">"DEST_HEX_ID"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb196-3"><a href="#cb196-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb196-4"><a href="#cb196-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb196-5"><a href="#cb196-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corrplot</span>(</span>
+<span id="cb196-6"><a href="#cb196-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">"lower"</span>,</span>
+<span id="cb196-7"><a href="#cb196-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"square"</span>,</span>
+<span id="cb196-8"><a href="#cb196-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Correlation map of model variables"</span>,</span>
+<span id="cb196-9"><a href="#cb196-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">addCoef.col =</span> <span class="st">"white"</span>,</span>
+<span id="cb196-10"><a href="#cb196-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.cex =</span> <span class="fl">0.5</span>,</span>
+<span id="cb196-11"><a href="#cb196-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.digits =</span> <span class="dv">2</span>,</span>
+<span id="cb196-12"><a href="#cb196-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.col =</span> <span class="st">"black"</span>,</span>
+<span id="cb196-13"><a href="#cb196-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.cex =</span> <span class="fl">0.5</span>,</span>
+<span id="cb196-14"><a href="#cb196-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.srt =</span> <span class="dv">45</span>,</span>
+<span id="cb196-15"><a href="#cb196-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
+<span id="cb196-16"><a href="#cb196-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">insig =</span> <span class="st">"blank"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-174-1.png" class="img-fluid" width="672"></p>
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-173-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
@@ -8940,24 +8930,24 @@ Residual Deviance: 7210000  AIC: 7478000</code></pre>
 <h4 class="anchored" data-anchor-id="model-generation-1">Model generation</h4>
 <p>We do not have variables with correlation &gt;= 0.6 anymore so we can proceed with generating the model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb198"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb198-1"><a href="#cb198-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_06 <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
-<span id="cb198-2"><a href="#cb198-2" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
-<span id="cb198-3"><a href="#cb198-3" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
-<span id="cb198-4"><a href="#cb198-4" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
-<span id="cb198-5"><a href="#cb198-5" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
-<span id="cb198-6"><a href="#cb198-6" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_LEISURE_COUNT) <span class="sc">+</span></span>
-<span id="cb198-7"><a href="#cb198-7" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
-<span id="cb198-8"><a href="#cb198-8" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
-<span id="cb198-9"><a href="#cb198-9" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
-<span id="cb198-10"><a href="#cb198-10" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DISTANCE),</span>
-<span id="cb198-11"><a href="#cb198-11" aria-hidden="true" tabindex="-1"></a>                         <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
-<span id="cb198-12"><a href="#cb198-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">data =</span> SIM_data,</span>
-<span id="cb198-13"><a href="#cb198-13" aria-hidden="true" tabindex="-1"></a>                         <span class="at">na.action =</span> na.exclude)</span>
-<span id="cb198-14"><a href="#cb198-14" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(uncSIM_corr_lt_06, <span class="st">"data/rds/uncSIM_corr_lt_06_202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb197"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb197-1"><a href="#cb197-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_06 <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> TRIPS <span class="sc">~</span> </span>
+<span id="cb197-2"><a href="#cb197-2" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_HDB_RESIDENT_COUNT) <span class="sc">+</span></span>
+<span id="cb197-3"><a href="#cb197-3" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_BUS_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb197-4"><a href="#cb197-4" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(ORIG_TRAIN_ALIGHT_COUNT) <span class="sc">+</span></span>
+<span id="cb197-5"><a href="#cb197-5" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_BUS_STOP_COUNT) <span class="sc">+</span></span>
+<span id="cb197-6"><a href="#cb197-6" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_LEISURE_COUNT) <span class="sc">+</span></span>
+<span id="cb197-7"><a href="#cb197-7" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_RETAIL_COUNT) <span class="sc">+</span></span>
+<span id="cb197-8"><a href="#cb197-8" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_TRAIN_EXITS_COUNT) <span class="sc">+</span></span>
+<span id="cb197-9"><a href="#cb197-9" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DEST_HDB_COUNT) <span class="sc">+</span></span>
+<span id="cb197-10"><a href="#cb197-10" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">log</span>(DISTANCE),</span>
+<span id="cb197-11"><a href="#cb197-11" aria-hidden="true" tabindex="-1"></a>                         <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb197-12"><a href="#cb197-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">data =</span> SIM_data,</span>
+<span id="cb197-13"><a href="#cb197-13" aria-hidden="true" tabindex="-1"></a>                         <span class="at">na.action =</span> na.exclude)</span>
+<span id="cb197-14"><a href="#cb197-14" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(uncSIM_corr_lt_06, <span class="st">"data/rds/uncSIM_corr_lt_06_202310.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb199"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb199-1"><a href="#cb199-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_06 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/uncSIM_corr_lt_06_202310.rds"</span>)</span>
-<span id="cb199-2"><a href="#cb199-2" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_06</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb198"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb198-1"><a href="#cb198-1" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_06 <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/uncSIM_corr_lt_06_202310.rds"</span>)</span>
+<span id="cb198-2"><a href="#cb198-2" aria-hidden="true" tabindex="-1"></a>uncSIM_corr_lt_06</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:  glm(formula = TRIPS ~ log(ORIG_HDB_RESIDENT_COUNT) + log(ORIG_BUS_ALIGHT_COUNT) + 
@@ -8991,17 +8981,17 @@ Residual Deviance: 7204000  AIC: 7473000</code></pre>
 <h3 class="anchored" data-anchor-id="model-comparison">Model comparison</h3>
 <p>We will now compare the model performance</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb201"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb201-1"><a href="#cb201-1" aria-hidden="true" tabindex="-1"></a>model_list_corr <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb201-2"><a href="#cb201-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unconstrained_Original =</span> uncSIM,</span>
-<span id="cb201-3"><a href="#cb201-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unconstrained_Corr_Lt08 =</span> uncSIM_corr_lt_08,</span>
-<span id="cb201-4"><a href="#cb201-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unconstrained_Corr_Lt06 =</span> uncSIM_corr_lt_06,</span>
-<span id="cb201-5"><a href="#cb201-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Doubly_Constrained_Original =</span> dbcSIM)</span>
-<span id="cb201-6"><a href="#cb201-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb201-7"><a href="#cb201-7" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">tibble</span>(</span>
-<span id="cb201-8"><a href="#cb201-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">names</span>(model_list_corr),</span>
-<span id="cb201-9"><a href="#cb201-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">R_squared =</span> <span class="fu">sapply</span>(model_list_corr, calc_r_squared),</span>
-<span id="cb201-10"><a href="#cb201-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="fu">sapply</span>(model_list_corr, rmse)</span>
-<span id="cb201-11"><a href="#cb201-11" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb200"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb200-1"><a href="#cb200-1" aria-hidden="true" tabindex="-1"></a>model_list_corr <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb200-2"><a href="#cb200-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unconstrained_Original =</span> uncSIM,</span>
+<span id="cb200-3"><a href="#cb200-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unconstrained_Corr_Lt08 =</span> uncSIM_corr_lt_08,</span>
+<span id="cb200-4"><a href="#cb200-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unconstrained_Corr_Lt06 =</span> uncSIM_corr_lt_06,</span>
+<span id="cb200-5"><a href="#cb200-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Doubly_Constrained_Original =</span> dbcSIM)</span>
+<span id="cb200-6"><a href="#cb200-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb200-7"><a href="#cb200-7" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">tibble</span>(</span>
+<span id="cb200-8"><a href="#cb200-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">names</span>(model_list_corr),</span>
+<span id="cb200-9"><a href="#cb200-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">R_squared =</span> <span class="fu">sapply</span>(model_list_corr, calc_r_squared),</span>
+<span id="cb200-10"><a href="#cb200-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="fu">sapply</span>(model_list_corr, rmse)</span>
+<span id="cb200-11"><a href="#cb200-11" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -9050,13 +9040,54 @@ Insights
 <p>In addition, removing a few variables resulted in <strong>very slight worsening in performance</strong>. Hence, it may not be worth removing variables to for improving model performance. However, for less powerful computer, it may be worth it to remove some variables to enable the computer to generate a model. Using a correlation matrix can be a good way to determine which variables can be removed.</p>
 </div>
 </div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-87-contents" aria-controls="callout-87" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Data clear point
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-87" class="callout-87-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We will clear that were used in this investigation data we do not need anymore.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb201"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb201-1"><a href="#cb201-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(model_list_corr)</span>
+<span id="cb201-2"><a href="#cb201-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(SIM_data_corr_lt_06)</span>
+<span id="cb201-3"><a href="#cb201-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(SIM_data_corr_lt_08)</span>
+<span id="cb201-4"><a href="#cb201-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(uncSIM_corr_lt_06)</span>
+<span id="cb201-5"><a href="#cb201-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(uncSIM_corr_lt_08)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
 </section>
 </section>
-<section id="inspecting-variable-relationship" class="level2">
-<h2 class="anchored" data-anchor-id="inspecting-variable-relationship">Inspecting variable relationship</h2>
+<section id="using-other-regression-methods" class="level2">
+<h2 class="anchored" data-anchor-id="using-other-regression-methods">Using other regression methods</h2>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>I originally wanted to perform a negative binomial using <code>glm.nb()</code> from <a href="https://www.rdocumentation.org/packages/MASS/versions/7.3-58.3">MASS</a> but after importing the package, it broke the functionality of <code>select()</code>.</p>
+<p>Perhaps the package redefines <code>select()</code>. I need more time to investigate the root cause of this.</p>
+<p>Unfortunately, I am not able to show the code chunks anymore.</p>
+<p>However, the models resulted in a higher RMSE (300+ compare to 200+ in the original models) so having a model more suited to an over-dispersed data does not necessarily produce a better model.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="conclusion-1" class="level1">
+<h1>Conclusion</h1>
+<p>The result of the modelling thus far does that mean that this is the best reflection of the real-world scenario. This is even after trying negative binomial regression that is better suited for the an over-dispersed dataset like ours.</p>
+<p>To explain the outliers we observed <a href="#sec-plotting-trips-vs-distance">plotting TRIPS vs DISTANCE</a> and <a href="#plotting-the-fit">Plotting the fit</a>, we may need to perform a different analysis like <strong>Spatial Economic Interaction Models</strong>, or add weights to the different destination i.e., Kranji and Woodlands Checkpoint bus stops are very attractive because of access to Malaysia.</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
