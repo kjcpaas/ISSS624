@@ -42,7 +42,7 @@ We need the following to start this analysis:
 
 ### Spatial interaction Modelling
 
-We will generate 4 *log*-based Poisson models:
+We will generate 4 *log*-based Poisson regression models:
 
 -   origin constrained model
 
@@ -81,7 +81,7 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
 | Variable            | Data Source                                                                                                                                 | Motivation                                               |
-|-------------------|-----------------------------------|-------------------|
+|-------------------|----------------------------------|-------------------|
 | `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
 | `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
 | `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
@@ -406,7 +406,10 @@ We will label this code chunk with `label: setup` so it will always be run even 
 
 ```{r}
 #| label: setup
-pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance, ggpubr)
+pacman::p_load(
+  sf, sp, tmap, tidyverse, knitr,
+  stplanr, reshape2, performance,
+  ggpubr, corrplot)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
@@ -1740,7 +1743,7 @@ Intra-zonal distances are currently **0**. This can be a result of passengers ta
 ::: {.callout-important collapse="true" appearance="simple"}
 ##### Why can't we just keep them as 0?
 
-As we are going to use **log-based Poisson models**, *log* operations will be applied to all independent variables (including distance).
+As we are going to use **log-based Poisson regression models**, *log* operations will be applied to all independent variables (including distance).
 
 $log(0) = undefined$ so we have to set it to a value **greater than 0**, as distances are **positive** in this context.
 :::
@@ -2633,11 +2636,24 @@ compare_performance(model_list,
                     metrics = "RMSE") %>% kable()
 ```
 
+::: {.callout-tip appearance="simple"}
+#### Alternative method
+
+We can also calculate the RMSE by using the `rmse()` method directly.
+
+```{r}
+kable(tibble(
+  Model = names(model_list),
+  R_squared = sapply(model_list, rmse)
+))
+```
+:::
+
 **Doubly constrained model**, which models the effect of solely the **distance** is the best model according to this metric.
 :::
 
 ::: {.callout-tip collapse="true" appearance="simple"}
-#### Insights
+### Insights
 
 From the model comparisons, we can see that the **doubly constrained model**, which models the effect of solely the **distance** is the best model by all metrics.
 
@@ -2737,4 +2753,287 @@ Similarly, outliers can be seen below the line, where the **model predicted high
 
 The result of the modelling thus far does that mean that this is the best reflection of the real-world scenario. It just means that the **alternative models do a worse job of modelling**.
 
-For example, from [plotting TRIPS vs DISTANCE](#sec-plotting-trips-vs-distance), we observed outliers in the plot, i.e. zone pairs that have long distances but on the top 5% highest number of trips. The same can be observed in [Plotting the fit]. Clearly, there are other forces that result in those trips, other than distance, that are not uncovered by the models we have.
+For example, from [plotting TRIPS vs DISTANCE](#sec-plotting-trips-vs-distance), we observed outliers in the plot, i.e. zone pairs that have long distances but on the top 5% highest number of trips. The same can be observed in [Plotting the fit]. Clearly, there are other forces that result in bus trips, other than distance, that are not uncovered by the models we have.
+
+::: {.callout-tip collapse="true"}
+## Save point
+
+Let's save `SIMdata_no_intra` as we will use it for further modelling,
+
+```{r}
+write_rds(SIM_data_no_intra, "data/rds/SIM_data_no_intra202310.rds")
+```
+:::
+
+::: {.callout-warning collapse="true"}
+## Data clear point
+
+We will clear the data we do not need anymore.
+
+```{r}
+#| eval: false
+rm(model_list)
+rm(dbcSIM)
+rm(decSIM)
+rm(orcSIM)
+rm(SIM_data)
+rm(SIM_data_no_intra_fitted)
+rm(plot_fit)
+```
+:::
+
+# Improving the Models
+
+::: {.callout-note collapse="true"}
+## Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+SIM_data <- read_rds("data/rds/SIM_data_no_intra202310.rds")
+uncSIM <- read_rds("data/rds/uncSIM202310.rds")
+dbcSIM <- read_rds("data/rds/dbcSIM202310.rds")
+```
+
+We will also load the `calc_r_squared()` function for model comparison.
+
+```{r}
+calc_r_squared <- function(model) {
+  cor(model$data$TRIPS, model$fitted.values)^2
+}
+```
+:::
+
+From [Spatial Interaction Modelling], we found that the **doubly constrained model** is the best out of all the models we created so far. In this part, we will try to improve the models, with the doubly constrained metrics as baseline:
+
+**R-squared**: 0.6103781
+
+**RMSE:** 236.1052
+
+As the doubly constrained model does not use explanatory variables other than distance, we will only focus our improvements on the three other models that consider the attractive and propulsive forces: **origin constrained**, **destination constrained**.
+
+::: callout-caution
+As I am no statistics expert and do not have research background, the techniques here are based on common sense and are not based on best practices in the industry.
+
+I just want to explore if doing these steps can improve the initial models, for my own curiosity.
+:::
+
+## Opportunities for Improvement
+
+To improve our model, we can do the following approaches.
+
+::: panel-tabset
+### Plot correlation matrix
+
+By plotting correlation matrix, we can see if there are explanatory variables that are closely correlated to each other.
+
+When use multiple variables with strong correlation, it will skew the model as the effects of common force are amplified.
+
+When we find explanatory variables that are closely correlated, we will remove some of them from the model.
+
+### Inspect variable relationship
+
+By applying *log* to all our explanatory variables, we have assumed that all are exponentially correlated, not linearly correlated.
+
+By plotting the `TRIPS` vs explanatory variable, we can more easily visualize if this relation is true.
+
+If it turns out that the relation is linear and not exponential, we will remove *log* from the model for that explanatory variable, so that `glm()` can fit a line better to our data.
+
+### Use other regression methods
+
+We are using [Poisson regression](https://stats.oarc.ucla.edu/r/dae/poisson-regression/) method, which is approriate for when the mean and variance of the dependent variable are not extremely different.
+
+However, this is not the case for our data.
+
+```{r}
+mean(SIM_data$TRIPS)
+```
+
+```{r}
+var(SIM_data$TRIPS)
+```
+
+**Negative binomial regression** may be more appropriate for our dataset as it is more suitable for over-dispersed data.
+:::
+
+## Plotting Correlation Matrix
+
+Let's plot the correlation matrix using `corrplot()` we will set a significance level ($\alpha$ value) of **0.05**.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+SIM_data %>%
+  select(-c("ORIG_HEX_ID", "DEST_HEX_ID")) %>%
+  st_drop_geometry() %>%
+  cor() %>%
+  corrplot(
+    type = "lower",
+    method = "square",
+    title = "Correlation map of model variables",
+    addCoef.col = "white",
+    number.cex = 0.5,
+    number.digits = 2,
+    tl.col = "black",
+    tl.cex = 0.5,
+    tl.srt = 45,
+    sig.level = 0.05,
+    insig = "blank")
+```
+
+Next, we will remove data with different correlation levels until we determine what will give us the best model performance.
+
+We will use only **unconstrained model** for comparison as it has all the explanatory variables. In addition, we can generate this model the fastest out of all the models.
+
+Also, we will remove **the least number of explanatory variables** that meet the condition we need.
+
+::: panel-tabset
+### Correlation \< 0.8
+
+To improve the model, we will remove those that have very strong correlation first (**0.8** to **1**).
+
+Let us remove `DEST_LEISURE_COUNT`, instead of `DEST_F_AND_B_COUNT` as it had negative coefficients from our previous model.
+
+```{r}
+SIM_data_corr_lt_08 <- SIM_data %>% select(-"DEST_LEISURE_COUNT")
+```
+
+#### Correlation Matrix
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+SIM_data_corr_lt_08 %>%
+  select(-c("ORIG_HEX_ID", "DEST_HEX_ID")) %>%
+  st_drop_geometry() %>%
+  cor() %>%
+  corrplot(
+    type = "lower",
+    method = "square",
+    title = "Correlation map of model variables",
+    addCoef.col = "white",
+    number.cex = 0.5,
+    number.digits = 2,
+    tl.col = "black",
+    tl.cex = 0.5,
+    tl.srt = 45,
+    sig.level = 0.05,
+    insig = "blank")
+```
+
+#### Model generation
+
+We do not have variables with correlation \>= 0.8 anymore so we can proceed with generating the model.
+
+```{r}
+#| eval: false
+uncSIM_corr_lt_08 <- glm(formula = TRIPS ~ 
+                           log(ORIG_HDB_RESIDENT_COUNT) +
+                           log(ORIG_BUS_ALIGHT_COUNT) +
+                           log(ORIG_TRAIN_ALIGHT_COUNT) +
+                           log(DEST_BUS_STOP_COUNT) +
+                           log(DEST_ENTERTN_COUNT) +
+                           log(DEST_F_AND_B_COUNT) +
+                           log(DEST_RETAIL_COUNT) +
+                           log(DEST_TRAIN_EXITS_COUNT) +
+                           log(DEST_HDB_COUNT) +
+                           log(DISTANCE),
+                         family = poisson(link = "log"),
+                         data = SIM_data,
+                         na.action = na.exclude)
+write_rds(uncSIM_corr_lt_08, "data/rds/uncSIM_corr_lt_08_202310.rds")
+```
+
+```{r}
+uncSIM_corr_lt_08 <- read_rds("data/rds/uncSIM_corr_lt_08_202310.rds")
+uncSIM_corr_lt_08
+```
+
+### Correlation \< 0.6
+
+To improve the model, we will remove those that have very strong correlation first (**0.8** to **1**) and strong correlation (**0.6** to **0.8**).
+
+Let us remove `DEST_F_AND_B_COUNT` and `DEST_ENTERTN_COUNT` as it is the least number of columns to be removed to satisfy the condition.
+
+We will remove `DEST_ENTERTN_COUNT` instead of `DEST_RETAIL_COUNT` as the former had negative coeficient from the previous model, and has less numbers.
+
+```{r}
+SIM_data_corr_lt_06 <- SIM_data %>% select(-c("DEST_F_AND_B_COUNT", "DEST_ENTERTN_COUNT"))
+```
+
+#### Correlation Matrix
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+SIM_data_corr_lt_06 %>%
+  select(-c("ORIG_HEX_ID", "DEST_HEX_ID")) %>%
+  st_drop_geometry() %>%
+  cor() %>%
+  corrplot(
+    type = "lower",
+    method = "square",
+    title = "Correlation map of model variables",
+    addCoef.col = "white",
+    number.cex = 0.5,
+    number.digits = 2,
+    tl.col = "black",
+    tl.cex = 0.5,
+    tl.srt = 45,
+    sig.level = 0.05,
+    insig = "blank")
+```
+
+#### Model generation
+
+We do not have variables with correlation \>= 0.6 anymore so we can proceed with generating the model.
+
+```{r}
+#| eval: false
+uncSIM_corr_lt_06 <- glm(formula = TRIPS ~ 
+                           log(ORIG_HDB_RESIDENT_COUNT) +
+                           log(ORIG_BUS_ALIGHT_COUNT) +
+                           log(ORIG_TRAIN_ALIGHT_COUNT) +
+                           log(DEST_BUS_STOP_COUNT) +
+                           log(DEST_LEISURE_COUNT) +
+                           log(DEST_RETAIL_COUNT) +
+                           log(DEST_TRAIN_EXITS_COUNT) +
+                           log(DEST_HDB_COUNT) +
+                           log(DISTANCE),
+                         family = poisson(link = "log"),
+                         data = SIM_data,
+                         na.action = na.exclude)
+write_rds(uncSIM_corr_lt_06, "data/rds/uncSIM_corr_lt_06_202310.rds")
+```
+
+```{r}
+uncSIM_corr_lt_06 <- read_rds("data/rds/uncSIM_corr_lt_06_202310.rds")
+uncSIM_corr_lt_06
+```
+:::
+
+### Model comparison
+
+We will now compare the model performance
+
+```{r}
+model_list_corr <- list(
+  Unconstrained_Original = uncSIM,
+  Unconstrained_Corr_Lt08 = uncSIM_corr_lt_08,
+  Unconstrained_Corr_Lt06 = uncSIM_corr_lt_06,
+  Doubly_Constrained_Original = dbcSIM)
+
+kable(tibble(
+  Model = names(model_list_corr),
+  R_squared = sapply(model_list_corr, calc_r_squared),
+  RMSE = sapply(model_list_corr, rmse)
+))
+```
+
+::: {.callout-tip collapse="true" appearance="simple"}
+### Insights
+
+Removing some explanatory variables does not change the coefficients of the explanatory variables in the model. This means that the coefficients were generated individually for each explanatory variable.
+
+In addition, removing a few variables resulted in **very slight worsening in performance**. Hence, it may not be worth removing variables to for improving model performance. However, for less powerful computer, it may be worth it to remove some variables to enable the computer to generate a model. Using a correlation matrix can be a good way to determine which variables can be removed.
+:::
