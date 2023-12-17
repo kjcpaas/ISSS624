@@ -297,6 +297,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#about-the-models" id="toc-about-the-models" class="nav-link" data-scroll-target="#about-the-models">About the models</a></li>
   <li><a href="#generating-the-models" id="toc-generating-the-models" class="nav-link" data-scroll-target="#generating-the-models">Generating the models</a></li>
   <li><a href="#model-comparisons" id="toc-model-comparisons" class="nav-link" data-scroll-target="#model-comparisons">Model Comparisons</a></li>
+  <li><a href="#visualizing-the-fit" id="toc-visualizing-the-fit" class="nav-link" data-scroll-target="#visualizing-the-fit">Visualizing the fit</a>
+  <ul>
+  <li><a href="#extracting-the-fitted-values" id="toc-extracting-the-fitted-values" class="nav-link" data-scroll-target="#extracting-the-fitted-values">Extracting the fitted values</a></li>
+  <li><a href="#plotting-the-fit" id="toc-plotting-the-fit" class="nav-link" data-scroll-target="#plotting-the-fit">Plotting the fit</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -862,7 +868,7 @@ Directory structure
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance)</span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance, ggpubr)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_style</span>(<span class="st">"natural"</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -8401,8 +8407,195 @@ Insights
 </div>
 </div>
 </div>
-<p>However, the result of the modelling thus far does that mean that this is the best reflection of the real-world scenario. It just means that the <strong>alternative models do a worse job of modelling</strong>.</p>
-<p>For example, from <a href="#sec-plotting-trips-vs-distance">plotting TRIPS vs DISTANCE</a>, we observed outliers in the plot, i.e.&nbsp;zone pairs that have long distances but on the top 5% highest number of trips. There are other forces that result in those trips other than the distance that are not uncovered by the models we have.</p>
+</section>
+<section id="visualizing-the-fit" class="level2">
+<h2 class="anchored" data-anchor-id="visualizing-the-fit">Visualizing the fit</h2>
+<p>Next, we will visualize the observed values and the fitted values to see how the model fits with the observed data.</p>
+<section id="extracting-the-fitted-values" class="level3">
+<h3 class="anchored" data-anchor-id="extracting-the-fitted-values">Extracting the fitted values</h3>
+<p>First, we will extract the fitted values from the model in preparation for input with <code>ggplot</code>.</p>
+<p>We will initiate a data frame from <code>SIM_data_no_intra</code>, with extracted <code>TRIPS</code> data to store those values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb174"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb174-1"><a href="#cb174-1" aria-hidden="true" tabindex="-1"></a>SIM_data_no_intra_fitted <span class="ot">&lt;-</span> SIM_data_no_intra <span class="sc">%&gt;%</span></span>
+<span id="cb174-2"><a href="#cb174-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ORIG_HEX_ID, DEST_HEX_ID, TRIPS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-17-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-17-1" role="tab" aria-controls="tabset-17-1" aria-selected="true">Unconstrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-17-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-17-2" role="tab" aria-controls="tabset-17-2" aria-selected="false">Origin constrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-17-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-17-3" role="tab" aria-controls="tabset-17-3" aria-selected="false">Destination constrained</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-17-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-17-4" role="tab" aria-controls="tabset-17-4" aria-selected="false">Doubly constrained</a></li></ul>
+<div class="tab-content">
+<div id="tabset-17-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-17-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb175"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb175-1"><a href="#cb175-1" aria-hidden="true" tabindex="-1"></a>SIM_data_no_intra_fitted <span class="ot">&lt;-</span> SIM_data_no_intra_fitted <span class="sc">%&gt;%</span></span>
+<span id="cb175-2"><a href="#cb175-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="fu">as.data.frame</span>(uncSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb175-3"><a href="#cb175-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb175-4"><a href="#cb175-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">uncTRIPS =</span> <span class="st">"uncSIM.fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-17-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-17-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb176"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb176-1"><a href="#cb176-1" aria-hidden="true" tabindex="-1"></a>SIM_data_no_intra_fitted <span class="ot">&lt;-</span> SIM_data_no_intra_fitted <span class="sc">%&gt;%</span></span>
+<span id="cb176-2"><a href="#cb176-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="fu">as.data.frame</span>(orcSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb176-3"><a href="#cb176-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb176-4"><a href="#cb176-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">orcTRIPS =</span> <span class="st">"orcSIM.fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-17-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-17-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb177"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a>SIM_data_no_intra_fitted <span class="ot">&lt;-</span> SIM_data_no_intra_fitted <span class="sc">%&gt;%</span></span>
+<span id="cb177-2"><a href="#cb177-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="fu">as.data.frame</span>(decSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb177-3"><a href="#cb177-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb177-4"><a href="#cb177-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">decTRIPS =</span> <span class="st">"decSIM.fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-17-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-17-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb178"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb178-1"><a href="#cb178-1" aria-hidden="true" tabindex="-1"></a>SIM_data_no_intra_fitted <span class="ot">&lt;-</span> SIM_data_no_intra_fitted <span class="sc">%&gt;%</span></span>
+<span id="cb178-2"><a href="#cb178-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="fu">as.data.frame</span>(dbcSIM<span class="sc">$</span>fitted.values) <span class="sc">%&gt;%</span></span>
+<span id="cb178-3"><a href="#cb178-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb178-4"><a href="#cb178-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dbcTRIPS =</span> <span class="st">"dbcSIM.fitted.values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb179"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb179-1"><a href="#cb179-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(SIM_data_no_intra_fitted))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 31%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">ORIG_HEX_ID</th>
+<th style="text-align: left;">DEST_HEX_ID</th>
+<th style="text-align: right;">TRIPS</th>
+<th style="text-align: right;">uncTRIPS</th>
+<th style="text-align: right;">orcTRIPS</th>
+<th style="text-align: right;">decTRIPS</th>
+<th style="text-align: right;">dbcTRIPS</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: left;">H0016</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: left;">LINESTRING (4345.122 28430….</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: left;">H0017</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">LINESTRING (4345.122 28430….</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0002</td>
+<td style="text-align: left;">H0032</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">LINESTRING (4345.122 28430….</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: left;">H0005</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">82</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: left;">LINESTRING (4345.122 31028….</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: left;">H0022</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: left;">LINESTRING (4345.122 31028….</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H0003</td>
+<td style="text-align: left;">H0028</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">LINESTRING (4345.122 31028….</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="plotting-the-fit" class="level3">
+<h3 class="anchored" data-anchor-id="plotting-the-fit">Plotting the fit</h3>
+<p>Finally, we will plot the fit using `ggplot`, plotting all the graphs in side by side for easier comparison.</p>
+<div class="cell">
+<details>
+<summary><strong>Show the code</strong></summary>
+<div class="sourceCode cell-code" id="cb180"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb180-1"><a href="#cb180-1" aria-hidden="true" tabindex="-1"></a>plot_fit <span class="ot">&lt;-</span> <span class="cf">function</span>(modelTrips) {</span>
+<span id="cb180-2"><a href="#cb180-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">data =</span> SIM_data_no_intra_fitted,</span>
+<span id="cb180-3"><a href="#cb180-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes_string</span>(<span class="at">x =</span> modelTrips,</span>
+<span id="cb180-4"><a href="#cb180-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">y =</span> <span class="st">"TRIPS"</span>)) <span class="sc">+</span></span>
+<span id="cb180-5"><a href="#cb180-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb180-6"><a href="#cb180-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm)</span>
+<span id="cb180-7"><a href="#cb180-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb180-8"><a href="#cb180-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb180-9"><a href="#cb180-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(</span>
+<span id="cb180-10"><a href="#cb180-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_fit</span>(<span class="st">"uncTRIPS"</span>), <span class="fu">plot_fit</span>(<span class="st">"orcTRIPS"</span>),</span>
+<span id="cb180-11"><a href="#cb180-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_fit</span>(<span class="st">"decTRIPS"</span>), <span class="fu">plot_fit</span>(<span class="st">"dbcTRIPS"</span>),</span>
+<span id="cb180-12"><a href="#cb180-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb180-13"><a href="#cb180-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Take-home_Ex2_files/figure-html/unnamed-chunk-160-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-80-contents" aria-controls="callout-80" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Insights
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-80" class="callout-80-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Although the <strong>doubly constrained</strong> <strong>model</strong> is the most fitted, it can be noticed that the points are most concentrated on the lower values of trips.</p>
+<p>Various outliers can be seen above the line, where the <strong>model predicted low values but observed values are high</strong>, i.e.&nbsp;modelled is 3,000 but observed is 12,000.</p>
+<p>Similarly, outliers can be seen below the line, where the <strong>model predicted high values but observed values are low</strong>, i.e.&nbsp;modelled is 8,000 but observed is 0.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>The result of the modelling thus far does that mean that this is the best reflection of the real-world scenario. It just means that the <strong>alternative models do a worse job of modelling</strong>.</p>
+<p>For example, from <a href="#sec-plotting-trips-vs-distance">plotting TRIPS vs DISTANCE</a>, we observed outliers in the plot, i.e.&nbsp;zone pairs that have long distances but on the top 5% highest number of trips. The same can be observed in <a href="#plotting-the-fit">Plotting the fit</a>. Clearly, there are other forces that result in those trips, other than distance, that are not uncovered by the models we have.</p>
 
 
 </section>

@@ -406,7 +406,7 @@ We will label this code chunk with `label: setup` so it will always be run even 
 
 ```{r}
 #| label: setup
-pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance)
+pacman::p_load(sf, sp, tmap, tidyverse, knitr, stplanr, reshape2, performance, ggpubr)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
@@ -2644,6 +2644,97 @@ From the model comparisons, we can see that the **doubly constrained model**, wh
 This means that the distance is the **best indicator of whether a person with take a bus** or not during weekend/holiday mornings.
 :::
 
-However, the result of the modelling thus far does that mean that this is the best reflection of the real-world scenario. It just means that the **alternative models do a worse job of modelling**.
+## Visualizing the fit
 
-For example, from [plotting TRIPS vs DISTANCE](#sec-plotting-trips-vs-distance), we observed outliers in the plot, i.e. zone pairs that have long distances but on the top 5% highest number of trips. There are other forces that result in those trips other than the distance that are not uncovered by the models we have.
+Next, we will visualize the observed values and the fitted values to see how the model fits with the observed data.
+
+### Extracting the fitted values
+
+First, we will extract the fitted values from the model in preparation for input with `ggplot`.
+
+We will initiate a data frame from `SIM_data_no_intra`, with extracted `TRIPS` data to store those values.
+
+```{r}
+SIM_data_no_intra_fitted <- SIM_data_no_intra %>%
+  select(ORIG_HEX_ID, DEST_HEX_ID, TRIPS)
+```
+
+::: panel-tabset
+#### Unconstrained
+
+```{r}
+SIM_data_no_intra_fitted <- SIM_data_no_intra_fitted %>%
+  cbind(as.data.frame(uncSIM$fitted.values) %>%
+          round(digits = 0)) %>%
+  rename(uncTRIPS = "uncSIM.fitted.values")
+```
+
+#### Origin constrained
+
+```{r}
+SIM_data_no_intra_fitted <- SIM_data_no_intra_fitted %>%
+  cbind(as.data.frame(orcSIM$fitted.values) %>%
+          round(digits = 0)) %>%
+  rename(orcTRIPS = "orcSIM.fitted.values")
+```
+
+#### Destination constrained
+
+```{r}
+SIM_data_no_intra_fitted <- SIM_data_no_intra_fitted %>%
+  cbind(as.data.frame(decSIM$fitted.values) %>%
+          round(digits = 0)) %>%
+  rename(decTRIPS = "decSIM.fitted.values")
+```
+
+#### Doubly constrained
+
+```{r}
+SIM_data_no_intra_fitted <- SIM_data_no_intra_fitted %>%
+  cbind(as.data.frame(dbcSIM$fitted.values) %>%
+          round(digits = 0)) %>%
+  rename(dbcTRIPS = "dbcSIM.fitted.values")
+```
+:::
+
+```{r}
+kable(head(SIM_data_no_intra_fitted))
+```
+
+### Plotting the fit
+
+Finally, we will plot the fit using \`ggplot\`, plotting all the graphs in side by side for easier comparison.
+
+```{r}
+#| code-fold: true
+#| code-summary: "**Show the code**"
+plot_fit <- function(modelTrips) {
+  ggplot(data = SIM_data_no_intra_fitted,
+                aes_string(x = modelTrips,
+                           y = "TRIPS")) +
+  geom_point() +
+  geom_smooth(method = lm)
+}
+
+ggarrange(
+  plot_fit("uncTRIPS"), plot_fit("orcTRIPS"),
+  plot_fit("decTRIPS"), plot_fit("dbcTRIPS"),
+  ncol = 2,
+  nrow = 2)
+```
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Insights
+
+Although the **doubly constrained** **model** is the most fitted, it can be noticed that the points are most concentrated on the lower values of trips.
+
+Various outliers can be seen above the line, where the **model predicted low values but observed values are high**, i.e. modelled is 3,000 but observed is 12,000.
+
+Similarly, outliers can be seen below the line, where the **model predicted high values but observed values are low**, i.e. modelled is 8,000 but observed is 0.
+:::
+
+## Conclusion
+
+The result of the modelling thus far does that mean that this is the best reflection of the real-world scenario. It just means that the **alternative models do a worse job of modelling**.
+
+For example, from [plotting TRIPS vs DISTANCE](#sec-plotting-trips-vs-distance), we observed outliers in the plot, i.e. zone pairs that have long distances but on the top 5% highest number of trips. The same can be observed in [Plotting the fit]. Clearly, there are other forces that result in those trips, other than distance, that are not uncovered by the models we have.
