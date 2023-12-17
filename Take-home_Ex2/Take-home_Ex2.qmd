@@ -81,7 +81,7 @@ As we are interested in the factors that influence **weekend/holiday morning (11
 Attractiveness variables are factors that can motivate people to go to their destinations. In our case, these are what *motivates people to ride to their destination bus stop*.
 
 | Variable            | Data Source                                                                                                                                 | Motivation                                               |
-|-------------------|----------------------------------|-------------------|
+|------------------|-------------------------------------|------------------|
 | `BUS_STOP_COUNT`    | *Bus Stop Location* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/BusStopLocation.zip)           | Transferring to another bus to their end destination     |
 | `TRAIN_EXITS_COUNT` | *Train Station* *Exit Point* from [LTA DataMall](https://datamall.lta.gov.sg/content/dam/datamall/datasets/Geospatial/TrainStationExit.zip) | Transferring to train to their end destination           |
 | `HDB_COUNT`         | `hdb.csv` aspatial data provided on E-learn                                                                                                 | To meet up with friends/family                           |
@@ -409,7 +409,7 @@ We will label this code chunk with `label: setup` so it will always be run even 
 pacman::p_load(
   sf, sp, tmap, tidyverse, knitr,
   stplanr, reshape2, performance,
-  ggpubr, corrplot)
+  ggpubr, corrplot, MASS)
 tmap_mode("plot")
 tmap_style("natural")
 set.seed(1234)
@@ -2784,26 +2784,6 @@ rm(plot_fit)
 
 # Improving the Models
 
-::: {.callout-note collapse="true"}
-## Load point
-
-We can start from this point by loading the relevant datasets.
-
-```{r}
-SIM_data <- read_rds("data/rds/SIM_data_no_intra202310.rds")
-uncSIM <- read_rds("data/rds/uncSIM202310.rds")
-dbcSIM <- read_rds("data/rds/dbcSIM202310.rds")
-```
-
-We will also load the `calc_r_squared()` function for model comparison.
-
-```{r}
-calc_r_squared <- function(model) {
-  cor(model$data$TRIPS, model$fitted.values)^2
-}
-```
-:::
-
 From [Spatial Interaction Modelling], we found that the **doubly constrained model** is the best out of all the models we created so far. In this part, we will try to improve the models, with the doubly constrained metrics as baseline:
 
 **R-squared**: 0.6103781
@@ -2831,14 +2811,6 @@ When use multiple variables with strong correlation, it will skew the model as t
 
 When we find explanatory variables that are closely correlated, we will remove some of them from the model.
 
-### Inspect variable relationship
-
-By applying *log* to all our explanatory variables, we have assumed that all are exponentially correlated, not linearly correlated.
-
-By plotting the `TRIPS` vs explanatory variable, we can more easily visualize if this relation is true.
-
-If it turns out that the relation is linear and not exponential, we will remove *log* from the model for that explanatory variable, so that `glm()` can fit a line better to our data.
-
 ### Use other regression methods
 
 We are using [Poisson regression](https://stats.oarc.ucla.edu/r/dae/poisson-regression/) method, which is approriate for when the mean and variance of the dependent variable are not extremely different.
@@ -2857,6 +2829,18 @@ var(SIM_data$TRIPS)
 :::
 
 ## Plotting Correlation Matrix
+
+::: {.callout-note collapse="true"}
+### Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+SIM_data <- read_rds("data/rds/SIM_data_no_intra202310.rds")
+uncSIM <- read_rds("data/rds/uncSIM202310.rds")
+dbcSIM <- read_rds("data/rds/dbcSIM202310.rds")
+```
+:::
 
 Let's plot the correlation matrix using `corrplot()` we will set a significance level ($\alpha$ value) of **0.05**.
 
@@ -3030,10 +3014,248 @@ kable(tibble(
 ))
 ```
 
-::: {.callout-tip collapse="true" appearance="simple"}
+::: {.callout-tip appearance="simple"}
 ### Insights
 
 Removing some explanatory variables does not change the coefficients of the explanatory variables in the model. This means that the coefficients were generated individually for each explanatory variable.
 
 In addition, removing a few variables resulted in **very slight worsening in performance**. Hence, it may not be worth removing variables to for improving model performance. However, for less powerful computer, it may be worth it to remove some variables to enable the computer to generate a model. Using a correlation matrix can be a good way to determine which variables can be removed.
+:::
+
+::: {.callout-warning collapse="true"}
+### Data clear point
+
+We will clear that were used in this investigation data we do not need anymore.
+
+```{r}
+rm(model_list_corr)
+rm(SIM_data_corr_lt_06)
+rm(SIM_data_corr_lt_08)
+rm(uncSIM_corr_lt_06)
+rm(uncSIM_corr_lt_08)
+```
+:::
+
+## Using other regression methods
+
+::: {.callout-note collapse="true"}
+### Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+SIM_data <- read_rds("data/rds/SIM_data_no_intra202310.rds")
+```
+:::
+
+Next, we will use the **negative binomial** regression method. We will use the `glm.nb()` function from [MASS](https://cran.r-project.org/web/packages/MASS/index.html) package.
+
+::: panel-tabset
+### Unconstrained
+
+```{r}
+#| eval: false
+uncSIM_nb <- glm.nb(formula = TRIPS ~ 
+                      log(ORIG_HDB_RESIDENT_COUNT) +
+                      log(ORIG_BUS_ALIGHT_COUNT) +
+                      log(ORIG_TRAIN_ALIGHT_COUNT) +
+                      log(DEST_BUS_STOP_COUNT) +
+                      log(DEST_ENTERTN_COUNT) +
+                      log(DEST_F_AND_B_COUNT) +
+                      log(DEST_LEISURE_COUNT) +
+                      log(DEST_RETAIL_COUNT) +
+                      log(DEST_TRAIN_EXITS_COUNT) +
+                      log(DEST_HDB_COUNT) +
+                      log(DISTANCE),
+                    data = SIM_data,
+                    na.action = na.exclude)
+write_rds(uncSIM_nb, "data/rds/uncSIM_nb202310.rds")
+```
+
+Coefficients for our explanatory variables:
+
+```{r}
+uncSIM_nb <- read_rds("data/rds/uncSIM_nb202310.rds")
+kable(tail(uncSIM_nb$coefficients, n = 11))
+```
+
+::: {.callout-note collapse="true" appearance="minimal"}
+#### Full model output
+
+```{r}
+uncSIM_nb
+```
+:::
+
+::: {.callout-tips collapse="true" appearance="minimal"}
+#### Insights
+
+We can notice that the coefficients are different with `ORIG_TRAIN_ALIGHT_COUNT` being **positive** now, implying that the more passengers alight from train, the more bus rides there are.
+
+This is contrary to our original model.
+
+`DEST_BUS_STOP_COUNT` also switched coefficient signs, implying that presence of bus stops at the destination deter people from going there.
+:::
+
+### Origin constrained
+
+```{r}
+#| eval: false
+orcSIM_nb <- glm.nb(formula = TRIPS ~ 
+                      ORIG_HEX_ID +
+                      log(DEST_BUS_STOP_COUNT) +
+                      log(DEST_ENTERTN_COUNT) +
+                      log(DEST_F_AND_B_COUNT) +
+                      log(DEST_LEISURE_COUNT) +
+                      log(DEST_RETAIL_COUNT) +
+                      log(DEST_TRAIN_EXITS_COUNT) +
+                      log(DEST_HDB_COUNT) +
+                      log(DISTANCE),
+                    data = SIM_data,
+                    na.action = na.exclude)
+write_rds(orcSIM_nb, "data/rds/orcSIM_nb202310.rds")
+```
+
+Coefficients for our explanatory variables:
+
+```{r}
+orcSIM_nb <- read_rds("data/rds/orcSIM_nb202310.rds")
+kable(tail(orcSIM_nb$coefficients, n=8))
+```
+
+::: {.callout-note collapse="true" appearance="minimal"}
+#### Full model output
+
+```{r}
+orcSIM_nb
+```
+:::
+
+::: {.callout-tips collapse="true" appearance="minimal"}
+#### Insights
+
+We can notice that the sign for `DEST_LEISURE_COUNT` coefficient switched from one model to the next, implying the attractiveness of leisure destinations in this model.
+:::
+
+### Destination constrained
+
+```{r}
+#| eval: false
+decSIM_nb <- glm.nb(formula = TRIPS ~ 
+                      DEST_HEX_ID +
+                      log(ORIG_HDB_RESIDENT_COUNT) +
+                      log(ORIG_BUS_ALIGHT_COUNT) +
+                      log(ORIG_TRAIN_ALIGHT_COUNT) +
+                      log(DISTANCE),
+                 data = SIM_data,
+                 na.action = na.exclude)
+write_rds(decSIM_nb, "data/rds/decSIM_nb202310.rds")
+```
+
+Coefficients for our explanatory variables:
+
+```{r}
+#| eval: false
+decSIM_nb <- read_rds("data/rds/decSIM_nb202310.rds")
+kable(tail(decSIM_nb$coefficients, n=4))
+```
+
+::: {.callout-note collapse="true" appearance="minimal"}
+#### Full model output
+
+```{r}
+#| eval: false
+decSIM_nb
+```
+:::
+
+::: {.callout-warning appearance="minimal"}
+Not able to generate due to time constraints. Model was taking almost an hour to generate.
+:::
+
+### Doubly constrained
+
+```{r}
+#| eval: false
+dbcSIM_nb <- glm.nb(formula = TRIPS ~
+                      ORIG_HEX_ID + 
+                      DEST_HEX_ID +
+                      log(DISTANCE),
+                    data = SIM_data,
+                    na.action = na.exclude)
+write_rds(dbcSIM_nb, "data/rds/dbcSIM_nb202310.rds")
+```
+
+Coefficients for our explanatory variables:
+
+```{r}
+#| eval: false
+dbcSIM_nb <- read_rds("data/rds/dbcSIM_nb202310.rds")
+kable(tail(dbcSIM_nb$coefficients, n=1))
+```
+
+::: {.callout-note collapse="true" appearance="minimal"}
+#### Full model output
+
+```{r}
+#| eval: false
+dbcSIM_nb
+```
+:::
+
+::: {.callout-warning appearance="minimal"}
+Not able to generate due to time constraints. Model was taking almost an hour to generate.
+:::
+:::
+
+## Model comparisons
+
+::: {.callout-note collapse="true"}
+### Load point
+
+We can start from this point by loading the relevant datasets.
+
+```{r}
+uncSIM <- read_rds("data/rds/uncSIM202310.rds")
+uncSIM_nb <- read_rds("data/rds/uncSIM_nb202310.rds")
+orcSIM <- read_rds("data/rds/orcSIM202310.rds")
+orcSIM_nb <- read_rds("data/rds/orcSIM_nb202310.rds")
+decSIM <- read_rds("data/rds/decSIM202310.rds")
+dbcSIM <- read_rds("data/rds/dbcSIM202310.rds")
+```
+
+We will also load the `calc_r_squared()` function for model comparison.
+
+```{r}
+calc_r_squared <- function(model) {
+  cor(model$data$TRIPS, model$fitted.values)^2
+}
+```
+:::
+
+Now, let's compare the performance of the negative binomial models that we were able to generate from the original ones.
+
+```{r}
+model_list <- list(
+  Unconstrained = uncSIM,
+  Unconstrained_NB = uncSIM_nb,
+  Origin_Constrained = orcSIM,
+  Origin_Constrained_NB = orcSIM_nb,
+  Destination_Constrained = decSIM,
+  Doubly_Constrained = dbcSIM)
+```
+
+```{r}
+compare_performance(model_list,
+                    metrics = "RMSE") %>% kable()
+```
+
+::: {.callout-tip appearance="simple"}
+### Insights
+
+Using the **negative binomial regression** resulted in a **higher RMSE**, which means that it is **worse** than **Poisson regression**.
+
+Despite our data being overdispersed, using a different regression **did not improve** the model fit. Hence, the best model so far is still the **doubly constrained model using Poisson regression**.
+
+Other factors may not be covered by simple spatial interaction models, and may be explained better by **Spatial Economic Interaction Models**.
 :::
